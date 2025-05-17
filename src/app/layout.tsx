@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Initial CRM Setup",
+  title: "ClearMatch AI",
   description: "Candidate Relationship Management System",
 };
 
