@@ -123,14 +123,19 @@ CREATE TABLE templates (
   updated_by uuid REFERENCES profiles(id)
 );
 
--- Enable RLS
-ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE candidates ENABLE ROW LEVEL SECURITY;
-ALTER TABLE activities ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
-ALTER TABLE candidate_tags ENABLE ROW LEVEL SECURITY;
-ALTER TABLE templates ENABLE ROW LEVEL SECURITY;
+-- Enable RLS Disabled by Dylan until we have policies in place
+-- ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE candidates ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE activities ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE candidate_tags ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE templates ENABLE ROW LEVEL SECURITY;
+
+-- Add unique constraint for organization_id and personal_email
+ALTER TABLE candidates
+ADD CONSTRAINT candidates_organization_email_unique UNIQUE (organization_id, personal_email)
+WHERE personal_email IS NOT NULL; 
 
 -- Create policies
 CREATE POLICY "Users can view their organization"

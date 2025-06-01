@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Bell, Users, Calendar, Briefcase, ArrowUpRight, Clock, Mail, Phone } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { HubSpotSync } from './dashboard/hubspot-sync';
 
 interface DashboardStats {
   totalCandidates: number;
@@ -142,11 +143,14 @@ export function Dashboard() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Overview of your candidate pipeline and recommended actions
-        </p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Overview of your candidate pipeline and recommended actions
+          </p>
+        </div>
+        <HubSpotSync />
       </div>
 
       {/* Stats Grid */}
