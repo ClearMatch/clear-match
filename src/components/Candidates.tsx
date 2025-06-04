@@ -1,12 +1,19 @@
 "use client";
 
+import type React from "react";
+
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useOpenable } from "@/hooks";
 import { supabase } from "@/lib/supabase";
 import {
   Briefcase,
   Building,
   ChevronDown,
+  Edit,
   Filter,
+  Loader2,
   Mail,
   MapPin,
   Phone,
@@ -14,9 +21,10 @@ import {
   Search,
   Tags,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
-import CreateCandidate from "./CreateCandidate";
+import CreateCandidate from "./Candidate/CreateCandidate";
+import EditCandidate from "./Candidate/EditCandidate";
 
 interface Candidate {
   id: string;
@@ -48,11 +56,30 @@ interface FilterState {
   location_category: string[];
 }
 
+// Custom hook for debounced value
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 export function Candidates() {
   const { user } = useAuth();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [selectId, setSelectId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInputValue, setSearchInputValue] = useState("");
+  const debouncedSearchQuery = useDebounce(searchInputValue, 500); // 500ms debounce
   const [refetchCandidate, setRefetchCandidate] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     relationship_type: [],
@@ -62,15 +89,21 @@ export function Candidates() {
   });
   const [showFilters, setShowFilters] = useState(false);
   const { isOpen, onOpen, onClose } = useOpenable();
-  useEffect(() => {
-    fetchCandidates();
-  }, [user, searchQuery, filters, refetchCandidate]);
+  const {
+    isOpen: isEditOpen,
+    onOpen: onEditOpen,
+    onClose: onEditClose,
+  } = useOpenable();
 
-  async function fetchCandidates() {
+  const fetchCandidates = useCallback(async () => {
     if (!user) return;
 
+    setLoading(true);
     try {
-      let query = supabase.from("candidates").select(`
+      let query = supabase
+        .from("candidates")
+        .select(
+          `
           *,
           tags:candidate_tags (
             tags (
@@ -79,16 +112,15 @@ export function Candidates() {
               color
             )
           )
-        `);
+        `
+        )
+        .order("updated_at", { ascending: false });
 
-      // Apply search
-      if (searchQuery) {
-        query = query.or(`
-          first_name.ilike.%${searchQuery}%,
-          last_name.ilike.%${searchQuery}%,
-          current_company.ilike.%${searchQuery}%,
-          current_job_title.ilike.%${searchQuery}%
-        `);
+      // Apply search - Fixed search query format
+      if (debouncedSearchQuery) {
+        query = query.or(
+          `first_name.ilike.%${debouncedSearchQuery}%,last_name.ilike.%${debouncedSearchQuery}%,current_company.ilike.%${debouncedSearchQuery}%,current_job_title.ilike.%${debouncedSearchQuery}%`
+        );
       }
 
       // Apply filters
@@ -117,14 +149,28 @@ export function Candidates() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [user, debouncedSearchQuery, filters]);
+
+  useEffect(() => {
+    fetchCandidates();
+  }, [fetchCandidates, refetchCandidate]);
+
+  const handleEditClick = (e: React.MouseEvent, candidateId: string) => {
+    e.stopPropagation();
+    setSelectId(candidateId);
+    onEditOpen();
+    setRefetchCandidate(false);
+  };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-gray-50 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Candidates</h1>
         <button
-          onClick={onOpen}
+          onClick={() => {
+            setRefetchCandidate(false);
+            onOpen();
+          }}
           className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -134,23 +180,26 @@ export function Candidates() {
 
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
         {/* Search */}
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search candidates..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
-          </div>
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search candidates..."
+            value={searchInputValue}
+            onChange={(e) => setSearchInputValue(e.target.value)}
+            className="pl-10"
+          />
+          {debouncedSearchQuery !== searchInputValue && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+            </div>
+          )}
         </div>
 
         {/* Filter Button */}
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
           <Filter className="h-4 w-4 mr-2" />
           Filters
@@ -160,133 +209,169 @@ export function Candidates() {
 
       {/* Filter Panel */}
       {showFilters && (
-        <div className="mb-6 p-4 bg-white rounded-lg shadow">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Relationship Type Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Relationship Type
-              </label>
-              <select
-                multiple
-                value={filters.relationship_type}
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    relationship_type: Array.from(
-                      e.target.selectedOptions,
-                      (option) => option.value
-                    ),
-                  })
-                }
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-              >
-                <option value="candidate">Candidate</option>
-                <option value="client">Client</option>
-                <option value="both">Both</option>
-              </select>
-            </div>
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Relationship Type Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Relationship Type
+                </label>
+                <select
+                  multiple
+                  value={filters.relationship_type}
+                  onChange={(e) =>
+                    setFilters({
+                      ...filters,
+                      relationship_type: Array.from(
+                        e.target.selectedOptions,
+                        (option) => option.value
+                      ),
+                    })
+                  }
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                >
+                  <option value="candidate">Candidate</option>
+                  <option value="client">Client</option>
+                  <option value="both">Both</option>
+                </select>
+              </div>
 
-            {/* More filters... */}
-          </div>
-        </div>
+              {/* More filters... */}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Candidates List */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul className="divide-y divide-gray-200">
-          {loading ? (
-            <div className="p-4 text-center">Loading...</div>
-          ) : candidates.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
-              No candidates found
-            </div>
-          ) : (
-            candidates.map((candidate) => (
-              <li key={candidate.id}>
-                <div className="px-4 py-4 sm:px-6 hover:bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center">
-                        <p className="text-sm font-medium text-indigo-600 truncate">
-                          {candidate.first_name} {candidate.last_name}
-                        </p>
-                        {candidate?.is_active_looking && (
-                          <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            Active
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-2 flex items-center text-sm text-gray-500">
-                        <Briefcase className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                        <p>
-                          {candidate.current_job_title} at{" "}
-                          {candidate.current_company}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="ml-4 flex flex-col">
-                      {candidate?.phone && (
-                        <div className="flex items-center space-x-2 mb-4">
-                          <Phone className="h-5 w-5 text-gray-400 hover:text-gray-600 cursor-pointer" />
-                          <span className="text-sm text-gray-500">
-                            {candidate.phone}
-                          </span>
-                        </div>
-                      )}
-                      {candidate?.work_email && (
-                        <div className="flex items-center space-x-2">
-                          <Mail className="h-5 w-5 text-gray-400 hover:text-gray-600 cursor-pointer" />
-                          <a
-                            href={`mailto:${candidate.work_email}`}
-                            className="text-sm text-gray-500 hover:text-gray-600"
-                          >
-                            {candidate.work_email}
-                          </a>
-                        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {loading ? (
+          <div className="col-span-2 flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          </div>
+        ) : candidates.length === 0 ? (
+          <div className="col-span-2 text-center py-12 text-gray-500">
+            No candidates found
+          </div>
+        ) : (
+          candidates.map((candidate) => (
+            <Card
+              key={candidate.id}
+              className="overflow-hidden hover:shadow-md transition-shadow duration-200"
+              onClick={() => {
+                setSelectId(candidate.id);
+                onEditOpen();
+                setRefetchCandidate(false);
+              }}
+            >
+              <CardContent className="p-5 pr-12 cursor-pointer relative">
+                <button
+                  className="absolute top-4 right-4 z-10"
+                  onClick={(e) => handleEditClick(e, candidate.id)}
+                >
+                  <Edit className="h-4 w-4" />
+                  <span className="sr-only">Edit</span>
+                </button>
+
+                <div className="flex flex-col md:flex-row justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center">
+                      <h3 className="text-lg font-medium text-indigo-600">
+                        {candidate.first_name} {candidate.last_name}
+                      </h3>
+                      {candidate?.is_active_looking && (
+                        <Badge
+                          variant="outline"
+                          className="ml-2 bg-green-50 text-green-700 border-green-200"
+                        >
+                          Active
+                        </Badge>
                       )}
                     </div>
-                  </div>
-                  <div className="mt-2">
-                    <div className="flex items-center space-x-2 text-sm text-gray-500">
+
+                    <div className="mt-2 flex items-center text-sm text-gray-500">
+                      <Briefcase className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                      <p>
+                        {candidate.current_job_title} at{" "}
+                        {candidate.current_company}
+                      </p>
+                    </div>
+
+                    <div className="mt-2 flex items-center space-x-2 text-sm text-gray-500">
                       <MapPin className="flex-shrink-0 h-4 w-4 text-gray-400" />
                       <span>{candidate?.current_location}</span>
-                      <Building className="flex-shrink-0 h-4 w-4 text-gray-400 ml-4" />
+                    </div>
+
+                    <div className="mt-2 flex items-center space-x-2 text-sm text-gray-500">
+                      <Building className="flex-shrink-0 h-4 w-4 text-gray-400" />
                       <span>{candidate?.functional_role}</span>
-                      {candidate?.tech_stack &&
-                        candidate?.tech_stack.length > 0 && (
-                          <>
-                            <Tags className="flex-shrink-0 h-4 w-4 text-gray-400 ml-4" />
-                            <span>{candidate?.tech_stack.join(", ")}</span>
-                          </>
-                        )}
                     </div>
+
+                    {candidate?.tech_stack &&
+                      candidate?.tech_stack.length > 0 && (
+                        <div className="mt-2 flex items-center space-x-2 text-sm text-gray-500">
+                          <Tags className="flex-shrink-0 h-4 w-4 text-gray-400" />
+                          <span>{candidate?.tech_stack.join(", ")}</span>
+                        </div>
+                      )}
                   </div>
-                  {candidate.tags && candidate.tags.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {candidate?.tags.map((tag) => (
-                        <span
-                          key={tag.id}
-                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                          style={{
-                            backgroundColor: `${tag.color}20`,
-                            color: tag.color,
-                          }}
-                        >
-                          {tag.name}
+
+                  <div className="md:ml-4 mt-4 md:mt-0 flex flex-col space-y-2 md:items-end">
+                    {candidate?.phone && (
+                      <div className="flex items-center space-x-2">
+                        <Phone className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm text-gray-500">
+                          {candidate.phone}
                         </span>
-                      ))}
-                    </div>
-                  )}
+                      </div>
+                    )}
+                    {candidate?.work_email && (
+                      <div className="flex items-center space-x-2">
+                        <Mail className="h-4 w-4 text-gray-400" />
+                        <a
+                          href={`mailto:${candidate.work_email}`}
+                          className="text-sm text-gray-500 hover:text-indigo-600"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {candidate.work_email}
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </li>
-            ))
-          )}
-        </ul>
+
+                {candidate.tags && candidate.tags.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {candidate?.tags.map((tag) => (
+                      <Badge
+                        key={tag.id}
+                        variant="outline"
+                        style={{
+                          backgroundColor: `${tag.color}20`,
+                          color: tag.color,
+                          borderColor: `${tag.color}40`,
+                        }}
+                      >
+                        {tag.name}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
+
       <CreateCandidate
         isOpen={isOpen}
         onClose={onClose}
+        setRefetchCandidate={setRefetchCandidate}
+      />
+      <EditCandidate
+        selectId={selectId}
+        isOpen={isEditOpen}
+        onClose={onEditClose}
         setRefetchCandidate={setRefetchCandidate}
       />
     </div>
