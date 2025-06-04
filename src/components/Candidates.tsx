@@ -20,10 +20,12 @@ import {
   Plus,
   Search,
   Tags,
+  Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import CreateCandidate from "./Candidate/CreateCandidate";
+import DeleteCandidate from "./Candidate/DeleteCandidate";
 import EditCandidate from "./Candidate/EditCandidate";
 
 interface Candidate {
@@ -95,6 +97,12 @@ export function Candidates() {
     onClose: onEditClose,
   } = useOpenable();
 
+  const {
+    isOpen: isDeleteOpen,
+    onOpen: onDeleteOpen,
+    onClose: onDeleteClose,
+  } = useOpenable();
+
   const fetchCandidates = useCallback(async () => {
     if (!user) return;
 
@@ -159,6 +167,12 @@ export function Candidates() {
     e.stopPropagation();
     setSelectId(candidateId);
     onEditOpen();
+    setRefetchCandidate(false);
+  };
+  const handleDeleteClick = (e: React.MouseEvent, candidateId: string) => {
+    e.stopPropagation();
+    setSelectId(candidateId);
+    onDeleteOpen();
     setRefetchCandidate(false);
   };
 
@@ -260,17 +274,23 @@ export function Candidates() {
               className="overflow-hidden hover:shadow-md transition-shadow duration-200"
               onClick={() => {
                 setSelectId(candidate.id);
-                onEditOpen();
                 setRefetchCandidate(false);
               }}
             >
               <CardContent className="p-5 pr-12 cursor-pointer relative">
                 <button
-                  className="absolute top-4 right-4 z-10"
+                  className="absolute top-6 right-4 z-10"
                   onClick={(e) => handleEditClick(e, candidate.id)}
                 >
-                  <Edit className="h-4 w-4" />
+                  <Edit className="h-4 w-4" color="blue" />
                   <span className="sr-only">Edit</span>
+                </button>
+                <button
+                  className="absolute top-11 right-4 z-10 mt-2"
+                  onClick={(e) => handleDeleteClick(e, candidate.id)}
+                >
+                  <Trash2 className="h-4 w-4" color="red" />
+                  <span className="sr-only">Delete</span>
                 </button>
 
                 <div className="flex flex-col md:flex-row justify-between">
@@ -372,6 +392,12 @@ export function Candidates() {
         selectId={selectId}
         isOpen={isEditOpen}
         onClose={onEditClose}
+        setRefetchCandidate={setRefetchCandidate}
+      />
+      <DeleteCandidate
+        selectId={selectId}
+        isOpen={isDeleteOpen}
+        onClose={onDeleteClose}
         setRefetchCandidate={setRefetchCandidate}
       />
     </div>
