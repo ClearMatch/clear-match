@@ -5,27 +5,37 @@ import { Form } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useEffect } from "react";
-
+import useSWRMutation from "swr/mutation";
 import { Schema, useUserForm } from "../Common/schema";
 import TextInputField from "../Common/TextInputField";
 import { Candidate } from "./Types";
 
 interface Props {
   onClose: () => void;
-  setRefetchCandidate: (value: boolean) => void;
+  onRefetchCandidates: () => void;
   data: Candidate;
   selectId: string;
 }
 
-export default function EditForm({
-  onClose,
-  setRefetchCandidate,
-  data,
-  selectId,
-}: Props) {
+async function updateCandidate(
+  _: string,
+  { arg }: { arg: { id: string; formData: Schema } }
+) {
+  const { error } = await supabase
+    .from("candidates")
+    .update(arg.formData)
+    .eq("id", arg.id);
+
+  if (error) throw new Error(error.message);
+}
+function EditForm({ onClose, onRefetchCandidates, data, selectId }: Props) {
   const form = useUserForm();
 
-  // Prepopulate form with candidate data
+  const { trigger, isMutating } = useSWRMutation(
+    "update-candidate",
+    updateCandidate
+  );
+
   useEffect(() => {
     if (data) {
       form.reset({
@@ -48,29 +58,27 @@ export default function EditForm({
   }, [data, form]);
 
   const onSubmit = async (formData: Schema) => {
-    const { error } = await supabase
-      .from("candidates")
-      .update(formData)
-      .eq("id", selectId); // Make sure the candidate is updated, not inserted
-
-    if (error) {
-      toast({
-        title: "Error",
-        variant: "destructive",
-      });
-    } else {
+    try {
+      await trigger({ id: selectId, formData });
       toast({
         title: "Candidate updated successfully",
       });
-      setRefetchCandidate(true);
+      onRefetchCandidates();
       onClose();
       form.reset();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Update failed",
+        variant: "destructive",
+      });
     }
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Your existing input fields */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <TextInputField
             control={form.control}
@@ -94,6 +102,7 @@ export default function EditForm({
             required
           />
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <TextInputField
             control={form.control}
@@ -115,6 +124,7 @@ export default function EditForm({
             placeholder="https://www.linkedin.com/in/username/"
           />
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <TextInputField
             control={form.control}
@@ -135,6 +145,7 @@ export default function EditForm({
             placeholder="https://www.example.com/resume.pdf"
           />
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <TextInputField
             control={form.control}
@@ -156,6 +167,7 @@ export default function EditForm({
             placeholder="Enter current job title"
           />
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <TextInputField
             control={form.control}
@@ -171,16 +183,23 @@ export default function EditForm({
             placeholder="Enter current company size"
           />
         </div>
+
         <hr className="color-black" />
         <div className="flex justify-center space-x-8 pt-6">
           <Button onClick={onClose} variant="outline" className="w-40">
             Cancel
           </Button>
-          <Button className="bg-black text-white w-40" type="submit">
-            Submit
+          <Button
+            className="bg-black text-white w-40"
+            type="submit"
+            disabled={isMutating}
+          >
+            {isMutating ? "Updating..." : "Submit"}
           </Button>
         </div>
       </form>
     </Form>
   );
 }
+
+export default EditForm;

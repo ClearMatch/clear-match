@@ -1,41 +1,45 @@
 "use client";
 
-import { Form } from "@/components/ui/form";
-
 import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { Schema, useUserForm } from "../Common/schema";
+import useSWRMutation from "swr/mutation";
 import TextInputField from "../Common/TextInputField";
+import { Schema, useUserForm } from "../Common/schema";
 
 interface Props {
   onClose: () => void;
-  setRefetchCandidate: (value: boolean) => void;
+  onRefetchCandidates: () => void;
 }
 
-export default function MyFormComponent({
-  onClose,
-  setRefetchCandidate,
-}: Props) {
+async function insertCandidate(url: string, { arg }: { arg: Schema }) {
+  const { error } = await supabase.from(url).insert(arg);
+  if (error) throw new Error(error.message);
+}
+
+function AddCandidate({ onClose, onRefetchCandidates }: Props) {
   const form = useUserForm();
   const { toast } = useToast();
+
+  const { trigger, isMutating } = useSWRMutation("candidates", insertCandidate);
+
   const onSubmit = async (data: Schema) => {
-    const { error } = await supabase.from("candidates").insert(data);
-    if (error) {
-      toast({
-        title: "Error",
-        variant: "destructive",
-      });
-      setRefetchCandidate(true);
-      onClose();
-    } else {
+    try {
+      await trigger(data);
       toast({
         title: "Success",
+        description: "Candidate added successfully.",
+      });
+      form.reset();
+      onRefetchCandidates();
+      onClose();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Something went wrong",
         variant: "destructive",
       });
-      setRefetchCandidate(true);
-      onClose();
-      form.reset();
     }
   };
 
@@ -151,14 +155,25 @@ export default function MyFormComponent({
         </div>
         <hr className="color-black" />
         <div className="flex justify-center space-x-8 pt-6">
-          <Button onClick={onClose} variant="outline" className="w-40">
+          <Button
+            type="button"
+            onClick={onClose}
+            variant="outline"
+            className="w-40"
+          >
             Cancel
           </Button>
-          <Button className="bg-black text-white w-40" type="submit">
-            Submit
+          <Button
+            className="bg-black text-white w-40"
+            type="submit"
+            disabled={isMutating}
+          >
+            {isMutating ? "Submitting..." : "Submit"}
           </Button>
         </div>
       </form>
     </Form>
   );
 }
+
+export default AddCandidate;
