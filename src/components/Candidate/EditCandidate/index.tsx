@@ -17,14 +17,14 @@ import { Candidate } from "./Types";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  setRefetchCandidate: (value: boolean) => void;
+  onRefetchCandidates: () => void;
   selectId: string | null;
 }
 
 const EditCandidate = ({
   isOpen,
   onClose,
-  setRefetchCandidate,
+  onRefetchCandidates,
   selectId,
 }: Props) => {
   const fetchCandidateById = async (id: string): Promise<Candidate> => {
@@ -79,7 +79,7 @@ const EditCandidate = ({
             selectId={selectId!}
             data={data}
             onClose={onClose}
-            setRefetchCandidate={setRefetchCandidate}
+            onRefetchCandidates={onRefetchCandidates}
           />
         ) : (
           <div className="text-center py-4 text-gray-600">

@@ -16,7 +16,7 @@ import {
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  setRefetchCandidate: (value: boolean) => void;
+  onRefetchCandidates: () => void;
   selectId: string | null;
 }
 
@@ -31,7 +31,7 @@ const deleteCandidateFn = async (
 const DeleteCandidate = ({
   isOpen,
   onClose,
-  setRefetchCandidate,
+  onRefetchCandidates,
   selectId,
 }: Props) => {
   const {
@@ -40,16 +40,16 @@ const DeleteCandidate = ({
     error,
   } = useSWRMutation("delete-candidate", deleteCandidateFn);
 
-const handleDelete = async () => {
-  if (!selectId) return;
-  try {
-    await deleteCandidate(selectId);
-    setRefetchCandidate(true);
-    onClose();
-   } catch (err) {
-     console.error("Delete error:", err);
-   }
- };
+  const handleDelete = async () => {
+    if (!selectId) return;
+    try {
+      await deleteCandidate(selectId);
+      onRefetchCandidates;
+      onClose();
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

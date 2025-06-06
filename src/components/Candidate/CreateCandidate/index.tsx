@@ -13,10 +13,10 @@ import AddCandidate from "./AddCandidate";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  setRefetchCandidate: (value: boolean) => void;
+  onRefetchCandidates: () => void;
 }
 
-const CreateCandidate = ({ isOpen, onClose, setRefetchCandidate }: Props) => {
+const CreateCandidate = ({ isOpen, onClose, onRefetchCandidates }: Props) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-white max-w-[70%]">
@@ -26,7 +26,7 @@ const CreateCandidate = ({ isOpen, onClose, setRefetchCandidate }: Props) => {
         </DialogHeader>
         <AddCandidate
           onClose={onClose}
-          setRefetchCandidate={setRefetchCandidate}
+          onRefetchCandidates={onRefetchCandidates}
         />
         <DialogFooter></DialogFooter>
       </DialogContent>
