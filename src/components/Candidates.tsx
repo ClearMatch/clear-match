@@ -6,21 +6,13 @@ import { useAuth } from "../hooks/useAuth";
 import { CandidatesList } from "./Candidate/CandidateList";
 import { SearchAndFilterBar } from "./Candidate/CandidateList/SearchAndFilterBar";
 import { useCandidates } from "./Candidate/CandidateList/useCandidate";
-import CreateCandidate from "./Candidate/CreateCandidate";
 import DeleteCandidate from "./Candidate/DeleteCandidate";
-import EditCandidate from "./Candidate/EditCandidate";
 import Header from "./Candidate/Header";
 
 export function Candidates() {
   const { user } = useAuth();
   const [selectId, setSelectId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const { isOpen, onOpen, onClose } = useOpenable();
-  const {
-    isOpen: isEditOpen,
-    onOpen: onEditOpen,
-    onClose: onEditClose,
-  } = useOpenable();
 
   const {
     isOpen: isDeleteOpen,
@@ -44,7 +36,6 @@ export function Candidates() {
 
   const handleEditClick = (candidateId: string) => {
     setSelectId(candidateId);
-    onEditOpen();
   };
   const handleDeleteClick = (candidateId: string) => {
     setSelectId(candidateId);
@@ -63,7 +54,7 @@ export function Candidates() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <Header onOpen={onOpen} />
+      <Header />
       <SearchAndFilterBar
         searchInputValue={searchInputValue}
         onSearchChange={setSearchInputValue}
@@ -81,17 +72,6 @@ export function Candidates() {
         hasMore={hasMore}
         totalCount={totalCount}
         onLoadMore={onLoadMore}
-      />
-      <CreateCandidate
-        isOpen={isOpen}
-        onClose={onClose}
-        onRefetchCandidates={refetchCandidates}
-      />
-      <EditCandidate
-        selectId={selectId}
-        isOpen={isEditOpen}
-        onClose={onEditClose}
-        onRefetchCandidates={refetchCandidates}
       />
       <DeleteCandidate
         selectId={selectId}

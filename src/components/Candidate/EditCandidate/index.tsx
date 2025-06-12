@@ -2,51 +2,19 @@
 
 import { supabase } from "@/lib/supabase";
 import { Loader } from "lucide-react";
+import { useParams } from "next/navigation";
 import useSWR from "swr";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "../../ui/dialog";
 import EditForm from "./EditForm";
 import { Candidate } from "./Types";
 
-interface Props {
-  isOpen: boolean;
-  onClose: () => void;
-  onRefetchCandidates: () => void;
-  selectId: string | null;
-}
+const EditCandidate = () => {
+  const params = useParams();
+  const selectId = params?.id as string;
 
-const EditCandidate = ({
-  isOpen,
-  onClose,
-  onRefetchCandidates,
-  selectId,
-}: Props) => {
   const fetchCandidateById = async (id: string): Promise<Candidate> => {
     const { data, error } = await supabase
       .from("candidates")
-      .select(
-        `
-        first_name,
-        last_name,
-        personal_email,
-        work_email,
-        phone,
-        linkedin_url,
-        github_url,
-        resume_url,
-        functional_role,
-        current_location,
-        current_job_title,
-        current_company,
-        current_company_size
-      `
-      )
+      .select("*")
       .eq("id", id)
       .single();
 
@@ -56,16 +24,13 @@ const EditCandidate = ({
 
   const { data, error, isLoading } = useSWR<Candidate>(
     selectId ? ["candidate", selectId] : null,
-    () => fetchCandidateById(selectId!)
+    () => fetchCandidateById(selectId)
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-white max-w-[70%]">
-        <DialogHeader>
-          <DialogTitle>Edit Candidate</DialogTitle>
-          <DialogDescription />
-        </DialogHeader>
+    <div className="p-4 bg-white">
+      <div className="p-4 bg-white shadow-lg rounded-lg">
+        <h1 className="font-bold text-md mb-4">Update Candidate</h1>
         {isLoading ? (
           <div className="flex justify-center py-10">
             <Loader className="animate-spin w-6 h-6 text-gray-500" />
@@ -75,21 +40,14 @@ const EditCandidate = ({
             Failed to load candidate data.
           </div>
         ) : data ? (
-          <EditForm
-            selectId={selectId!}
-            data={data}
-            onClose={onClose}
-            onRefetchCandidates={onRefetchCandidates}
-          />
+          <EditForm data={data} id={selectId} />
         ) : (
           <div className="text-center py-4 text-gray-600">
-            No candidate selected.
+            No candidate found.
           </div>
         )}
-
-        <DialogFooter />
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
 
