@@ -19,7 +19,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Organizations table for multi-tenant support
-CREATE TABLE organizations (
+CREATE TABLE IF NOT EXISTS organizations (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   name text NOT NULL,
   created_at timestamptz DEFAULT now(),
@@ -27,7 +27,7 @@ CREATE TABLE organizations (
 );
 
 -- Profiles table extends auth.users
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id),
   organization_id uuid REFERENCES organizations(id),
   first_name text,
@@ -38,7 +38,7 @@ CREATE TABLE profiles (
 );
 
 -- Candidates table
-CREATE TABLE candidates (
+CREATE TABLE IF NOT EXISTS candidates (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   organization_id uuid REFERENCES organizations(id),
   first_name text NOT NULL,
@@ -79,7 +79,7 @@ CREATE TABLE candidates (
 );
 
 -- Activities table
-CREATE TABLE activities (
+CREATE TABLE IF NOT EXISTS activities (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   candidate_id uuid REFERENCES candidates(id),
   organization_id uuid REFERENCES organizations(id),
@@ -91,7 +91,7 @@ CREATE TABLE activities (
 );
 
 -- Tags table
-CREATE TABLE tags (
+CREATE TABLE IF NOT EXISTS tags (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   organization_id uuid REFERENCES organizations(id),
   name text NOT NULL,
@@ -101,7 +101,7 @@ CREATE TABLE tags (
 );
 
 -- Candidate tags junction table
-CREATE TABLE candidate_tags (
+CREATE TABLE IF NOT EXISTS candidate_tags (
   candidate_id uuid REFERENCES candidates(id),
   tag_id uuid REFERENCES tags(id),
   created_at timestamptz DEFAULT now(),
@@ -110,7 +110,7 @@ CREATE TABLE candidate_tags (
 );
 
 -- Templates table
-CREATE TABLE templates (
+CREATE TABLE IF NOT EXISTS templates (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   organization_id uuid REFERENCES organizations(id),
   name text NOT NULL,
