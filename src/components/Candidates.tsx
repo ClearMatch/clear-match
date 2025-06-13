@@ -42,6 +42,19 @@ export function Candidates() {
     onDeleteOpen();
   };
 
+  const handleToggleFilters = () => {
+    setFilters({
+      relationship_type: [],
+      location_category: [],
+      functional_role: [],
+      is_active_looking: null,
+      current_company_size: [],
+      past_company_sizes: [],
+      urgency_level: [],
+      employment_status: [],
+    });
+  };
+
   if (!user || !user.id) {
     return (
       <div className="p-6 bg-gray-50 min-h-screen">
@@ -63,6 +76,7 @@ export function Candidates() {
         onFiltersChange={setFilters}
         showFilters={showFilters}
         onToggleFilters={() => setShowFilters(!showFilters)}
+        clearFilter={handleToggleFilters}
       />
       <CandidatesList
         candidates={candidates}

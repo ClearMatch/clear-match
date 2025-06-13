@@ -18,6 +18,10 @@ export function useCandidates() {
     functional_role: [],
     is_active_looking: null,
     location_category: [],
+    current_company_size: [],
+    past_company_sizes: [],
+    urgency_level: [],
+    employment_status: [],
   });
 
   const isLoadingMoreRef = useRef(false);
