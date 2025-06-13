@@ -48,17 +48,33 @@ export const candidateService = {
     if (filters.relationship_type.length > 0) {
       query = query.in("relationship_type", filters.relationship_type);
     }
+    if (filters.location_category.length > 0) {
+      query = query.contains(
+        "workplace_preferences",
+        `"${filters.location_category}"`
+      );
+    }
     if (filters.functional_role.length > 0) {
       query = query.in("functional_role", filters.functional_role);
     }
     if (filters.is_active_looking !== null) {
       query = query.eq("is_active_looking", filters.is_active_looking);
     }
-    if (filters.location_category.length > 0) {
-      query = query.containedBy(
-        "current_location->category",
-        filters.location_category
-      );
+
+    if (filters.current_company_size.length > 0) {
+      query = query.in("current_company_size", filters.current_company_size);
+    }
+
+    if (filters.past_company_sizes.length > 0) {
+      query = query.overlaps("past_company_sizes", filters.past_company_sizes);
+    }
+
+    if (filters.urgency_level.length > 0) {
+      query = query.in("urgency_level", filters.urgency_level);
+    }
+
+    if (filters.employment_status.length > 0) {
+      query = query.in("employment_status", filters.employment_status);
     }
 
     // Check abort signal before making the request
@@ -144,20 +160,39 @@ export const candidateService = {
     if (filters.relationship_type.length > 0) {
       query = query.in("relationship_type", filters.relationship_type);
     }
+
+    if (filters.location_category.length > 0) {
+      query = query.contains(
+        "workplace_preferences",
+        `"${filters.location_category}"`
+      );
+    }
+
     if (filters.functional_role.length > 0) {
       query = query.in("functional_role", filters.functional_role);
     }
     if (filters.is_active_looking !== null) {
       query = query.eq("is_active_looking", filters.is_active_looking);
     }
-    if (filters.location_category.length > 0) {
-      query = query.containedBy(
-        "current_location->category",
-        filters.location_category
+    if (filters.current_company_size.length > 0) {
+      query = query.overlaps(
+        "current_company_size",
+        filters.current_company_size
       );
     }
 
-    // Check abort signal before making the request
+    if (filters.past_company_sizes.length > 0) {
+      query = query.in("past_company_sizes", filters.past_company_sizes);
+    }
+
+    if (filters.urgency_level.length > 0) {
+      query = query.in("urgency_level", filters.urgency_level);
+    }
+
+    if (filters.employment_status.length > 0) {
+      query = query.in("employment_status", filters.employment_status);
+    }
+
     if (signal?.aborted) {
       throw new DOMException("Request was aborted", "AbortError");
     }

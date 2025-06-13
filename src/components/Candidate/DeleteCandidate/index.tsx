@@ -44,7 +44,7 @@ const DeleteCandidate = ({
     if (!selectId) return;
     try {
       await deleteCandidate(selectId);
-      onRefetchCandidates;
+      onRefetchCandidates();
       onClose();
     } catch (err) {
       console.error("Delete error:", err);

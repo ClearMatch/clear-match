@@ -26,6 +26,10 @@ export interface FilterState {
   functional_role: string[];
   is_active_looking: boolean | null;
   location_category: string[];
+  current_company_size: string[];
+  past_company_sizes: string[];
+  urgency_level: string[];
+  employment_status: string[];
 }
 
 export interface PaginationParams {

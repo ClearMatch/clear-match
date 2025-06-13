@@ -2,8 +2,17 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, Filter, Loader2, Search } from "lucide-react";
+import { ChevronDown, Filter, Loader2, Search, X, Eraser } from "lucide-react";
 import { FilterState } from "./Types";
+import FilterSelect from "../FilterSelect";
+
+import {
+  companySizeOptions,
+  employmentStatusOptions,
+  locationPreferenceOptions,
+  relationshipOptions,
+  urgencyOptions,
+} from "../Common/constants";
 
 interface SearchAndFilterBarProps {
   searchInputValue: string;
@@ -13,6 +22,7 @@ interface SearchAndFilterBarProps {
   onFiltersChange: (filters: FilterState) => void;
   showFilters: boolean;
   onToggleFilters: () => void;
+  clearFilter: () => void;
 }
 
 export function SearchAndFilterBar({
@@ -23,7 +33,16 @@ export function SearchAndFilterBar({
   onFiltersChange,
   showFilters,
   onToggleFilters,
+  clearFilter,
 }: SearchAndFilterBarProps) {
+  const createFilterHandler =
+    (filterKey: keyof FilterState) => (value: string) => {
+      onFiltersChange({
+        ...filters,
+        [filterKey]: value ? [value] : [],
+      });
+    };
+
   return (
     <>
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
@@ -54,30 +73,66 @@ export function SearchAndFilterBar({
       {showFilters && (
         <Card className="mb-6">
           <CardContent className="pt-6">
+            <button
+              onClick={onToggleFilters}
+              className="p-1 rounded-md hover:bg-gray-100 transition-colors flex float-right"
+              aria-label="Close filters"
+            >
+              <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+            </button>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Relationship Type
-                </label>
-                <select
-                  multiple
-                  value={filters.relationship_type}
-                  onChange={(e) =>
-                    onFiltersChange({
-                      ...filters,
-                      relationship_type: Array.from(
-                        e.target.selectedOptions,
-                        (option) => option.value
-                      ),
-                    })
-                  }
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                >
-                  <option value="candidate">Candidate</option>
-                  <option value="client">Client</option>
-                  <option value="both">Both</option>
-                </select>
-              </div>
+              <FilterSelect
+                selected={filters.relationship_type[0] || ""}
+                onChange={createFilterHandler("relationship_type")}
+                options={relationshipOptions}
+                placeholder="Select relationship type"
+                label="Relationship Type"
+              />
+
+              <FilterSelect
+                selected={filters.location_category[0] || ""}
+                onChange={createFilterHandler("location_category")}
+                options={locationPreferenceOptions}
+                placeholder="Select location preference"
+                label="Location Preference"
+              />
+              <FilterSelect
+                selected={filters.current_company_size[0] || ""}
+                onChange={createFilterHandler("current_company_size")}
+                options={companySizeOptions}
+                placeholder="Select Company Size"
+                label="Current Company Size"
+              />
+              <FilterSelect
+                selected={filters.past_company_sizes[0] || ""}
+                onChange={createFilterHandler("past_company_sizes")}
+                options={companySizeOptions}
+                placeholder="Select Company Size"
+                label="Past Company Size"
+              />
+              <FilterSelect
+                selected={filters.urgency_level[0] || ""}
+                onChange={createFilterHandler("urgency_level")}
+                options={urgencyOptions}
+                placeholder="Select Urgency Level"
+                label="Level of Urgency"
+              />
+              <FilterSelect
+                selected={filters.employment_status[0] || ""}
+                onChange={createFilterHandler("employment_status")}
+                options={employmentStatusOptions}
+                placeholder="Select Employment Status"
+                label="Employment Status"
+              />
+            </div>
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={clearFilter}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 justify-end"
+              >
+                <Eraser className="h-4 w-4 mr-2" />
+                Clear Filters
+              </button>
             </div>
           </CardContent>
         </Card>
