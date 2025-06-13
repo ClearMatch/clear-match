@@ -19,6 +19,7 @@ type TextInputFieldProps<
   placeholder?: string;
   required?: boolean;
   description?: string;
+  type?: string;
 };
 
 function TextInputField<
@@ -31,6 +32,7 @@ function TextInputField<
   placeholder,
   required,
   description,
+  type = "text",
 }: TextInputFieldProps<TFieldValues, TName>) {
   return (
     <FormField
@@ -40,7 +42,7 @@ function TextInputField<
         <FormItem>
           <FormLabel required={required}>{label}</FormLabel>
           <FormControl>
-            <Input placeholder={placeholder} {...field} />
+            <Input placeholder={placeholder} {...field} type={type} />
           </FormControl>
           {description && <FormDescription>{description}</FormDescription>}
           <FormMessage />

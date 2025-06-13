@@ -12,6 +12,7 @@ import {
   Tags,
   Trash2,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type React from "react";
 import { Candidate } from "./Types";
 
@@ -26,12 +27,13 @@ export function CandidateCard({
   onEdit,
   onDelete,
 }: CandidateCardProps) {
+  const router = useRouter();
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow duration-200">
       <CardContent className="p-5 pr-12 cursor-pointer relative">
         <button
           className="absolute top-4 right-4 z-10"
-          onClick={() => onEdit(candidate.id)}
+          onClick={() => router.push(`/candidates/edit/${candidate.id}`)}
         >
           <Edit className="h-4 w-4" />
           <span className="sr-only">Edit</span>
