@@ -30,7 +30,6 @@ export const schema = z.object({
   past_company_sizes: z.string().optional(),
   urgency_level: z.string().optional(),
   employment_status: z.string().optional(),
-  // hybrid_work_days: z.string().optional(),
 });
 
 export type Schema = z.infer<typeof schema>;
@@ -63,7 +62,6 @@ export function useUserForm() {
       past_company_sizes: "",
       urgency_level: "",
       employment_status: "",
-      // hybrid_work_days: "",
     },
   });
 
