@@ -8,7 +8,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-auto bg-[#EFF2FC]">{children}</main>
+        <main className="p-6 bg-gray-50 min-h-screen">{children}</main>
       </div>
     </div>
   );
