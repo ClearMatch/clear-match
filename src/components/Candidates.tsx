@@ -57,7 +57,7 @@ export function Candidates() {
 
   if (!user || !user.id) {
     return (
-      <div className="p-6 bg-gray-50 min-h-screen">
+      <div>
         <div className="flex justify-center items-center py-12">
           <div className="text-gray-500">Please log in to view candidates</div>
         </div>
@@ -66,7 +66,7 @@ export function Candidates() {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div>
       <Header />
       <SearchAndFilterBar
         searchInputValue={searchInputValue}
