@@ -1,7 +1,7 @@
 "use client";
 
-import { Task } from "@/components/Task";
+import Task from "@/components/Task";
 
-export default function DashboardPage() {
+export default function TaskPage() {
   return <Task />;
 }
