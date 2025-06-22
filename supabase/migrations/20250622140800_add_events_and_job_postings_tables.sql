@@ -75,24 +75,38 @@ BEGIN
     END IF;
 END $$;
 
--- Add constraint to ensure only events with type 'job-group-posting' can have job_postings
+-- Create a trigger function to ensure only events with type 'job-group-posting' can have job_postings
+CREATE OR REPLACE FUNCTION check_job_posting_event_type()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- If event_id is NULL, allow the operation
+    IF NEW.event_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+    
+    -- Check if the event has the correct type
+    IF NOT EXISTS (
+        SELECT 1 FROM events 
+        WHERE id = NEW.event_id AND type = 'job-group-posting'
+    ) THEN
+        RAISE EXCEPTION 'Job postings can only be associated with events of type job-group-posting';
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create the trigger if it doesn't exist
 DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1
-        FROM information_schema.constraint_column_usage
-        WHERE table_schema = 'public'
-        AND table_name = 'job_postings'
-        AND constraint_name = 'job_postings_event_type_check'
+        SELECT 1 FROM pg_trigger 
+        WHERE tgname = 'job_postings_event_type_check'
     ) THEN
-        ALTER TABLE job_postings
-        ADD CONSTRAINT job_postings_event_type_check
-        CHECK (
-            event_id IS NULL OR 
-            event_id IN (
-                SELECT id FROM events WHERE type = 'job-group-posting'
-            )
-        );
+        CREATE TRIGGER job_postings_event_type_check
+        BEFORE INSERT OR UPDATE ON job_postings
+        FOR EACH ROW
+        EXECUTE FUNCTION check_job_posting_event_type();
     END IF;
 END $$;
 
