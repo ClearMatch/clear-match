@@ -29,14 +29,13 @@ export function Candidates() {
     setFilters,
     isSearching,
     hasMore,
-    totalCount,
     onLoadMore,
     refetchCandidates,
+    sort,
+    onSortChange,
   } = useCandidates();
 
-  const handleEditClick = (candidateId: string) => {
-    setSelectId(candidateId);
-  };
+  // Edit is now handled directly in the table component
   const handleDeleteClick = (candidateId: string) => {
     setSelectId(candidateId);
     onDeleteOpen();
@@ -81,11 +80,11 @@ export function Candidates() {
       <CandidatesList
         candidates={candidates}
         loading={loading}
-        onEditCandidate={handleEditClick}
         onDeleteCandidate={handleDeleteClick}
         hasMore={hasMore}
-        totalCount={totalCount}
         onLoadMore={onLoadMore}
+        sort={sort}
+        onSortChange={onSortChange}
       />
       <DeleteCandidate
         selectId={selectId}

@@ -3,27 +3,27 @@
 import { emptyFragment } from "@/components/ui/emptyFragment";
 import InfiniteScroll from "@/components/ui/infiniteScroll";
 import { Loader2 } from "lucide-react";
-import { CandidateCard } from "./CandidateCard";
-import { Candidate } from "./Types";
+import { CandidatesTable } from "./CandidatesTable";
+import { Candidate, SortConfig, SortField } from "./Types";
 
 interface CandidatesListProps {
   candidates: Candidate[];
   loading: boolean;
-  onEditCandidate: (candidateId: string) => void;
   onDeleteCandidate: (candidateId: string) => void;
   hasMore: boolean;
-  totalCount: number;
   onLoadMore: () => void;
+  sort: SortConfig;
+  onSortChange: (field: SortField) => void;
 }
 
 export function CandidatesList({
   candidates,
   loading,
-  onEditCandidate,
   hasMore,
-  totalCount,
   onLoadMore,
   onDeleteCandidate,
+  sort,
+  onSortChange,
 }: CandidatesListProps) {
   const scrollableContainerId = "candidates-scroll-container";
   if (loading && candidates.length === 0) {
@@ -42,14 +42,12 @@ export function CandidatesList({
 
   return (
     <div className="space-y-6">
-      {totalCount > 0 && (
-        <div className="text-sm text-gray-600">
-          Showing {candidates.length} of {totalCount} candidates
-        </div>
-      )}
+      <div className="text-sm text-gray-600">
+        Showing {candidates.length} candidates
+      </div>
       <div
         id={scrollableContainerId}
-        className="max-h-[70vh] overflow-y-auto pr-2"
+        className="max-h-[70vh] overflow-y-auto"
       >
         <InfiniteScroll
           dataLength={candidates.length}
@@ -63,16 +61,14 @@ export function CandidatesList({
           endMessage={emptyFragment()}
           scrollThreshold={0.6}
           scrollableTarget={scrollableContainerId}
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
         >
-          {candidates.map((candidate, index) => (
-            <CandidateCard
-              key={`${candidate.id}-${index}`}
-              candidate={candidate}
-              onEdit={onEditCandidate}
-              onDelete={onDeleteCandidate}
-            />
-          ))}
+          <CandidatesTable
+            candidates={candidates}
+            sort={sort}
+            onSortChange={onSortChange}
+            onEdit={() => {}} // Not used anymore, navigation handled in table
+            onDelete={(candidate) => onDeleteCandidate(candidate.id)}
+          />
         </InfiniteScroll>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { CandidatesResponse, FilterState, PaginationParams } from "./Types";
+import { CandidatesResponse, FilterState, PaginationParams, SortConfig } from "./Types";
 
 export const candidateService = {
   async fetchCandidates(
@@ -120,6 +120,7 @@ export const candidateService = {
     userId: string,
     searchQuery: string,
     filters: FilterState,
+    sort: SortConfig = { field: 'updated_at', direction: 'desc' },
     cursor?: string,
     pageSize: number = 20,
     signal?: AbortSignal
@@ -143,11 +144,16 @@ export const candidateService = {
         )
       `
       )
-      .order("updated_at", { ascending: false })
+      .order(sort.field, { ascending: sort.direction === 'asc' })
       .limit(pageSize + 1);
 
     if (cursor) {
-      query = query.lt("updated_at", cursor);
+      // Apply cursor based on sort direction
+      if (sort.direction === 'asc') {
+        query = query.gt(sort.field, cursor);
+      } else {
+        query = query.lt(sort.field, cursor);
+      }
     }
 
     if (searchQuery) {
@@ -175,14 +181,11 @@ export const candidateService = {
       query = query.eq("is_active_looking", filters.is_active_looking);
     }
     if (filters.current_company_size.length > 0) {
-      query = query.overlaps(
-        "current_company_size",
-        filters.current_company_size
-      );
+      query = query.in("current_company_size", filters.current_company_size);
     }
 
     if (filters.past_company_sizes.length > 0) {
-      query = query.in("past_company_sizes", filters.past_company_sizes);
+      query = query.overlaps("past_company_sizes", filters.past_company_sizes);
     }
 
     if (filters.urgency_level.length > 0) {
