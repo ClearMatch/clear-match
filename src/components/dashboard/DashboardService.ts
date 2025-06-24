@@ -58,6 +58,7 @@ const fetchCandidatesData = async (userId: string) => {
       userId,
       "",
       candidatesFilter,
+      { field: 'updated_at', direction: 'desc' },
       undefined,
       1000
     ),
@@ -65,6 +66,7 @@ const fetchCandidatesData = async (userId: string) => {
       userId,
       "",
       clientsFilter,
+      { field: 'updated_at', direction: 'desc' },
       undefined,
       1000
     ),
@@ -72,6 +74,7 @@ const fetchCandidatesData = async (userId: string) => {
       userId,
       "",
       bothFilter,
+      { field: 'updated_at', direction: 'desc' },
       undefined,
       1000
     ),
@@ -79,6 +82,7 @@ const fetchCandidatesData = async (userId: string) => {
       userId,
       "",
       candidatesAndBothFilter,
+      { field: 'updated_at', direction: 'desc' },
       undefined,
       1000
     ),
@@ -86,6 +90,7 @@ const fetchCandidatesData = async (userId: string) => {
       userId,
       "",
       activeSearchingFilter,
+      { field: 'updated_at', direction: 'desc' },
       undefined,
       1000
     ),

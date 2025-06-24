@@ -14,6 +14,10 @@ export interface Candidate {
   functional_role: string;
   is_active_looking: boolean;
   tech_stack: string[];
+  years_of_experience?: number;
+  engagement_score?: number;
+  created_at: string;
+  updated_at: string;
   tags: {
     id: string;
     name: string;
@@ -62,4 +66,13 @@ export interface LoadingState {
   isInitialLoading: boolean;
   isFetchingMore: boolean;
   isSearching: boolean;
+}
+
+// Sorting types
+export type SortField = 'first_name' | 'last_name' | 'created_at' | 'updated_at' | 'years_of_experience' | 'engagement_score';
+export type SortDirection = 'asc' | 'desc';
+
+export interface SortConfig {
+  field: SortField;
+  direction: SortDirection;
 }
