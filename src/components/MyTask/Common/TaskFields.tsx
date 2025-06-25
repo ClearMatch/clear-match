@@ -1,13 +1,14 @@
-import SelectField from "@/components/Candidate/Common/SelectField";
-import { useTaskForm } from "./schema";
-import TextAreaField from "./TextAreaField";
-import DateField from "./DateField";
+import TextInputField from "@/components/Candidate/Common/TextInputField";
+import { useMemo } from "react";
 import {
   activityTypeOptions,
-  statusOptions,
   priorityOptions,
+  statusOptions,
 } from "./constants";
-import TextInputField from "@/components/Candidate/Common/TextInputField";
+import DateField from "./DateField";
+import { useTaskForm } from "./schema";
+import SelectField from "./SelectField";
+import TextAreaField from "./TextAreaField";
 
 interface User {
   id: string;
@@ -32,6 +33,7 @@ function TaskFields({
   users = [],
   events = [],
   jobPostings = [],
+  isLoading,
 }: {
   form: ReturnType<typeof useTaskForm>;
   candidates: Array<{ id: string; first_name: string; last_name: string }>;
@@ -39,31 +41,52 @@ function TaskFields({
   users?: Array<User>;
   events?: Array<Event>;
   jobPostings?: Array<JobPosting>;
+  isLoading?: boolean;
 }) {
-  const candidateOptions = candidates.map((candidate) => ({
-    value: candidate.id,
-    label: `${candidate.first_name} ${candidate.last_name}`,
-  }));
+  const candidateOptions = useMemo(
+    () =>
+      candidates.map((candidate) => ({
+        value: candidate.id,
+        label: `${candidate.first_name} ${candidate.last_name}`,
+      })),
+    [candidates]
+  );
 
-  const organizationOptions = organizations.map((org) => ({
-    value: org.id,
-    label: org.name,
-  }));
+  const organizationOptions = useMemo(
+    () =>
+      organizations.map((org) => ({
+        value: org.id,
+        label: org.name,
+      })),
+    [organizations]
+  );
 
-  const userOptions = users.map((user) => ({
-    value: user.id,
-    label: `${user.first_name} ${user.last_name}`,
-  }));
+  const userOptions = useMemo(
+    () =>
+      users.map((user) => ({
+        value: user.id,
+        label: `${user.first_name} ${user.last_name}`,
+      })),
+    [users]
+  );
 
-  const eventOptions = events.map((event) => ({
-    value: event.id,
-    label: event.name,
-  }));
+  const eventOptions = useMemo(
+    () =>
+      events.map((event) => ({
+        value: event.id,
+        label: event.name,
+      })),
+    [events]
+  );
 
-  const jobPostingOptions = jobPostings.map((jobPosting) => ({
-    value: jobPosting.id,
-    label: jobPosting.title,
-  }));
+  const jobPostingOptions = useMemo(
+    () =>
+      jobPostings.map((jobPosting) => ({
+        value: jobPosting.id,
+        label: jobPosting.title,
+      })),
+    [jobPostings]
+  );
 
   return (
     <>
@@ -72,8 +95,11 @@ function TaskFields({
           control={form.control}
           name="candidate_id"
           label="Contact"
-          placeholder="Select a contact"
+          placeholder={
+            candidates.length ? "Select a contact" : "Loading contacts..."
+          }
           options={candidateOptions}
+          disabled={isLoading}
           required
         />
         <SelectField

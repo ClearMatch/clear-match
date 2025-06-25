@@ -8,7 +8,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
-type TextInputFieldProps<
+type TextAreaFieldProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
 > = {
@@ -18,6 +18,7 @@ type TextInputFieldProps<
   placeholder?: string;
   required?: boolean;
   rows?: number;
+  disabled?: boolean;
 };
 
 function TextAreaField<
@@ -30,7 +31,8 @@ function TextAreaField<
   placeholder,
   required,
   rows = 3,
-}: TextInputFieldProps<TFieldValues, TName>) {
+  disabled,
+}: TextAreaFieldProps<TFieldValues, TName>) {
   return (
     <FormField
       control={control}
@@ -42,7 +44,12 @@ function TextAreaField<
             {required && <span className="text-red-500 ml-1">*</span>}
           </FormLabel>
           <FormControl>
-            <Textarea placeholder={placeholder} rows={rows} {...field} />
+            <Textarea
+              placeholder={placeholder}
+              rows={rows}
+              disabled={disabled}
+              {...field}
+            />
           </FormControl>
           <FormMessage />
         </FormItem>

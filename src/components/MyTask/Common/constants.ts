@@ -11,6 +11,7 @@ export const statusOptions = [
   { value: "done", label: "Done" },
 ];
 
+// Keep as strings for form compatibility but with proper mapping
 export const priorityOptions = [
   { value: "1", label: "High" },
   { value: "2", label: "High-Medium" },
@@ -21,3 +22,9 @@ export const priorityOptions = [
 ];
 
 export const criticalityTypeOptions = priorityOptions;
+
+// Utility function to convert priority string to number for database
+export const getPriorityNumber = (priorityString: string): number | null => {
+  const priority = parseInt(priorityString);
+  return isNaN(priority) ? null : priority;
+};

@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { getPriorityNumber } from "../Common/constants";
 import { TaskSchema } from "../Common/schema";
 
 export async function insertTask(
@@ -18,7 +19,7 @@ export async function insertTask(
     due_date: arg.due_date || null,
     event_id: arg.event_id || null,
     assigned_to: arg.assigned_to || null,
-    priority: arg.priority ? parseInt(arg.priority) : null,
+    priority: arg.priority ? getPriorityNumber(arg.priority) : null,
     job_posting_id: arg.job_posting_id || null,
     metadata: null,
     created_at: new Date().toISOString().replace("Z", "+00:00"),

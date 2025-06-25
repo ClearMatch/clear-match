@@ -1,7 +1,6 @@
-import React from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { useTaskData } from "../Services/useTaskData";
 import { AddTaskForm } from "../Common/AddTaskForm";
+import { useTaskData } from "../Services/useTaskData";
 
 function AddTask() {
   const { candidates, organizations, users, events, jobPostings, isLoading } =
@@ -23,6 +22,7 @@ function AddTask() {
         users={users}
         events={events}
         jobPostings={jobPostings}
+        isLoading={isLoading}
       />
     </div>
   );

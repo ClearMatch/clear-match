@@ -1,19 +1,18 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import useSWRMutation from "swr/mutation";
-import TaskFields from "../Common/TaskFields";
-import { TaskSchema, useTaskForm } from "../Common/schema";
 import {
   Candidate,
-  Organization,
-  User,
   Event,
   JobPosting,
+  Organization,
+  User,
 } from "../AddTask/Types";
+import TaskFields from "../Common/TaskFields";
+import { TaskSchema, useTaskForm } from "../Common/schema";
 import { insertTask } from "../Services/taskService";
 
 interface AddTaskFormProps {
@@ -22,6 +21,7 @@ interface AddTaskFormProps {
   users: User[];
   events: Event[];
   jobPostings: JobPosting[];
+  isLoading?: boolean;
 }
 
 export function AddTaskForm({
@@ -30,6 +30,7 @@ export function AddTaskForm({
   users,
   events,
   jobPostings,
+  isLoading = false,
 }: AddTaskFormProps) {
   const form = useTaskForm();
   const { toast } = useToast();
@@ -69,7 +70,11 @@ export function AddTaskForm({
     }
 
     try {
-      await trigger({ ...data, userId: auth.user.id });
+      await trigger({
+        ...data,
+        userId: auth.user.id,
+      });
+
       toast({
         title: "Success",
         description: "Activity added successfully.",
@@ -98,6 +103,7 @@ export function AddTaskForm({
             users={users}
             events={events}
             jobPostings={jobPostings}
+            isLoading={isLoading}
           />
           <hr className="color-black" />
           <div className="flex justify-center space-x-8 pt-6">
@@ -106,13 +112,14 @@ export function AddTaskForm({
               variant="outline"
               className="w-40"
               onClick={() => router.push("/task")}
+              disabled={isMutating}
             >
               Cancel
             </Button>
             <Button
               className="bg-black text-white w-40"
               type="submit"
-              disabled={isMutating}
+              disabled={isMutating || isLoading}
             >
               {isMutating ? "Submitting..." : "Submit"}
             </Button>

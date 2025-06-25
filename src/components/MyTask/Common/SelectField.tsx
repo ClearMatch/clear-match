@@ -1,5 +1,6 @@
 import {
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -14,11 +15,11 @@ import {
 } from "@/components/ui/select";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
-interface SelectOption {
+type SelectOption = {
   value: string;
-  disabled?: boolean;
   label: string;
-}
+  disabled?: boolean;
+};
 
 type SelectFieldProps<
   TFieldValues extends FieldValues = FieldValues,
@@ -29,6 +30,7 @@ type SelectFieldProps<
   label: string;
   placeholder?: string;
   required?: boolean;
+  description?: string;
   options: SelectOption[];
   disabled?: boolean;
 };
@@ -41,8 +43,9 @@ function SelectField<
   name,
   label,
   placeholder,
-  options,
   required,
+  description,
+  options,
   disabled,
 }: SelectFieldProps<TFieldValues, TName>) {
   return (
@@ -75,6 +78,7 @@ function SelectField<
               ))}
             </SelectContent>
           </Select>
+          {description && <FormDescription>{description}</FormDescription>}
           <FormMessage />
         </FormItem>
       )}

@@ -1,12 +1,12 @@
+import { useToast } from "@/hooks/use-toast";
 import React from "react";
 import useSWR from "swr";
-import { useToast } from "@/hooks/use-toast";
 import {
   fetchCandidates,
-  fetchOrganizations,
-  fetchUsers,
   fetchEvents,
   fetchJobPostings,
+  fetchOrganizations,
+  fetchUsers,
 } from "../Services/dataFetchers";
 
 const SWR_CONFIG = {
@@ -14,66 +14,52 @@ const SWR_CONFIG = {
   revalidateOnReconnect: false,
   refreshInterval: 0,
   dedupingInterval: 60000,
+  errorRetryCount: 3,
+  errorRetryInterval: 1000,
 };
 
 export function useTaskData() {
   const { toast } = useToast();
 
-  const candidates = useSWR("candidates", fetchCandidates, SWR_CONFIG);
-  const organizations = useSWR("organizations", fetchOrganizations, SWR_CONFIG);
-  const users = useSWR("users", fetchUsers, SWR_CONFIG);
-  const events = useSWR("events", fetchEvents, SWR_CONFIG);
-  const jobPostings = useSWR("jobPostings", fetchJobPostings, SWR_CONFIG);
+  const {
+    data: allData,
+    error,
+    isLoading,
+  } = useSWR(
+    "task-form-data",
+    async () => {
+      const [candidates, organizations, users, events, jobPostings] =
+        await Promise.all([
+          fetchCandidates(),
+          fetchOrganizations(),
+          fetchUsers(),
+          fetchEvents(),
+          fetchJobPostings(),
+        ]);
+      return { candidates, organizations, users, events, jobPostings };
+    },
+    SWR_CONFIG
+  );
 
   // Handle errors
   React.useEffect(() => {
-    const errors = [
-      { error: candidates.error, name: "candidates" },
-      { error: organizations.error, name: "organizations" },
-      { error: users.error, name: "users" },
-      { error: events.error, name: "events" },
-      { error: jobPostings.error, name: "job postings" },
-    ];
-
-    errors.forEach(({ error, name }) => {
-      if (error) {
-        toast({
-          title: "Error",
-          description: `Failed to fetch ${name}: ${error.message}`,
-          variant: "destructive",
-        });
-      }
-    });
-  }, [
-    candidates.error,
-    organizations.error,
-    users.error,
-    events.error,
-    jobPostings.error,
-    toast,
-  ]);
-
-  const isLoading = [
-    candidates.isLoading,
-    organizations.isLoading,
-    users.isLoading,
-    events.isLoading,
-    jobPostings.isLoading,
-  ].some(Boolean);
+    if (error) {
+      toast({
+        title: "Error",
+        description: `Failed to load form data: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   return {
-    candidates: candidates.data || [],
-    organizations: organizations.data || [],
-    users: users.data || [],
-    events: events.data || [],
-    jobPostings: jobPostings.data || [],
+    candidates: allData?.candidates || [],
+    organizations: allData?.organizations || [],
+    users: allData?.users || [],
+    events: allData?.events || [],
+    jobPostings: allData?.jobPostings || [],
     isLoading,
-    hasError: [
-      candidates.error,
-      organizations.error,
-      users.error,
-      events.error,
-      jobPostings.error,
-    ].some(Boolean),
+    hasError: !!error,
+    error,
   };
 }
