@@ -54,7 +54,12 @@ function AddCandidate() {
             <CandidateFields form={form} />
             <hr className="color-black" />
             <div className="flex justify-center space-x-8 pt-6">
-              <Button type="button" variant="outline" className="w-40">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-40"
+                onClick={() => router.push("/candidates")}
+              >
                 Cancel
               </Button>
               <Button
