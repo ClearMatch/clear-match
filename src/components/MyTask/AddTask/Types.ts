@@ -1,4 +1,4 @@
-export interface Candidate {
+export interface Entity {
   id: string;
   first_name: string;
   last_name: string;
@@ -9,15 +9,9 @@ export interface Organization {
   name: string;
 }
 
-export interface User {
-  id: string;
-  first_name: string;
-  last_name: string;
-}
-
 export interface Event {
   id: string;
-  name: string; // This will be mapped from 'type' field
+  name: string;
   contact_id?: string;
   organization_id?: string;
   type: string;

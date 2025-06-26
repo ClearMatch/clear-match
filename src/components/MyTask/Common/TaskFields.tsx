@@ -1,3 +1,5 @@
+"use client";
+
 import TextInputField from "@/components/Candidate/Common/TextInputField";
 import { useMemo } from "react";
 import {

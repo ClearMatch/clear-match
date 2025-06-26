@@ -1,3 +1,5 @@
+"use client";
+
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { AddTaskForm } from "../Common/AddTaskForm";
 import { useTaskData } from "../Services/useTaskData";

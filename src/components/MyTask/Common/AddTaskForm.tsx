@@ -1,24 +1,20 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import useSWRMutation from "swr/mutation";
-import {
-  Candidate,
-  Event,
-  JobPosting,
-  Organization,
-  User,
-} from "../AddTask/Types";
+import { Entity, Event, JobPosting, Organization } from "../AddTask/Types";
 import TaskFields from "../Common/TaskFields";
 import { TaskSchema, useTaskForm } from "../Common/schema";
 import { insertTask } from "../Services/taskService";
 
 interface AddTaskFormProps {
-  candidates: Candidate[];
+  candidates: Entity[];
   organizations: Organization[];
-  users: User[];
+  users: Entity[];
   events: Event[];
   jobPostings: JobPosting[];
   isLoading?: boolean;

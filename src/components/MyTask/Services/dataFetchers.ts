@@ -1,13 +1,7 @@
 import { supabase } from "@/lib/supabase";
-import {
-  Candidate,
-  Organization,
-  User,
-  Event,
-  JobPosting,
-} from "../AddTask/Types";
+import { Entity, Event, JobPosting, Organization } from "../AddTask/Types";
 
-export async function fetchCandidates(): Promise<Candidate[]> {
+export async function fetchCandidates(): Promise<Entity[]> {
   try {
     const { data, error } = await supabase
       .from("candidates")
@@ -59,7 +53,7 @@ export async function fetchOrganizations(): Promise<Organization[]> {
   }
 }
 
-export async function fetchUsers(): Promise<User[]> {
+export async function fetchUsers(): Promise<Entity[]> {
   try {
     const { data, error } = await supabase
       .from("profiles")
