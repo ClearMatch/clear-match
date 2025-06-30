@@ -34,7 +34,6 @@ function TaskFields({
   organizations,
   users = [],
   events = [],
-  jobPostings = [],
   isLoading,
 }: {
   form: ReturnType<typeof useTaskForm>;
@@ -42,7 +41,6 @@ function TaskFields({
   organizations: Array<{ id: string; name: string }>;
   users?: Array<User>;
   events?: Array<Event>;
-  jobPostings?: Array<JobPosting>;
   isLoading?: boolean;
 }) {
   const candidateOptions = useMemo(
@@ -79,15 +77,6 @@ function TaskFields({
         label: event.name,
       })),
     [events]
-  );
-
-  const jobPostingOptions = useMemo(
-    () =>
-      jobPostings.map((jobPosting) => ({
-        value: jobPosting.id,
-        label: jobPosting.title,
-      })),
-    [jobPostings]
   );
 
   return (
@@ -172,7 +161,7 @@ function TaskFields({
           name="job_posting_id"
           label="Job Posting"
           placeholder="Select job posting"
-          options={jobPostingOptions}
+          options={[]}
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

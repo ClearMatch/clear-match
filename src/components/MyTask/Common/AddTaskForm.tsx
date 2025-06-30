@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import useSWRMutation from "swr/mutation";
-import { Entity, Event, JobPosting, Organization } from "../AddTask/Types";
+import { Entity, Event, Organization } from "../AddTask/Types";
 import TaskFields from "../Common/TaskFields";
 import { TaskSchema, useTaskForm } from "../Common/schema";
 import { insertTask } from "../Services/taskService";
@@ -16,7 +16,6 @@ interface AddTaskFormProps {
   organizations: Organization[];
   users: Entity[];
   events: Event[];
-  jobPostings: JobPosting[];
   isLoading?: boolean;
 }
 
@@ -25,7 +24,6 @@ export function AddTaskForm({
   organizations,
   users,
   events,
-  jobPostings,
   isLoading = false,
 }: AddTaskFormProps) {
   const form = useTaskForm();
@@ -98,7 +96,6 @@ export function AddTaskForm({
             organizations={organizations}
             users={users}
             events={events}
-            jobPostings={jobPostings}
             isLoading={isLoading}
           />
           <hr className="color-black" />

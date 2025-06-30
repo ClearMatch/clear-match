@@ -19,8 +19,3 @@ export interface Event {
   updated_at: string;
   created_by: string;
 }
-
-export interface JobPosting {
-  id: string;
-  title: string;
-}

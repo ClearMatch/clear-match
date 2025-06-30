@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { Entity, Event, JobPosting, Organization } from "../AddTask/Types";
+import { Entity, Event, Organization } from "../AddTask/Types";
 
 export async function fetchCandidates(): Promise<Entity[]> {
   try {
@@ -99,26 +99,6 @@ export async function fetchEvents(): Promise<Event[]> {
     return mappedData;
   } catch (error) {
     console.error("Fetch events error:", error);
-    throw error;
-  }
-}
-
-export async function fetchJobPostings(): Promise<JobPosting[]> {
-  try {
-    const { data, error } = await supabase
-      .from("job_postings")
-      .select("id, title")
-      .not("title", "is", null)
-      .order("title");
-
-    if (error) {
-      console.error("Job postings error:", error);
-      throw new Error(`Failed to fetch job postings: ${error.message}`);
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error("Fetch job postings error:", error);
     throw error;
   }
 }

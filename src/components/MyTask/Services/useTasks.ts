@@ -26,21 +26,22 @@ export function useTasks() {
   const memoizedFilters = useMemo(() => {
     const activeFilters: Partial<TaskFilterState> = {};
 
-    if (filters.type.length > 0) activeFilters.type = filters.type;
-    if (filters.status.length > 0) activeFilters.status = filters.status;
-    if (filters.priority.length > 0) activeFilters.priority = filters.priority;
-    if (filters.assigned_to.length > 0)
+    if (filters?.type?.length > 0) activeFilters.type = filters.type;
+    if (filters?.status?.length > 0) activeFilters.status = filters.status;
+    if (filters?.priority?.length > 0)
+      activeFilters.priority = filters.priority;
+    if (filters?.assigned_to?.length > 0)
       activeFilters.assigned_to = filters.assigned_to;
-    if (filters.created_by.length > 0)
+    if (filters?.created_by?.length > 0)
       activeFilters.created_by = filters.created_by;
 
     return activeFilters;
   }, [
-    filters.type,
-    filters.status,
-    filters.priority,
-    filters.assigned_to,
-    filters.created_by,
+    filters?.type,
+    filters?.status,
+    filters?.priority,
+    filters?.assigned_to,
+    filters?.created_by,
   ]);
 
   const swrKey = useMemo(() => {
@@ -58,16 +59,25 @@ export function useTasks() {
     mutate,
   } = useSWR<ActivityWithRelations[]>(
     swrKey,
-    () =>
-      fetchActivitiesWithRelations(
-        debouncedSearchQuery || undefined,
-        Object.keys(memoizedFilters).length > 0
-          ? (memoizedFilters as TaskFilterState)
-          : undefined
-      ),
+    async () => {
+      try {
+        return await fetchActivitiesWithRelations(
+          debouncedSearchQuery || undefined,
+          Object.keys(memoizedFilters).length > 0
+            ? (memoizedFilters as TaskFilterState)
+            : undefined
+        );
+      } catch (error) {
+        console.error("Error in SWR fetcher:", error);
+        throw error;
+      }
+    },
     {
       revalidateOnFocus: false,
       dedupingInterval: 2000,
+      onError: (error) => {
+        console.error("SWR Error:", error);
+      },
     }
   );
 
@@ -77,6 +87,9 @@ export function useTasks() {
     {
       revalidateOnFocus: false,
       dedupingInterval: 60000,
+      onError: (error) => {
+        console.error("Error fetching assignee options:", error);
+      },
     }
   );
 
@@ -86,6 +99,9 @@ export function useTasks() {
     {
       revalidateOnFocus: false,
       dedupingInterval: 60000,
+      onError: (error) => {
+        console.error("Error fetching creator options:", error);
+      },
     }
   );
 
@@ -99,22 +115,30 @@ export function useTasks() {
 
   const handleFiltersChange = useCallback((newFilters: TaskFilterState) => {
     setFilters((prevFilters) => {
-      const hasChanged = Object.keys(newFilters).some((key) => {
+      const safeNewFilters = {
+        type: newFilters?.type || [],
+        status: newFilters?.status || [],
+        priority: newFilters?.priority || [],
+        assigned_to: newFilters?.assigned_to || [],
+        created_by: newFilters?.created_by || [],
+      };
+
+      const hasChanged = Object.keys(safeNewFilters).some((key) => {
         const filterKey = key as keyof TaskFilterState;
         return (
           JSON.stringify(prevFilters[filterKey]) !==
-          JSON.stringify(newFilters[filterKey])
+          JSON.stringify(safeNewFilters[filterKey])
         );
       });
 
-      return hasChanged ? newFilters : prevFilters;
+      return hasChanged ? safeNewFilters : prevFilters;
     });
   }, []);
 
   const clearFilters = useCallback(() => {
     setFilters((prevFilters) => {
-      const hasActiveFilters = Object.values(prevFilters).some(
-        (filter) => filter.length > 0
+      const hasActiveFilters = Object.values(prevFilters || {}).some(
+        (filter) => Array.isArray(filter) && filter.length > 0
       );
 
       if (!hasActiveFilters) return prevFilters;

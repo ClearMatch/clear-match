@@ -30,31 +30,35 @@ export const fetchActivitiesWithRelations = async (
   }
 
   if (filters) {
-    if (filters.type.length > 0) {
+    if (filters?.type?.length > 0) {
       query = query.in("type", filters.type);
     }
 
-    if (filters.status.length > 0) {
+    if (filters?.status?.length > 0) {
       query = query.in("status", filters.status);
     }
 
-    if (filters.priority.length > 0) {
+    if (filters?.priority?.length > 0) {
       query = query.in("priority", filters.priority);
     }
 
-    if (filters.assigned_to.length > 0) {
+    if (filters?.assigned_to?.length > 0) {
       query = query.in("candidate_id", filters.assigned_to);
     }
 
-    if (filters.created_by.length > 0) {
+    if (filters?.created_by?.length > 0) {
       query = query.in("created_by", filters.created_by);
     }
   }
 
   const { data, error } = await query;
 
-  if (error) throw error;
-  return data;
+  if (error) {
+    console.error("Error fetching task:", error);
+    throw error;
+  }
+
+  return data || [];
 };
 
 export const updateActivityStatus = async (
@@ -77,7 +81,12 @@ export const fetchAssigneeOptions = async (): Promise<
     .select("id, first_name, last_name")
     .order("first_name");
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error fetching assignee options:", error);
+    throw error;
+  }
+
+  if (!data) return [];
 
   return data.map((candidate) => ({
     value: candidate.id,
@@ -93,7 +102,12 @@ export const fetchCreatorOptions = async (): Promise<
     .select("id, first_name, last_name")
     .order("first_name");
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error fetching creator options:", error);
+    throw error;
+  }
+
+  if (!data) return [];
 
   return data.map((profile) => ({
     value: profile.id,

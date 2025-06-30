@@ -5,8 +5,7 @@ import { AddTaskForm } from "../Common/AddTaskForm";
 import { useTaskData } from "../Services/useTaskData";
 
 function AddTask() {
-  const { candidates, organizations, users, events, jobPostings, isLoading } =
-    useTaskData();
+  const { candidates, organizations, users, events, isLoading } = useTaskData();
 
   if (isLoading) {
     return (
@@ -23,7 +22,6 @@ function AddTask() {
         organizations={organizations}
         users={users}
         events={events}
-        jobPostings={jobPostings}
         isLoading={isLoading}
       />
     </div>
