@@ -10,6 +10,11 @@ export interface ActivityData {
   due_date: string;
   status: string;
   priority: number;
+  subject: string | null;
+  content: string | null;
+  assigned_to: string | null;
+  event_id: string | null;
+  job_posting_id: string | null;
 }
 
 export interface ActivityWithRelations extends ActivityData {

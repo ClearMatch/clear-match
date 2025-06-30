@@ -18,7 +18,7 @@ import {
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
 type SelectOption = {
-  value: string;
+  value: string | number;
   label: string;
   disabled?: boolean;
 };
@@ -59,7 +59,6 @@ function SelectField<
           <FormLabel required={required}>{label}</FormLabel>
           <Select
             onValueChange={field.onChange}
-            defaultValue={field.value}
             disabled={disabled}
             value={field.value}
           >
@@ -72,7 +71,7 @@ function SelectField<
               {options.map((option) => (
                 <SelectItem
                   key={option.value}
-                  value={option.value}
+                  value={option.value?.toString()}
                   disabled={option.disabled}
                 >
                   {option.label}

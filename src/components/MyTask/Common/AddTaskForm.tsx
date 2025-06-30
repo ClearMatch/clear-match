@@ -35,9 +35,6 @@ export function AddTaskForm({
   const { trigger, isMutating } = useSWRMutation("activities", insertTask);
 
   const onSubmit = async (data: TaskSchema) => {
-    console.log("Form submitted with data:", data);
-
-    // Validate required fields
     if (!data.candidate_id) {
       toast({
         title: "Error",
