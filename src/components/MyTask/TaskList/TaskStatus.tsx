@@ -11,8 +11,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { mutate } from "swr";
 import useSWRMutation from "swr/mutation";
-import { updateActivityStatus } from "../Service";
-import { statusOptions } from "../Service/Types";
+import { updateActivityStatus } from "../Services";
+import { statusOptions } from "../Services/Types";
 
 interface Props {
   status: string;
