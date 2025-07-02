@@ -3,13 +3,14 @@ import DataTable from "@/components/ui/DataTable";
 import { Column } from "@/components/ui/DataTable/Types";
 import { useOpenable } from "@/hooks";
 import { formatDate } from "@/lib/utils";
-import { Loader, MoreVerticalIcon } from "lucide-react";
+import { Loader } from "lucide-react";
 import DeleteTask from "../DeleteTask";
 import {
   ActivityWithRelations,
   getFullName,
   getPriorityLabel,
 } from "../Services/Types";
+import Actions from "./Actions";
 import TaskStatus from "./TaskStatus";
 
 interface TaskListProps {
@@ -115,8 +116,9 @@ function TaskList({
           columns={taskColumns}
           data={tasks}
           rowKey="id"
-          renderAction={() => <MoreVerticalIcon />}
-          renderActionHeader={() => <MoreVerticalIcon />}
+          hideHeaderCheckBox
+          hideRowCheckBox
+          renderAction={(row) => <Actions id={row.id} />}
         />
       )}
     </div>

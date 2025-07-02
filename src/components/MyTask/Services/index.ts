@@ -114,3 +114,30 @@ export const fetchCreatorOptions = async (): Promise<
     label: `${profile.first_name} ${profile.last_name}`.trim(),
   }));
 };
+
+export const fetchTaskById = async (
+  id: string
+): Promise<ActivityWithRelations> => {
+  const { data, error } = await supabase
+    .from("activities")
+    .select(
+      `
+      *,
+      candidates:candidate_id (
+        id,
+        first_name,
+        last_name
+      ),
+      profiles:created_by (
+        id,
+        first_name,
+        last_name
+      )
+    `
+    )
+    .eq("id", id)
+    .single();
+
+  if (error) throw error;
+  return data;
+};

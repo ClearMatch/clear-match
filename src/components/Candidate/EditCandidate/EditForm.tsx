@@ -5,6 +5,7 @@ import { Form } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import useSWRMutation from "swr/mutation";
 import CandidateFields from "../Common/CandidateFields";
@@ -19,6 +20,7 @@ interface Props {
 function EditForm({ data, id }: Props) {
   const form = useUserForm();
   const auth = useAuth();
+  const router = useRouter();
 
   async function updateCandidate(
     _: string,
@@ -60,7 +62,6 @@ function EditForm({ data, id }: Props) {
         past_company_sizes: data.past_company_sizes || "",
         urgency_level: data.urgency_level || "",
         employment_status: data.employment_status || "",
-        // hybrid_work_days: data.hybrid_work_days || "",
       });
     }
   }, [data, form]);
@@ -87,7 +88,11 @@ function EditForm({ data, id }: Props) {
         <CandidateFields form={form} />
         <hr className="color-black" />
         <div className="flex justify-center space-x-8 pt-6">
-          <Button variant="outline" className="w-40">
+          <Button
+            variant="outline"
+            className="w-40"
+            onClick={() => router.push("/candidates")}
+          >
             Cancel
           </Button>
           <Button

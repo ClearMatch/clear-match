@@ -38,7 +38,6 @@ export function useTaskData() {
     SWR_CONFIG
   );
 
-  // Handle errors
   React.useEffect(() => {
     if (error) {
       toast({

@@ -1,6 +1,7 @@
 "use client";
 import { cn } from "@/lib/utils";
 import React, { useState } from "react";
+import { emptyFragment } from "../emptyFragment";
 import Body from "./Body";
 import Header from "./Header";
 import { TableProps, toggleSelectAll, toggleSet } from "./Types";
@@ -12,7 +13,7 @@ function DataTable<T>({
   className,
   expandable = false,
   expandedRowRender,
-  renderActionHeader,
+  renderActionHeader = emptyFragment,
   renderAction,
   setSortSelection,
   sortSelection,

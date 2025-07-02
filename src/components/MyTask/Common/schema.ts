@@ -19,7 +19,7 @@ export const taskSchema = z.object({
     }, "Due date cannot be in the past"),
   event_id: z.string().optional(),
   assigned_to: z.string().optional(),
-  priority: z.string().optional(), // Keep as string to match select options
+  priority: z.string().default("1"),
   job_posting_id: z.string().optional(),
 });
 
@@ -39,7 +39,7 @@ export function useTaskForm() {
       due_date: "",
       event_id: "",
       assigned_to: "",
-      priority: "",
+      priority: "1",
       job_posting_id: "",
     },
   });
