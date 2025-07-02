@@ -1,4 +1,5 @@
 import {
+  CalendarRange,
   ChartNoAxesCombined,
   FileText,
   ListChecks,
@@ -7,7 +8,7 @@ import {
   Settings,
   Users,
 } from "lucide-react";
-import { ForwardRefExoticComponent, RefAttributes, SVGProps } from "react";
+import { ForwardRefExoticComponent, RefAttributes } from "react";
 
 export interface MenuItemProps {
   name: string;
@@ -27,6 +28,7 @@ export const menuItems = [
       { name: "Templates", icon: FileText, path: "/templates" },
       { name: "My Task", icon: ListChecks, path: "/task" },
       { name: "Inbox", icon: MailCheck, path: "/inbox" },
+      { name: "Event", icon: CalendarRange, path: "/event" },
       { name: "Settings", icon: Settings, path: "/settings" },
     ],
   },
