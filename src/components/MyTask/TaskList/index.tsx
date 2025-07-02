@@ -2,46 +2,30 @@
 import DataTable from "@/components/ui/DataTable";
 import { Column } from "@/components/ui/DataTable/Types";
 import { useOpenable } from "@/hooks";
-import { useDebounce } from "@/hooks/useDebounce";
 import { formatDate } from "@/lib/utils";
 import { Loader, MoreVerticalIcon } from "lucide-react";
-import { useEffect, useState } from "react";
-import useSWR from "swr";
 import DeleteTask from "../DeleteTask";
-import { fetchActivitiesWithRelations } from "../Service";
 import {
   ActivityWithRelations,
   getFullName,
   getPriorityLabel,
-} from "../Service/Types";
+} from "../Services/Types";
 import TaskStatus from "./TaskStatus";
 
 interface TaskListProps {
-  searchTerm: string;
+  tasks: ActivityWithRelations[];
+  loading: boolean;
+  isSearching: boolean;
+  hasNoResults: boolean;
 }
 
-function TaskList({ searchTerm }: TaskListProps) {
+function TaskList({
+  tasks,
+  loading,
+  isSearching,
+  hasNoResults,
+}: TaskListProps) {
   const { isOpen, onClose } = useOpenable();
-  const [isSearching, setIsSearching] = useState(false);
-
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
-
-  const swrKey = debouncedSearchTerm
-    ? `activitiesWithRelations-${debouncedSearchTerm}`
-    : "activitiesWithRelations";
-
-  const { data, error, isLoading } = useSWR<ActivityWithRelations[]>(
-    swrKey,
-    () => fetchActivitiesWithRelations(debouncedSearchTerm)
-  );
-
-  useEffect(() => {
-    if (searchTerm !== debouncedSearchTerm) {
-      setIsSearching(true);
-    } else {
-      setIsSearching(false);
-    }
-  }, [searchTerm, debouncedSearchTerm]);
 
   const taskColumns: Column<ActivityWithRelations>[] = [
     {
@@ -102,9 +86,7 @@ function TaskList({ searchTerm }: TaskListProps) {
     },
   ];
 
-  if (error) return <div>Error loading data</div>;
-
-  if (isLoading || isSearching) {
+  if (loading || isSearching) {
     return (
       <div className="flex justify-center items-center py-8">
         <Loader className="animate-spin h-6 w-6 text-indigo-600" />
@@ -115,11 +97,11 @@ function TaskList({ searchTerm }: TaskListProps) {
     );
   }
 
-  if (data?.length === 0 && debouncedSearchTerm) {
+  if (hasNoResults) {
     return (
       <div className="text-center py-8">
         <p className="text-gray-500">
-          No tasks found for {debouncedSearchTerm}
+          No tasks found matching your search criteria
         </p>
       </div>
     );
@@ -128,10 +110,10 @@ function TaskList({ searchTerm }: TaskListProps) {
   return (
     <div>
       <DeleteTask isOpen={isOpen} onClose={onClose} />
-      {data?.length && (
+      {tasks?.length && (
         <DataTable
           columns={taskColumns}
-          data={data}
+          data={tasks}
           rowKey="id"
           renderAction={() => <MoreVerticalIcon />}
           renderActionHeader={() => <MoreVerticalIcon />}

@@ -34,7 +34,6 @@ function TaskFields({
   organizations,
   users = [],
   events = [],
-  jobPostings = [],
   isLoading,
 }: {
   form: ReturnType<typeof useTaskForm>;
@@ -42,7 +41,6 @@ function TaskFields({
   organizations: Array<{ id: string; name: string }>;
   users?: Array<User>;
   events?: Array<Event>;
-  jobPostings?: Array<JobPosting>;
   isLoading?: boolean;
 }) {
   const candidateOptions = useMemo(
@@ -81,15 +79,6 @@ function TaskFields({
     [events]
   );
 
-  const jobPostingOptions = useMemo(
-    () =>
-      jobPostings.map((jobPosting) => ({
-        value: jobPosting.id,
-        label: jobPosting.title,
-      })),
-    [jobPostings]
-  );
-
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -120,7 +109,7 @@ function TaskFields({
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <TextInputField
           control={form.control}
           name="subject"
@@ -134,9 +123,6 @@ function TaskFields({
           placeholder="Select status"
           options={statusOptions}
         />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <SelectField
           control={form.control}
           name="priority"
@@ -144,6 +130,9 @@ function TaskFields({
           placeholder="Select priority"
           options={priorityOptions}
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <DateField
           control={form.control}
           name="due_date"
@@ -157,9 +146,6 @@ function TaskFields({
           placeholder="Select assignee"
           options={userOptions}
         />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <SelectField
           control={form.control}
           name="event_id"
@@ -167,31 +153,35 @@ function TaskFields({
           placeholder="Select event"
           options={eventOptions}
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <SelectField
           control={form.control}
           name="job_posting_id"
           label="Job Posting"
           placeholder="Select job posting"
-          options={jobPostingOptions}
+          options={[]}
         />
       </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <TextAreaField
+          control={form.control}
+          name="description"
+          label="Description"
+          placeholder="Enter activity description"
+          rows={4}
+          required
+        />
 
-      <TextAreaField
-        control={form.control}
-        name="description"
-        label="Description"
-        placeholder="Enter activity description"
-        rows={4}
-        required
-      />
-
-      <TextAreaField
-        control={form.control}
-        name="content"
-        label="Content"
-        placeholder="Enter activity content"
-        rows={6}
-      />
+        <TextAreaField
+          control={form.control}
+          name="content"
+          label="Content"
+          placeholder="Enter activity content"
+          rows={4}
+        />
+      </div>
     </>
   );
 }

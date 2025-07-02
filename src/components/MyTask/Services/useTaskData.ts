@@ -4,7 +4,6 @@ import useSWR from "swr";
 import {
   fetchCandidates,
   fetchEvents,
-  fetchJobPostings,
   fetchOrganizations,
   fetchUsers,
 } from "../Services/dataFetchers";
@@ -28,15 +27,13 @@ export function useTaskData() {
   } = useSWR(
     "task-form-data",
     async () => {
-      const [candidates, organizations, users, events, jobPostings] =
-        await Promise.all([
-          fetchCandidates(),
-          fetchOrganizations(),
-          fetchUsers(),
-          fetchEvents(),
-          fetchJobPostings(),
-        ]);
-      return { candidates, organizations, users, events, jobPostings };
+      const [candidates, organizations, users, events] = await Promise.all([
+        fetchCandidates(),
+        fetchOrganizations(),
+        fetchUsers(),
+        fetchEvents(),
+      ]);
+      return { candidates, organizations, users, events };
     },
     SWR_CONFIG
   );
@@ -57,7 +54,6 @@ export function useTaskData() {
     organizations: allData?.organizations || [],
     users: allData?.users || [],
     events: allData?.events || [],
-    jobPostings: allData?.jobPostings || [],
     isLoading,
     hasError: !!error,
     error,
