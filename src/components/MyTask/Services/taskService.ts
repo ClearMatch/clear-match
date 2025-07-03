@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { formatISO } from "date-fns";
 import { getPriorityNumber } from "../Common/constants";
 import { TaskSchema } from "../Common/schema";
 
@@ -22,11 +23,9 @@ export async function insertTask(
     priority: arg.priority ? getPriorityNumber(arg.priority) : null,
     job_posting_id: arg.job_posting_id || null,
     metadata: null,
-    created_at: new Date().toISOString().replace("Z", "+00:00"),
+    created_at: formatISO(new Date()),
     created_by: arg.userId,
   };
-
-  console.log("Task data to insert:", taskData);
 
   const { data, error } = await supabase
     .from("activities")

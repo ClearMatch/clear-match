@@ -27,18 +27,18 @@ export function useTaskData() {
   } = useSWR(
     "task-form-data",
     async () => {
-      const [candidates, organizations, users, events] = await Promise.all([
-        fetchCandidates(),
-        fetchOrganizations(),
-        fetchUsers(),
-        fetchEvents(),
-      ]);
+      const [candidates, organizations, users, events] =
+        await Promise.allSettled([
+          fetchCandidates(),
+          fetchOrganizations(),
+          fetchUsers(),
+          fetchEvents(),
+        ]);
       return { candidates, organizations, users, events };
     },
     SWR_CONFIG
   );
 
-  // Handle errors
   React.useEffect(() => {
     if (error) {
       toast({

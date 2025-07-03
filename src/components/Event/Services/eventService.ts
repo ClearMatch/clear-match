@@ -1,15 +1,16 @@
 import { supabase } from "@/lib/supabase";
+import { formatISO } from "date-fns";
 import { EventSchema } from "../Common/schema";
 
-export async function insertEvent(
+export const insertEvent = async (
   url: string,
   { arg }: { arg: EventSchema & { userId: string } }
-) {
+) => {
   const eventData = {
     contact_id: arg.contact_id,
     organization_id: arg.organization_id || null,
     type: arg.type || "none",
-    created_at: new Date().toISOString().replace("Z", "+00:00"),
+    created_at: formatISO(new Date()),
     created_by: arg.userId,
   };
 
@@ -24,4 +25,4 @@ export async function insertEvent(
   }
 
   return data;
-}
+};

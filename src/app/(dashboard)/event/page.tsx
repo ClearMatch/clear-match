@@ -1,7 +1,7 @@
 "use client";
 
-import { Event } from "@/components/Event";
+import Events from "@/components/Event";
 
-export default function SettingsPage() {
-  return <Event />;
+export default function Event() {
+  return <Events />;
 }
