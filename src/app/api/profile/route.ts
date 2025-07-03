@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { handleApiError, validateString, ApiError } from '@/lib/api-utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,21 +27,8 @@ export async function GET(request: NextRequest) {
     // Get the current session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    console.log("API Route - Session check:", { 
-      hasSession: !!session, 
-      hasUser: !!session?.user, 
-      userId: session?.user?.id,
-      sessionError 
-    });
-    
-    if (sessionError) {
-      console.error("API Route - Session error:", sessionError);
-      return NextResponse.json({ error: 'Session failed', details: sessionError.message }, { status: 401 });
-    }
-    
-    if (!session || !session.user) {
-      console.error("API Route - No valid session found");
-      return NextResponse.json({ error: 'No authenticated session found' }, { status: 401 });
+    if (sessionError || !session || !session.user) {
+      throw new ApiError('Authentication required', 401);
     }
     
     const user = session.user;
@@ -53,14 +41,12 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (profileError) {
-      console.error("Profile fetch error:", profileError);
-      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+      throw new ApiError("Profile not found", 404);
     }
 
     return NextResponse.json(profile);
   } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return handleApiError(error);
   }
 }
 
@@ -88,21 +74,8 @@ export async function PUT(request: NextRequest) {
     // Get the current session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    console.log("API Route PUT - Session check:", { 
-      hasSession: !!session, 
-      hasUser: !!session?.user, 
-      userId: session?.user?.id,
-      sessionError 
-    });
-    
-    if (sessionError) {
-      console.error("API Route PUT - Session error:", sessionError);
-      return NextResponse.json({ error: 'Session failed', details: sessionError.message }, { status: 401 });
-    }
-    
-    if (!session || !session.user) {
-      console.error("API Route PUT - No valid session found");
-      return NextResponse.json({ error: 'No authenticated session found' }, { status: 401 });
+    if (sessionError || !session || !session.user) {
+      throw new ApiError('Authentication required', 401);
     }
     
     const user = session.user;
@@ -110,26 +83,27 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { firstName, lastName, occupation } = body;
 
+    // Input validation and sanitization
+    const sanitizedData = {
+      first_name: validateString(firstName, 'First name', 100),
+      last_name: validateString(lastName, 'Last name', 100),
+      occupation: validateString(occupation, 'Occupation', 200),
+    };
+
     // Update user profile in the profiles table
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .update({
-        first_name: firstName,
-        last_name: lastName,
-        occupation: occupation,
-      })
+      .update(sanitizedData)
       .eq("id", user.id)
       .select()
       .single();
 
     if (profileError) {
-      console.error("Profile update error:", profileError);
-      return NextResponse.json({ error: "Failed to update profile" }, { status: 500 });
+      throw new ApiError("Failed to update profile", 500);
     }
 
     return NextResponse.json(profile);
   } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

@@ -15,34 +15,19 @@ function Header() {
   useEffect(() => {
     const loadProfilePic = async () => {
       if (!user) {
-        console.log("Header: No user found");
         return;
       }
-      
-      console.log("Header: User found:", { id: user.id, email: user.email });
-      
-      // Check client-side session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log("Header: Client session check:", { 
-        hasSession: !!session, 
-        userId: session?.user?.id,
-        sessionError 
-      });
       
       try {
         const response = await fetch("/api/profile", {
           credentials: 'include',
         });
-        console.log("Header: API response status:", response.status);
         if (response.ok) {
           const profile = await response.json();
           setProfilePicUrl(profile.profile_pic_url);
-        } else {
-          const errorText = await response.text();
-          console.error("Header: API error:", errorText);
         }
       } catch (error) {
-        console.error("Failed to load profile picture:", error);
+        // Silently fail - profile picture is non-critical
       }
     };
 

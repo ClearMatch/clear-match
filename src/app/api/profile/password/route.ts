@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { handleApiError, validatePassword, ApiError } from '@/lib/api-utils';
 
 export async function PUT(request: NextRequest) {
   try {
@@ -26,21 +27,8 @@ export async function PUT(request: NextRequest) {
     // Get the current session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    console.log("Password API Route - Session check:", { 
-      hasSession: !!session, 
-      hasUser: !!session?.user, 
-      userId: session?.user?.id,
-      sessionError 
-    });
-    
-    if (sessionError) {
-      console.error("Password API Route - Session error:", sessionError);
-      return NextResponse.json({ error: 'Session failed', details: sessionError.message }, { status: 401 });
-    }
-    
-    if (!session || !session.user) {
-      console.error("Password API Route - No valid session found");
-      return NextResponse.json({ error: 'No authenticated session found' }, { status: 401 });
+    if (sessionError || !session || !session.user) {
+      throw new ApiError('Authentication required', 401);
     }
     
     const user = session.user;
@@ -48,8 +36,18 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { currentPassword, newPassword } = body;
 
-    if (!currentPassword || !newPassword) {
-      return NextResponse.json({ error: "Current password and new password are required" }, { status: 400 });
+    // Input validation
+    validatePassword(currentPassword);
+    validatePassword(newPassword);
+
+    // Validate current password by attempting to sign in
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email!,
+      password: currentPassword,
+    });
+
+    if (signInError) {
+      throw new ApiError("Current password is incorrect", 400);
     }
 
     // Update password using Supabase Auth
@@ -58,13 +56,11 @@ export async function PUT(request: NextRequest) {
     });
 
     if (updateError) {
-      console.error("Password update error:", updateError);
-      return NextResponse.json({ error: "Failed to update password" }, { status: 500 });
+      throw new ApiError("Failed to update password", 500);
     }
 
     return NextResponse.json({ message: "Password updated successfully" });
   } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

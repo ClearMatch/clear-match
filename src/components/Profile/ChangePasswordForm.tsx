@@ -95,8 +95,6 @@ export function ChangePasswordForm() {
         newPassword: formData.newPassword,
       };
 
-      console.log("Attempting password change...");
-
       const response = await fetch("/api/profile/password", {
         method: "PUT",
         credentials: 'include',
@@ -106,12 +104,8 @@ export function ChangePasswordForm() {
         body: JSON.stringify(passwordData),
       });
 
-      console.log("Password change response status:", response.status);
-      console.log("Password change response headers:", response.headers);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Password change error:", response.status, errorText);
         
         // Try to parse as JSON for better error message
         try {
@@ -123,7 +117,6 @@ export function ChangePasswordForm() {
       }
 
       const result = await response.json();
-      console.log("Password change successful:", result);
 
       toast({
         title: "Success",
@@ -133,7 +126,6 @@ export function ChangePasswordForm() {
       // Navigate back to previous page or dashboard
       router.push("/dashboard");
     } catch (error) {
-      console.error("Password change error:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to change password. Please check your current password and try again.",

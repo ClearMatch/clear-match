@@ -32,11 +32,8 @@ export function ProfileEditForm() {
           credentials: 'include', // Include cookies
         });
         
-        console.log("Profile API response status:", response.status);
-        
         if (response.ok) {
           const profile = await response.json();
-          console.log("Loaded profile data:", profile);
           setFormData({
             firstName: profile.first_name || "",
             lastName: profile.last_name || "",
@@ -46,9 +43,6 @@ export function ProfileEditForm() {
           if (profile.profile_pic_url) {
             setPreviewUrl(profile.profile_pic_url);
           }
-        } else {
-          const errorData = await response.text();
-          console.error("Profile API error:", response.status, errorData);
         }
       } catch (error) {
         console.error("Failed to load profile:", error);
@@ -110,11 +104,8 @@ export function ProfileEditForm() {
     setIsLoading(true);
 
     try {
-      console.log("Starting profile update with data:", formData);
-
       // First, upload profile picture if provided
       if (formData.profilePicture) {
-        console.log("Uploading profile picture...");
         const formDataUpload = new FormData();
         formDataUpload.append("file", formData.profilePicture);
 
@@ -124,16 +115,10 @@ export function ProfileEditForm() {
           body: formDataUpload,
         });
 
-        console.log("Upload response status:", uploadResponse.status);
-
         if (!uploadResponse.ok) {
           const uploadError = await uploadResponse.text();
-          console.error("Upload error:", uploadError);
           throw new Error("Failed to upload profile picture");
         }
-
-        const uploadResult = await uploadResponse.json();
-        console.log("Upload successful:", uploadResult);
       }
 
       // Update profile data
@@ -142,8 +127,6 @@ export function ProfileEditForm() {
         lastName: formData.lastName,
         occupation: formData.occupation,
       };
-
-      console.log("Updating profile data:", profileData);
 
       const response = await fetch("/api/profile", {
         method: "PUT",
@@ -154,12 +137,8 @@ export function ProfileEditForm() {
         body: JSON.stringify(profileData),
       });
 
-      console.log("Profile update response status:", response.status);
-      console.log("Profile update response headers:", response.headers);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Profile update error:", response.status, errorText);
         
         // Try to parse as JSON for better error message
         try {
@@ -171,7 +150,6 @@ export function ProfileEditForm() {
       }
 
       const result = await response.json();
-      console.log("Profile update successful:", result);
 
       toast({
         title: "Success",
