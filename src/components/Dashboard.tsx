@@ -51,7 +51,8 @@ export function Dashboard() {
   }
 
   if (error) {
-    return <ErrorMessage message={error} onRetry={refetch} />;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return <ErrorMessage message={errorMessage} onRetry={refetch} />;
   }
 
   if (!data) {
