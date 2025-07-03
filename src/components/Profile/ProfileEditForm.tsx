@@ -45,7 +45,7 @@ export function ProfileEditForm() {
           }
         }
       } catch (error) {
-        console.error("Failed to load profile:", error);
+        // Silently fail - profile loading is non-critical
       } finally {
         setIsLoadingProfile(false);
       }
@@ -156,10 +156,12 @@ export function ProfileEditForm() {
         description: "Profile updated successfully!",
       });
 
+      // Trigger header refresh by dispatching a custom event
+      window.dispatchEvent(new CustomEvent('profileUpdated'));
+      
       // Navigate back to previous page or dashboard
       router.push("/dashboard");
     } catch (error) {
-      console.error("Profile update error:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to update profile. Please try again.",
@@ -194,7 +196,7 @@ export function ProfileEditForm() {
         <div className="flex flex-col items-center space-y-4">
           <Avatar className="h-24 w-24">
             <AvatarImage 
-              src={previewUrl || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e"} 
+              src={previewUrl || undefined} 
               alt="Profile Preview" 
             />
             <AvatarFallback className="bg-[#E8EBF4]">

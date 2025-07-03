@@ -32,6 +32,17 @@ function Header() {
     };
 
     loadProfilePic();
+
+    // Listen for profile updates
+    const handleProfileUpdate = () => {
+      loadProfilePic();
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
   }, [user]);
 
   return (
