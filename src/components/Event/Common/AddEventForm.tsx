@@ -5,6 +5,7 @@ import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import { memo, useCallback } from "react";
 import useSWRMutation from "swr/mutation";
 import { Entity, Organization } from "../AddEvent/Types";
 import { insertEvent } from "../Services/eventService";
@@ -17,7 +18,7 @@ interface AddEventFormProps {
   isLoading?: boolean;
 }
 
-export function AddEventForm({
+export const AddEventForm = memo(function AddEventForm({
   candidates,
   organizations,
   isLoading = false,
@@ -28,49 +29,52 @@ export function AddEventForm({
   const auth = useAuth();
   const { trigger, isMutating } = useSWRMutation("events", insertEvent);
 
-  const onSubmit = async (data: EventSchema) => {
-    console.log("Form submitted with data:", data);
+  const onSubmit = useCallback(
+    async (data: EventSchema) => {
+      if (!data.contact_id) {
+        toast({
+          title: "Error",
+          description: "Please select a contact",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    // Validate required fields
-    if (!data.contact_id) {
-      toast({
-        title: "Error",
-        description: "Please select a contact",
-        variant: "destructive",
-      });
-      return;
-    }
+      if (!auth.user?.id) {
+        toast({
+          title: "Error",
+          description: "User not authenticated",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    if (!auth.user?.id) {
-      toast({
-        title: "Error",
-        description: "User not authenticated",
-        variant: "destructive",
-      });
-      return;
-    }
+      try {
+        await trigger({
+          ...data,
+          userId: auth.user.id,
+        });
 
-    try {
-      await trigger({
-        ...data,
-        userId: auth.user.id,
-      });
+        toast({
+          title: "Success",
+          description: "Event added successfully.",
+        });
 
-      toast({
-        title: "Success",
-        description: "Event added successfully.",
-      });
-      form.reset();
-      router.push("/event");
-    } catch (error: any) {
-      console.error("Submit error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Something went wrong",
-        variant: "destructive",
-      });
-    }
-  };
+        form.reset();
+        router.push("/event");
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Something went wrong";
+
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+    },
+    [trigger, auth.user?.id, form, router, toast]
+  );
 
   return (
     <div className="p-4 bg-white shadow-lg rounded-lg">
@@ -83,7 +87,7 @@ export function AddEventForm({
             organizations={organizations}
             isLoading={isLoading}
           />
-          <hr className="color-black" />
+          <hr className="border-gray-300" />
           <div className="flex justify-center space-x-8 pt-6">
             <Button
               type="button"
@@ -95,7 +99,7 @@ export function AddEventForm({
               Cancel
             </Button>
             <Button
-              className="bg-black text-white w-40"
+              className="bg-black text-white w-40 hover:bg-gray-800"
               type="submit"
               disabled={isMutating || isLoading}
             >
@@ -106,4 +110,4 @@ export function AddEventForm({
       </Form>
     </div>
   );
-}
+});

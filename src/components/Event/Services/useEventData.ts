@@ -22,16 +22,20 @@ export function useEventData() {
   } = useSWR(
     "event-form-data",
     async () => {
-      const [candidates, organizations] = await Promise.all([
-        fetchCandidates(),
-        fetchOrganizations(),
-      ]);
-      return { candidates, organizations };
+      try {
+        const [candidates, organizations] = await Promise.all([
+          fetchCandidates(),
+          fetchOrganizations(),
+        ]);
+        return { candidates, organizations };
+      } catch (error) {
+        console.error("Data fetching error:", error);
+        throw error;
+      }
     },
     SWR_CONFIG
   );
 
-  // Handle errors
   useEffect(() => {
     if (error) {
       toast({
