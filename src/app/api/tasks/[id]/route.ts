@@ -34,6 +34,17 @@ export async function PUT(
       throw new ApiError('Authentication required', 401);
     }
     
+    // Get the user's organization_id
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("organization_id")
+      .eq("id", session.user.id)
+      .single();
+      
+    if (profileError) {
+      throw new ApiError('Failed to get user organization', 500);
+    }
+    
     const { id } = params;
     const body = await request.json();
     
@@ -45,7 +56,6 @@ export async function PUT(
       status,
       priority,
       candidate_id,
-      organization_id,
       subject,
       content,
       assigned_to,
@@ -55,6 +65,9 @@ export async function PUT(
 
     // Build update object with validated fields
     const updateData: any = {};
+    
+    // Always set the organization_id from the user's profile
+    updateData.organization_id = profileData.organization_id;
     
     if (description !== undefined) {
       updateData.description = validateString(description, 'Description', 500, true);
@@ -91,10 +104,6 @@ export async function PUT(
       updateData.candidate_id = candidate_id === "" ? null : candidate_id;
     }
     
-    if (organization_id !== undefined) {
-      // Handle empty string for organization_id
-      updateData.organization_id = organization_id === "" ? null : organization_id;
-    }
     
     if (subject !== undefined) {
       updateData.subject = validateString(subject, 'Subject', 200);
@@ -115,6 +124,18 @@ export async function PUT(
     
     if (job_posting_id !== undefined) {
       updateData.job_posting_id = job_posting_id;
+    }
+
+    // First, verify the task exists and belongs to the user's organization
+    const { data: existingTask, error: taskError } = await supabase
+      .from("activities")
+      .select("id, organization_id")
+      .eq("id", id)
+      .eq("organization_id", profileData.organization_id)
+      .single();
+      
+    if (taskError || !existingTask) {
+      throw new ApiError('Task not found or you do not have permission to update it', 404);
     }
 
     // Update the task
@@ -166,7 +187,30 @@ export async function DELETE(
       throw new ApiError('Authentication required', 401);
     }
     
+    // Get the user's organization_id
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("organization_id")
+      .eq("id", session.user.id)
+      .single();
+      
+    if (profileError) {
+      throw new ApiError('Failed to get user organization', 500);
+    }
+    
     const { id } = params;
+
+    // First, check if the task exists and belongs to the user's organization
+    const { data: task, error: taskError } = await supabase
+      .from("activities")
+      .select("id, organization_id")
+      .eq("id", id)
+      .eq("organization_id", profileData.organization_id)
+      .single();
+      
+    if (taskError || !task) {
+      throw new ApiError('Task not found or you do not have permission to delete it', 404);
+    }
 
     // Delete the task
     const { error: deleteError } = await supabase

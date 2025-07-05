@@ -5,9 +5,21 @@ export async function insertTask(
   url: string,
   { arg }: { arg: TaskSchema & { userId: string } }
 ) {
+  // First, get the user's organization_id from their profile
+  const { data: profileData, error: profileError } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", arg.userId)
+    .single();
+
+  if (profileError) {
+    console.error("Error fetching user profile:", profileError);
+    throw new Error("Failed to get user organization");
+  }
+
   const taskData = {
     candidate_id: arg.candidate_id,
-    organization_id: arg.organization_id || null,
+    organization_id: profileData.organization_id, // Always use the organization_id from the user's profile
     type: arg.type,
     subject: arg.subject || null,
     content: arg.content || null,
