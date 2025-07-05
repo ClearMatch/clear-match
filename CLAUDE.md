@@ -73,6 +73,22 @@ You have access to multiple MCP servers to enhance development efficiency:
   - Find React Hook Form validation examples
   - Understand Supabase authentication patterns
 
+### Playwright MCP Server
+- **Purpose**: Browser automation and testing
+- **Usage**: Test changes directly in the browser, automate user interactions, capture screenshots
+- **When to use**: 
+  - Verify new features work correctly in the browser
+  - Test user workflows and interactions
+  - Capture visual proof of functionality
+  - Regression testing after changes
+  - Accessibility testing
+- **Examples**:
+  - Test form submissions and validation
+  - Verify responsive design across viewports
+  - Test authentication flows
+  - Capture screenshots of new UI components
+  - Test candidate management workflows
+
 ## Development Workflow
 
 ### Branch Management
@@ -86,11 +102,12 @@ You have access to multiple MCP servers to enhance development efficiency:
 1. **Setup**: Pull main branch and create new branch with issue number
 2. **Development**: Implement features following code standards
 3. **Testing**: Run tests and ensure all pass
-4. **Quality Checks**: Run linting and type checking
-5. **Commit**: Use descriptive commit messages
-6. **Pull Request**: Create PR with comprehensive description
-7. **Review**: Address feedback and update as needed
-8. **Merge**: Use "Squash and Merge" option
+4. **Browser Testing**: Use Playwright MCP server to test changes in browser
+5. **Quality Checks**: Run linting and type checking
+6. **Commit**: Use descriptive commit messages
+7. **Pull Request**: Create PR with comprehensive description
+8. **Review**: Address feedback and update as needed
+9. **Merge**: Use "Squash and Merge" option
 
 #### For Existing Branches
 1. **Update Branch**: Always rebase against main before starting work
@@ -102,7 +119,7 @@ You have access to multiple MCP servers to enhance development efficiency:
    git merge origin/main
    ```
 2. **Verify Build**: Run `npm run build` to ensure no conflicts
-3. **Continue Development**: Follow steps 2-8 above
+3. **Continue Development**: Follow steps 2-9 above
 
 ### Commit Message Format
 - Use clear, descriptive commit messages
