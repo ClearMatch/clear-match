@@ -4,6 +4,7 @@ import { Column } from "@/components/ui/DataTable/Types";
 import { useOpenable } from "@/hooks";
 import { formatDate } from "@/lib/utils";
 import { Loader } from "lucide-react";
+import { useState } from "react";
 import DeleteTask from "../DeleteTask";
 import {
   ActivityWithRelations,
@@ -26,7 +27,18 @@ function TaskList({
   isSearching,
   hasNoResults,
 }: TaskListProps) {
-  const { isOpen, onClose } = useOpenable();
+  const { isOpen, onClose, onOpen } = useOpenable();
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+
+  const handleDeleteClick = (taskId: string) => {
+    setTaskToDelete(taskId);
+    onOpen();
+  };
+
+  const handleDeleteClose = () => {
+    setTaskToDelete(null);
+    onClose();
+  };
 
   const taskColumns: Column<ActivityWithRelations>[] = [
     {
@@ -110,7 +122,7 @@ function TaskList({
 
   return (
     <div>
-      <DeleteTask isOpen={isOpen} onClose={onClose} />
+      <DeleteTask isOpen={isOpen} onClose={handleDeleteClose} taskId={taskToDelete} />
       {tasks?.length && (
         <DataTable
           columns={taskColumns}
@@ -118,7 +130,7 @@ function TaskList({
           rowKey="id"
           hideHeaderCheckBox
           hideRowCheckBox
-          renderAction={(row) => <Actions id={row.id} />}
+          renderAction={(row) => <Actions id={row.id} onDelete={handleDeleteClick} />}
         />
       )}
     </div>
