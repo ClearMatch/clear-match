@@ -9,7 +9,7 @@ export interface Candidate {
   github_url: string;
   current_job_title: string;
   current_company: string;
-  current_location: string;
+  current_location: string | { location: string };
   relationship_type: string;
   functional_role: string;
   is_active_looking: boolean;
