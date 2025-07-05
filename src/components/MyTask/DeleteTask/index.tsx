@@ -12,6 +12,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { mutate } from "swr";
+import { CACHE_KEYS } from "../Common/cacheKeys";
 
 interface Props {
   isOpen: boolean;
@@ -33,14 +34,19 @@ const DeleteTask = ({ isOpen, onClose, taskId }: Props) => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete task");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to delete task");
       }
 
+      const result = await response.json();
       toast.success("Task deleted successfully");
-      mutate("activitiesWithRelations");
+      
+      // Only invalidate cache after successful server confirmation
+      await mutate(CACHE_KEYS.ACTIVITIES_WITH_RELATIONS);
       onClose();
     } catch (error) {
-      toast.error("Failed to delete task");
+      console.error("Delete task error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to delete task");
     } finally {
       setIsDeleting(false);
     }
@@ -48,25 +54,32 @@ const DeleteTask = ({ isOpen, onClose, taskId }: Props) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-white max-w-[30%] h-[180px]">
+      <DialogContent className="bg-white max-w-sm h-auto">
         <DialogHeader>
           <DialogTitle className="mb-2">Delete Task</DialogTitle>
           <DialogDescription>
             <span className="text-base font-normal mt-4">
-              Are you sure you want to delete this task?
+              Are you sure you want to delete this task? This action cannot be undone.
             </span>
           </DialogDescription>
         </DialogHeader>
 
         <DialogFooter className="flex !justify-center gap-2 pt-4 items-center">
-          <Button variant="outline" onClick={onClose} className="w-40" disabled={isDeleting}>
+          <Button 
+            variant="outline" 
+            onClick={onClose} 
+            className="w-40" 
+            disabled={isDeleting}
+            aria-label="Cancel deletion"
+          >
             Cancel
           </Button>
           <Button 
             variant="destructive" 
-            className="bg-black text-white w-40"
+            className="bg-red-600 hover:bg-red-700 text-white w-40"
             onClick={handleDelete}
             disabled={isDeleting}
+            aria-label="Confirm deletion"
           >
             {isDeleting ? "Deleting..." : "Delete"}
           </Button>
