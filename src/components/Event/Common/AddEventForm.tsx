@@ -78,9 +78,23 @@ export const AddEventForm = memo(function AddEventForm({
 
   return (
     <div className="p-4 bg-white shadow-lg rounded-lg">
-      <h1 className="font-bold text-md mb-4">Add Event</h1>
+      <h1 className="font-bold text-md mb-4" id="add-event-title">Add Event</h1>
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {isLoading ? "Loading form data..." : "Form ready"}
+        {isMutating ? "Submitting event..." : ""}
+      </div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form 
+          onSubmit={form.handleSubmit(onSubmit)} 
+          className="space-y-6"
+          aria-labelledby="add-event-title"
+          noValidate
+        >
           <EventFields
             form={form}
             candidates={candidates}

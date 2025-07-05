@@ -62,6 +62,8 @@ function SelectField<
             defaultValue={field.value}
             disabled={disabled}
             value={field.value}
+            aria-label={label}
+            aria-required={required}
           >
             <FormControl>
               <SelectTrigger>
