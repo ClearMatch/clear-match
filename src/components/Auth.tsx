@@ -23,26 +23,42 @@ export function Auth() {
 
     try {
       if (isSignUp) {
-        // Create organization first
-        const { data: orgData, error: orgError } = await supabase
-          .from('organizations')
-          .insert([{ name: orgName }])
-          .select()
-          .single();
-
-        if (orgError) throw orgError;
-
-        // Sign up user
+        console.log("Starting signup process...");
+        
+        // Sign up user first
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
         });
 
-        if (signUpError) throw signUpError;
+        console.log("Auth signup result:", { authData, signUpError });
 
-        // Create profile
+        if (signUpError) {
+          console.error("Signup error:", signUpError);
+          throw signUpError;
+        }
+
         if (authData.user) {
-          const { error: profileError } = await supabase
+          console.log("User created, creating organization...");
+          
+          // Create organization (now that user is authenticated)
+          const { data: orgData, error: orgError } = await supabase
+            .from('organizations')
+            .insert([{ name: orgName }])
+            .select()
+            .single();
+
+          console.log("Organization creation result:", { orgData, orgError });
+
+          if (orgError) {
+            console.error("Organization creation error:", orgError);
+            throw orgError;
+          }
+
+          console.log("Organization created, creating profile...");
+
+          // Create profile
+          const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .insert([{
               id: authData.user.id,
@@ -50,9 +66,21 @@ export function Auth() {
               first_name: firstName,
               last_name: lastName,
               role: 'admin'
-            }]);
+            }])
+            .select()
+            .single();
 
-          if (profileError) throw profileError;
+          console.log("Profile creation result:", { profileData, profileError });
+
+          if (profileError) {
+            console.error("Profile creation error:", profileError);
+            throw profileError;
+          }
+
+          console.log("Signup completed successfully!");
+        } else {
+          console.error("No user returned from signup");
+          throw new Error("Signup failed - no user created");
         }
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
