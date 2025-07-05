@@ -56,7 +56,6 @@ export async function PUT(
       status,
       priority,
       candidate_id,
-      organization_id,
       subject,
       content,
       assigned_to,
@@ -105,10 +104,6 @@ export async function PUT(
       updateData.candidate_id = candidate_id === "" ? null : candidate_id;
     }
     
-    if (organization_id !== undefined) {
-      // Handle empty string for organization_id
-      updateData.organization_id = organization_id === "" ? null : organization_id;
-    }
     
     if (subject !== undefined) {
       updateData.subject = validateString(subject, 'Subject', 200);
@@ -129,6 +124,18 @@ export async function PUT(
     
     if (job_posting_id !== undefined) {
       updateData.job_posting_id = job_posting_id;
+    }
+
+    // First, verify the task exists and belongs to the user's organization
+    const { data: existingTask, error: taskError } = await supabase
+      .from("activities")
+      .select("id, organization_id")
+      .eq("id", id)
+      .eq("organization_id", profileData.organization_id)
+      .single();
+      
+    if (taskError || !existingTask) {
+      throw new ApiError('Task not found or you do not have permission to update it', 404);
     }
 
     // Update the task
