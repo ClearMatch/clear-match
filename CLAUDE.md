@@ -7,10 +7,11 @@
 4. [Development Workflow](#development-workflow)
 5. [Issue Management](#issue-management)
 6. [Code Standards & Quality](#code-standards--quality)
-7. [Common Commands](#common-commands)
-8. [Testing Guidelines](#testing-guidelines)
-9. [Troubleshooting](#troubleshooting)
-10. [Deployment](#deployment)
+7. [Security Guidelines](#security-guidelines)
+8. [Common Commands](#common-commands)
+9. [Testing Guidelines](#testing-guidelines)
+10. [Troubleshooting](#troubleshooting)
+11. [Deployment](#deployment)
 
 ## Project Overview
 
@@ -39,7 +40,7 @@
 ## Setup & Prerequisites
 
 ### Required Tools
-- Node.js 18+ 
+- Node.js 18.17.0 or later 
 - npm or yarn
 - Supabase CLI
 - Git
@@ -76,7 +77,7 @@ You have access to multiple MCP servers to enhance development efficiency:
 
 ### Branch Management
 - **Main Branch**: `main` (production-ready code)
-- **Feature Branches**: Use issue number as branch name (e.g., `84`, `feature-123`)
+- **Feature Branches**: Use issue number as branch name (e.g., `84` for issues, `feature-123` for features without issues)
 - **Branch Creation**: Always branch from latest `main`
 
 ### Workflow Steps
@@ -163,6 +164,61 @@ export default function Component({ title, onAction }: ComponentProps) {
 - **Responsive Design**: Mobile-first design approach
 - **Accessibility**: Ensure WCAG compliance
 
+## Security Guidelines
+
+### RLS Policy Management
+- **Always implement RLS**: Every table must have Row Level Security enabled
+- **Test policies thoroughly**: Use multiple user contexts to verify access controls
+- **Principle of least privilege**: Grant minimal necessary permissions
+- **Regular audits**: Review and update policies as features evolve
+
+### API Security
+- **Route protection**: Implement authentication checks in API routes
+- **Input validation**: Use Zod schemas for all incoming data
+- **Rate limiting**: Implement rate limiting for public endpoints
+- **Error handling**: Never expose sensitive information in error messages
+
+```typescript
+// Example protected API route
+export async function GET(request: Request) {
+  const { data: { user }, error } = await supabase.auth.getUser()
+  
+  if (error || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  
+  // Proceed with authenticated logic
+}
+```
+
+### Environment Security
+- **Never commit secrets**: Use environment variables for all sensitive data
+- **Validate environment**: Check required environment variables on startup
+- **Separate environments**: Use different keys for dev/staging/production
+- **Key rotation**: Regularly rotate API keys and secrets
+
+### Frontend Security
+- **Client-side validation**: Always validate on both client and server
+- **Sanitize inputs**: Prevent XSS attacks through proper input sanitization
+- **HTTPS only**: Ensure all communications use HTTPS
+- **CSP headers**: Implement Content Security Policy headers
+
+### Database Security
+- **Parameterized queries**: Always use parameterized queries to prevent SQL injection
+- **Connection security**: Use SSL connections to database
+- **Backup encryption**: Ensure database backups are encrypted
+- **Access logging**: Enable audit logging for sensitive operations
+
+### Security Review Checklist
+- [ ] RLS policies implemented and tested
+- [ ] API routes protected with authentication
+- [ ] Input validation with Zod schemas
+- [ ] Environment variables properly configured
+- [ ] No sensitive data in client-side code
+- [ ] CORS configured appropriately
+- [ ] Error messages don't expose sensitive information
+- [ ] Rate limiting implemented where needed
+
 ## Common Commands
 
 ### Development Commands
@@ -227,6 +283,12 @@ gh pr create --title "Title" --body "Description"
 - **E2E Tests**: Test complete user workflows
 - **API Tests**: Test API endpoints and database operations
 
+### Testing Standards
+- **Coverage Requirements**: Maintain minimum 80% code coverage
+- **Test Naming**: Use descriptive test names following `should [expected behavior] when [condition]` pattern
+- **Mock Data**: Use consistent mock data patterns across tests
+- **Database Testing**: Use test database with proper cleanup between tests
+
 ### Testing Tools
 - **Jest**: Unit testing framework
 - **React Testing Library**: Component testing
@@ -235,11 +297,36 @@ gh pr create --title "Title" --body "Description"
 
 ### Test Patterns
 ```typescript
-// Example test structure
-describe('Component', () => {
-  it('should render correctly', () => {
-    render(<Component />);
-    expect(screen.getByText('Expected Text')).toBeInTheDocument();
+// Example test structure with proper naming
+describe('CandidateList Component', () => {
+  it('should display candidates when data is loaded', () => {
+    const mockCandidates = [
+      { id: 1, name: 'John Doe', email: 'john@example.com' }
+    ];
+    
+    render(<CandidateList candidates={mockCandidates} />);
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+  });
+  
+  it('should show loading state when data is being fetched', () => {
+    render(<CandidateList candidates={[]} loading={true} />);
+    expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
+  });
+});
+
+// Database test pattern
+describe('Candidate API', () => {
+  beforeEach(async () => {
+    await cleanupTestDatabase();
+    await seedTestData();
+  });
+  
+  it('should create candidate with valid data', async () => {
+    const candidateData = { name: 'Jane Doe', email: 'jane@example.com' };
+    const response = await createCandidate(candidateData);
+    
+    expect(response.status).toBe(201);
+    expect(response.data).toMatchObject(candidateData);
   });
 });
 ```
@@ -290,6 +377,8 @@ describe('Component', () => {
 ### Environment Variables
 ```bash
 # Required environment variables
+# Note: Never commit these values to the repository
+# Use .env.local for local development
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
