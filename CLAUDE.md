@@ -81,6 +81,8 @@ You have access to multiple MCP servers to enhance development efficiency:
 - **Branch Creation**: Always branch from latest `main`
 
 ### Workflow Steps
+
+#### For New Branches
 1. **Setup**: Pull main branch and create new branch with issue number
 2. **Development**: Implement features following code standards
 3. **Testing**: Run tests and ensure all pass
@@ -89,6 +91,18 @@ You have access to multiple MCP servers to enhance development efficiency:
 6. **Pull Request**: Create PR with comprehensive description
 7. **Review**: Address feedback and update as needed
 8. **Merge**: Use "Squash and Merge" option
+
+#### For Existing Branches
+1. **Update Branch**: Always rebase against main before starting work
+   ```bash
+   git checkout existing-branch
+   git fetch origin
+   git rebase origin/main
+   # OR use merge if rebase causes conflicts
+   git merge origin/main
+   ```
+2. **Verify Build**: Run `npm run build` to ensure no conflicts
+3. **Continue Development**: Follow steps 2-8 above
 
 ### Commit Message Format
 - Use clear, descriptive commit messages
@@ -110,10 +124,11 @@ You have access to multiple MCP servers to enhance development efficiency:
 
 ### Issue Working Process
 1. **Get approval** before starting work
-2. **Communicate progress** regularly
-3. **Request testing** when implementation is complete
-4. **Address feedback** promptly
-5. **Iterate** based on user feedback
+2. **Update existing branches**: If working on existing branch, always rebase/merge against main first
+3. **Communicate progress** regularly
+4. **Request testing** when implementation is complete
+5. **Address feedback** promptly
+6. **Iterate** based on user feedback
 
 ### Pull Request Management
 1. **Create descriptive PRs** with clear titles and descriptions
@@ -349,6 +364,9 @@ describe('Candidate API', () => {
 - **TypeScript Errors**: Fix type definitions and imports
 - **Module Resolution**: Check tsconfig.json paths
 - **Missing Dependencies**: Run `npm install`
+- **Vercel Build Failures**: Often caused by outdated branches; rebase/merge against main first
+- **Duplicate Directory Issues**: Remove any duplicate directories (e.g., `mcp-testing/`)
+- **Type Mismatches**: Ensure consistent typing between forms, constants, and APIs
 
 #### Performance Issues
 - **Slow Queries**: Optimize database queries and add indexes
