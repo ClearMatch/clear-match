@@ -11,19 +11,15 @@ export async function fetchCandidates(): Promise<Entity[]> {
       .order("first_name");
 
     if (error) {
-      console.error("Candidates error:", error);
       throw new Error(`Failed to fetch candidates: ${error.message}`);
     }
 
-    const uniqueCandidates =
-      data?.filter(
-        (candidate, index, self) =>
-          index === self.findIndex((c) => c.id === candidate.id)
-      ) || [];
+    const uniqueCandidates = data
+      ? Array.from(new Map(data.map(candidate => [candidate.id, candidate])).values())
+      : [];
 
     return uniqueCandidates;
   } catch (error) {
-    console.error("Fetch candidates error:", error);
     throw error;
   }
 }
@@ -37,18 +33,15 @@ export async function fetchOrganizations(): Promise<Organization[]> {
       .order("name");
 
     if (error) {
-      console.error("Organizations error:", error);
       throw new Error(`Failed to fetch organizations: ${error.message}`);
     }
 
-    const uniqueOrganizations =
-      data?.filter(
-        (org, index, self) => index === self.findIndex((o) => o.id === org.id)
-      ) || [];
+    const uniqueOrganizations = data
+      ? Array.from(new Map(data.map(org => [org.id, org])).values())
+      : [];
 
     return uniqueOrganizations;
   } catch (error) {
-    console.error("Fetch organizations error:", error);
     throw error;
   }
 }

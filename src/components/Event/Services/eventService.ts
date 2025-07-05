@@ -19,7 +19,6 @@ export async function insertEvent(
     .select();
 
   if (error) {
-    console.error("Supabase error:", error);
     throw new Error(error.message);
   }
 

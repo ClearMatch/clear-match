@@ -29,7 +29,6 @@ export function useEventData() {
         ]);
         return { candidates, organizations };
       } catch (error) {
-        console.error("Data fetching error:", error);
         throw error;
       }
     },
@@ -38,11 +37,15 @@ export function useEventData() {
 
   useEffect(() => {
     if (error) {
-      toast({
-        title: "Error",
-        description: `Failed to load form data: ${error.message}`,
-        variant: "destructive",
-      });
+      const timeoutId = setTimeout(() => {
+        toast({
+          title: "Error",
+          description: `Failed to load form data: ${error.message}`,
+          variant: "destructive",
+        });
+      }, 0);
+
+      return () => clearTimeout(timeoutId);
     }
   }, [error, toast]);
 

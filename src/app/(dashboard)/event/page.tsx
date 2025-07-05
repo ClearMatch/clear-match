@@ -2,6 +2,6 @@
 
 import { Event } from "@/components/Event";
 
-export default function SettingsPage() {
+export default function EventPage() {
   return <Event />;
 }
