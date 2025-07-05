@@ -54,7 +54,7 @@ export function validateString(
     throw new ApiError(`${fieldName} is required`, 400);
   }
   
-  if (!value) return null;
+  if (!value || value === "") return null;
   
   if (typeof value !== 'string') {
     throw new ApiError(`${fieldName} must be a string`, 400);

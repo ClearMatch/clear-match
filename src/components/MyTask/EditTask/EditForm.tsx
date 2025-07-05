@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import useSWRMutation from "swr/mutation";
@@ -11,6 +10,7 @@ import { TaskSchema, useTaskForm } from "../Common/schema";
 import TaskFields from "../Common/TaskFields";
 import { ActivityData } from "../Services/Types";
 import { useTaskData } from "../Services/useTaskData";
+import { supabase } from "@/lib/supabase";
 
 interface Props {
   data: ActivityData;
@@ -50,17 +50,68 @@ function EditForm({ data, selectId }: Props) {
     url: string,
     { arg }: { arg: { selectId: string; formData: TaskSchema } }
   ) {
-    const { error } = await supabase
-      .from(url)
-      .update({
-        ...arg.formData,
+    try {
+      console.log("Updating task with ID:", arg.selectId);
+      console.log("Form data:", arg.formData);
+      
+      // Check if user is authenticated
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error("You must be logged in to update tasks");
+      }
+      
+      console.log("Authenticated as user:", session.user.id);
+      
+      // Get the user's organization_id
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("organization_id")
+        .eq("id", session.user.id)
+        .single();
+        
+      if (profileError || !profileData) {
+        throw new Error("Failed to get user profile");
+      }
+      
+      // Build update data
+      const updateData: any = {
+        description: arg.formData.description,
+        type: arg.formData.type,
+        due_date: arg.formData.due_date || null,
+        status: arg.formData.status,
         priority: Number(arg.formData.priority),
+        candidate_id: arg.formData.candidate_id || null,
+        subject: arg.formData.subject || "",
+        content: arg.formData.content || "",
+        assigned_to: arg.formData.assigned_to || null,
         event_id: arg.formData.event_id || null,
         job_posting_id: arg.formData.job_posting_id || null,
-      })
-      .eq("id", arg.selectId);
-
-    if (error) throw new Error(error.message);
+        organization_id: profileData.organization_id
+      };
+      
+      console.log("Update data:", updateData);
+      
+      // Update the task directly using Supabase
+      const { data, error } = await supabase
+        .from("activities")
+        .update(updateData)
+        .eq("id", arg.selectId)
+        .eq("organization_id", profileData.organization_id) // Ensure user can only update tasks in their org
+        .select()
+        .single();
+      
+      if (error) {
+        console.error("Supabase update error:", error);
+        throw new Error(error.message || "Failed to update task");
+      }
+      
+      console.log("Task updated successfully:", data);
+      return data;
+    } catch (error) {
+      console.error("Update activity error:", error);
+      throw error;
+    }
   }
 
   const { trigger, isMutating } = useSWRMutation("activities", updateActivity);

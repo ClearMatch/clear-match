@@ -168,7 +168,9 @@ export function CandidatesTable({
                 </div>
               </TableCell>
               <TableCell className="text-sm text-gray-500">
-                {candidate.current_location || '-'}
+                {typeof candidate.current_location === 'string' 
+                  ? candidate.current_location 
+                  : candidate.current_location?.location || '-'}
               </TableCell>
               <TableCell className="text-sm text-gray-500">
                 {candidate.years_of_experience ? `${candidate.years_of_experience} years` : '-'}
