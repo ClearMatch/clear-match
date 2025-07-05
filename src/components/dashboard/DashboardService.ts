@@ -5,6 +5,16 @@ import { Candidate, FilterState } from "../Candidate/CandidateList/Types";
 import { candidateService } from "../Candidate/CandidateList/candidateService";
 import { DashboardStats, RecentActivity, RecommendedAction } from "./Types";
 
+// Minimal candidate interface for dashboard stats
+interface DashboardCandidate {
+  id: string;
+  first_name: string;
+  last_name: string;
+  relationship_type: string;
+  is_active_looking: boolean;
+  updated_at: string;
+}
+
 const createEmptyFilters = (): FilterState => {
   return {
     relationship_type: [],
@@ -19,89 +29,50 @@ const createEmptyFilters = (): FilterState => {
 };
 
 const fetchCandidatesData = async (userId: string) => {
-  const emptyFilters = createEmptyFilters();
+  // Get user's organization for direct database query
+  const { data: profiles, error: profileError } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", userId);
 
-  const candidatesFilter: FilterState = {
-    ...emptyFilters,
-    relationship_type: ["candidate"],
-  };
+  if (profileError || !profiles || profiles.length === 0) {
+    throw new Error("Could not fetch user profile");
+  }
 
-  const clientsFilter: FilterState = {
-    ...emptyFilters,
-    relationship_type: ["client"],
-  };
+  const organizationId = profiles[0].organization_id;
 
-  const bothFilter: FilterState = {
-    ...emptyFilters,
-    relationship_type: ["both"],
-  };
+  // Single optimized query to get all candidate data at once
+  const { data: allCandidates, error: candidatesError } = await supabase
+    .from("candidates")
+    .select("id, first_name, last_name, relationship_type, is_active_looking, updated_at")
+    .eq("organization_id", organizationId)
+    .order("updated_at", { ascending: false })
+    .limit(200); // Much smaller limit for dashboard stats
 
-  const candidatesAndBothFilter: FilterState = {
-    ...emptyFilters,
-    relationship_type: ["candidate", "both"],
-  };
+  if (candidatesError) {
+    throw new Error(`Failed to fetch candidates: ${candidatesError.message}`);
+  }
 
-  const activeSearchingFilter: FilterState = {
-    ...emptyFilters,
-    relationship_type: ["candidate", "both"],
-    is_active_looking: true,
-  };
+  const candidates: DashboardCandidate[] = allCandidates || [];
 
-  const [
-    candidatesResult,
-    clientsResult,
-    bothResult,
-    candidatesAndBothResult,
-    activeSearchingResult,
-  ] = await Promise.all([
-    candidateService.fetchCandidatesCursor(
-      userId,
-      "",
-      candidatesFilter,
-      { field: 'updated_at', direction: 'desc' },
-      undefined,
-      1000
-    ),
-    candidateService.fetchCandidatesCursor(
-      userId,
-      "",
-      clientsFilter,
-      { field: 'updated_at', direction: 'desc' },
-      undefined,
-      1000
-    ),
-    candidateService.fetchCandidatesCursor(
-      userId,
-      "",
-      bothFilter,
-      { field: 'updated_at', direction: 'desc' },
-      undefined,
-      1000
-    ),
-    candidateService.fetchCandidatesCursor(
-      userId,
-      "",
-      candidatesAndBothFilter,
-      { field: 'updated_at', direction: 'desc' },
-      undefined,
-      1000
-    ),
-    candidateService.fetchCandidatesCursor(
-      userId,
-      "",
-      activeSearchingFilter,
-      { field: 'updated_at', direction: 'desc' },
-      undefined,
-      1000
-    ),
-  ]);
+  // Filter the results locally instead of making multiple queries
+  const candidatesOnly = candidates.filter(c => c.relationship_type === "candidate");
+  const clientsOnly = candidates.filter(c => c.relationship_type === "client");
+  const bothOnly = candidates.filter(c => c.relationship_type === "both");
+  const candidatesAndBoth = candidates.filter(c => 
+    c.relationship_type === "candidate" || c.relationship_type === "both"
+  );
+  const activeSearching = candidates.filter(c => 
+    (c.relationship_type === "candidate" || c.relationship_type === "both") && 
+    c.is_active_looking === true
+  );
 
   return {
-    candidates: candidatesResult.candidates,
-    clients: clientsResult.candidates,
-    both: bothResult.candidates,
-    candidatesAndBoth: candidatesAndBothResult.candidates,
-    activeSearching: activeSearchingResult.candidates,
+    candidates: candidatesOnly,
+    clients: clientsOnly,
+    both: bothOnly,
+    candidatesAndBoth: candidatesAndBoth,
+    activeSearching: activeSearching,
   };
 };
 
@@ -128,7 +99,7 @@ const fetchRecentActivities = async (
 };
 
 const generateCandidateActions = (
-  candidates: Candidate[]
+  candidates: DashboardCandidate[]
 ): RecommendedAction[] => {
   return candidates
     .filter((candidate) => candidate.id)
@@ -151,7 +122,7 @@ const generateCandidateActions = (
 };
 
 const generateClientActions = (
-  clients: Candidate[],
+  clients: DashboardCandidate[],
   candidateActionsCount: number
 ): RecommendedAction[] => {
   return clients
@@ -173,7 +144,7 @@ const generateClientActions = (
 };
 
 const generateBothActions = (
-  bothContacts: Candidate[],
+  bothContacts: DashboardCandidate[],
   existingActionsCount: number
 ): RecommendedAction[] => {
   return bothContacts
@@ -213,7 +184,7 @@ const sortRecommendedActions = (
 };
 
 export const fetchDashboardData = async (userId: string) => {
-  // Get user's organization
+  // Get user's organization ID (this is now done inside fetchCandidatesData)
   const { data: profiles, error: profileError } = await supabase
     .from("profiles")
     .select("organization_id")
@@ -227,27 +198,26 @@ export const fetchDashboardData = async (userId: string) => {
     throw new Error(`No profile found for user ${userId}. Please complete your profile setup.`);
   }
 
-
   const profile = profiles[0];
-
 
   if (!profile?.organization_id) {
     throw new Error("User profile exists but no organization is associated");
   }
 
-  // Fetch all data in parallel
+  // Fetch all data in parallel - now much more efficient
   const [candidatesData, recentActivities] = await Promise.all([
     fetchCandidatesData(userId),
     fetchRecentActivities(profile.organization_id),
   ]);
 
-  const candidateActions = generateCandidateActions(candidatesData.candidates);
+  // Generate actions from a smaller, more relevant subset
+  const candidateActions = generateCandidateActions(candidatesData.candidates.slice(0, 10));
   const clientActions = generateClientActions(
-    candidatesData.clients,
+    candidatesData.clients.slice(0, 5),
     candidateActions.length
   );
   const bothActions = generateBothActions(
-    candidatesData.both,
+    candidatesData.both.slice(0, 5),
     candidateActions.length + clientActions.length
   );
 

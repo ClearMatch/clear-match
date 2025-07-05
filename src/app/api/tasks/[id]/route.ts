@@ -1,49 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import { handleApiError, validateString, ApiError } from '@/lib/api-utils';
+import { handleApiError, validateString, ApiError, authenticateUser } from '@/lib/api-utils';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options });
-          },
-        },
-      }
-    );
-    
-    // Get the current session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError || !session || !session.user) {
-      throw new ApiError('Authentication required', 401);
-    }
-    
-    // Get the user's organization_id
-    const { data: profileData, error: profileError } = await supabase
-      .from("profiles")
-      .select("organization_id")
-      .eq("id", session.user.id)
-      .single();
-      
-    if (profileError) {
-      throw new ApiError('Failed to get user organization', 500);
-    }
+    const { user, supabase } = await authenticateUser();
     
     const { id } = params;
     const body = await request.json();
@@ -64,10 +27,23 @@ export async function PUT(
     } = body;
 
     // Build update object with validated fields
-    const updateData: any = {};
-    
-    // Always set the organization_id from the user's profile
-    updateData.organization_id = profileData.organization_id;
+    const updateData: {
+      organization_id: string;
+      description?: string | null;
+      type?: string | null;
+      due_date?: string | null;
+      status?: string;
+      priority?: number;
+      candidate_id?: string | null;
+      subject?: string | null;
+      content?: string | null;
+      assigned_to?: string | null;
+      event_id?: string | null;
+      job_posting_id?: string | null;
+    } = {
+      // Always set the organization_id from the user's profile
+      organization_id: user.organizationId
+    };
     
     if (description !== undefined) {
       updateData.description = validateString(description, 'Description', 500, true);
@@ -130,7 +106,7 @@ export async function PUT(
       .from("activities")
       .select("id, organization_id")
       .eq("id", id)
-      .eq("organization_id", profileData.organization_id)
+      .eq("organization_id", user.organizationId)
       .single();
       
     if (taskError || !existingTask) {
@@ -160,42 +136,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options });
-          },
-        },
-      }
-    );
-    
-    // Get the current session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError || !session || !session.user) {
-      throw new ApiError('Authentication required', 401);
-    }
-    
-    // Get the user's organization_id
-    const { data: profileData, error: profileError } = await supabase
-      .from("profiles")
-      .select("organization_id")
-      .eq("id", session.user.id)
-      .single();
-      
-    if (profileError) {
-      throw new ApiError('Failed to get user organization', 500);
-    }
+    const { user, supabase } = await authenticateUser();
     
     const { id } = params;
 
@@ -204,7 +145,7 @@ export async function DELETE(
       .from("activities")
       .select("id, organization_id")
       .eq("id", id)
-      .eq("organization_id", profileData.organization_id)
+      .eq("organization_id", user.organizationId)
       .single();
       
     if (taskError || !task) {

@@ -112,7 +112,7 @@ export function CandidateCard({
             {candidate?.tags.map(
               (tag: {
                 id: React.Key | null | undefined;
-                color: any;
+                color: string;
                 name: string;
               }) => (
                 <Badge

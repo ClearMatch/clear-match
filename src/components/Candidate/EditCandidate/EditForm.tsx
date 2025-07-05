@@ -73,10 +73,10 @@ function EditForm({ data, id }: Props) {
         title: "Candidate updated successfully",
       });
       form.reset();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Update failed",
+        description: error instanceof Error ? error.message : "Update failed",
         variant: "destructive",
       });
     }

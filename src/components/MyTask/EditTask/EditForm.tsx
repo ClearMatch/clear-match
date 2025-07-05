@@ -75,7 +75,20 @@ function EditForm({ data, selectId }: Props) {
       }
       
       // Build update data
-      const updateData: any = {
+      const updateData: {
+        description: string;
+        type: string;
+        due_date: string | null;
+        status: string;
+        priority: number;
+        candidate_id: string | null;
+        subject: string;
+        content: string;
+        assigned_to: string | null;
+        event_id: string | null;
+        job_posting_id: string | null;
+        organization_id: string;
+      } = {
         description: arg.formData.description,
         type: arg.formData.type,
         due_date: arg.formData.due_date || null,
@@ -124,10 +137,10 @@ function EditForm({ data, selectId }: Props) {
         title: "Task updated successfully",
       });
       form.reset();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Update failed",
+        description: error instanceof Error ? error.message : "Update failed",
         variant: "destructive",
       });
     }

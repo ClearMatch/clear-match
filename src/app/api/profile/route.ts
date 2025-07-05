@@ -1,28 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import { handleApiError, validateString, ApiError } from '@/lib/api-utils';
+import { handleApiError, validateString, ApiError, createSupabaseServerClient } from '@/lib/api-utils';
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options });
-          },
-        },
-      }
-    );
+    const supabase = createSupabaseServerClient();
     
     // Get the current session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -52,24 +33,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const cookieStore = cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options });
-          },
-        },
-      }
-    );
+    const supabase = createSupabaseServerClient();
     
     // Get the current session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();

@@ -1,33 +1,15 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { handleApiError, createSupabaseServerClient, ApiError } from '@/lib/api-utils';
 
 export async function POST() {
   try {
-    const cookieStore = cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options });
-          },
-        },
-      }
-    );
+    const supabase = createSupabaseServerClient();
     
     // Get the current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      throw new ApiError('Authentication required', 401);
     }
 
     // Call the Supabase Edge Function to sync HubSpot contacts
@@ -48,9 +30,6 @@ export async function POST() {
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error syncing HubSpot contacts:', error);
-    return NextResponse.json(
-      { error: 'Failed to sync contacts' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

@@ -72,11 +72,11 @@ export function AddTaskForm({
       });
       form.reset();
       router.push("/task");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Submit error:", error);
       toast({
         title: "Error",
-        description: error.message || "Something went wrong",
+        description: error instanceof Error ? error.message : "Something went wrong",
         variant: "destructive",
       });
     }

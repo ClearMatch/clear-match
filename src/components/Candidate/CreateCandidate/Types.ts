@@ -1,3 +1,5 @@
+import { UseFormRegister, FieldError } from 'react-hook-form';
+
 interface ProfileFormData {
   first_name: string;
   last_name: string;
@@ -16,7 +18,7 @@ interface FormFieldProps {
   type: 'text' | 'email' | 'tel' | 'url';
   placeholder: string;
   required?: boolean;
-  register: any;
-  error?: any;
+  register: UseFormRegister<ProfileFormData>;
+  error?: FieldError;
   className?: string;
 }
