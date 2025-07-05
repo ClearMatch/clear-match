@@ -68,7 +68,11 @@ export function CandidateCard({
             </div>
             <div className="mt-2 flex items-center space-x-2 text-sm text-gray-500">
               <MapPin className="flex-shrink-0 h-4 w-4 text-gray-400" />
-              <span>{candidate?.current_location}</span>
+              <span>
+                {typeof candidate?.current_location === 'string' 
+                  ? candidate.current_location 
+                  : candidate?.current_location?.location || '-'}
+              </span>
             </div>
 
             <div className="mt-2 flex items-center space-x-2 text-sm text-gray-500">

@@ -1,10 +1,10 @@
 "use client";
 
-import { supabase } from "@/lib/supabase";
 import { Loader } from "lucide-react";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 import { ActivityData } from "../Services/Types";
+import { fetchTaskById } from "../Services";
 
 import EditForm from "./EditForm";
 
@@ -12,20 +12,9 @@ const EditTask = () => {
   const params = useParams();
   const selectId = params?.id as string;
 
-  const fetchCandidateById = async (id: string): Promise<ActivityData> => {
-    const { data, error } = await supabase
-      .from("activities")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) throw error;
-    return data;
-  };
-
   const { data, error, isLoading } = useSWR<ActivityData>(
     selectId ? ["activity", selectId] : null,
-    () => fetchCandidateById(selectId)
+    () => fetchTaskById(selectId)
   );
 
   return (

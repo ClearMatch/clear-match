@@ -34,6 +34,17 @@ export async function PUT(
       throw new ApiError('Authentication required', 401);
     }
     
+    // Get the user's organization_id
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("organization_id")
+      .eq("id", session.user.id)
+      .single();
+      
+    if (profileError) {
+      throw new ApiError('Failed to get user organization', 500);
+    }
+    
     const { id } = params;
     const body = await request.json();
     
@@ -45,7 +56,6 @@ export async function PUT(
       status,
       priority,
       candidate_id,
-      organization_id,
       subject,
       content,
       assigned_to,
@@ -56,6 +66,9 @@ export async function PUT(
     // Build update object with validated fields
     const updateData: any = {};
     
+    // Always set the organization_id from the user's profile
+    updateData.organization_id = profileData.organization_id;
+    
     if (description !== undefined) {
       updateData.description = validateString(description, 'Description', 500, true);
     }
@@ -65,7 +78,8 @@ export async function PUT(
     }
     
     if (due_date !== undefined) {
-      updateData.due_date = due_date;
+      // Handle empty string for due_date
+      updateData.due_date = due_date === "" ? null : due_date;
     }
     
     if (status !== undefined) {
@@ -77,18 +91,17 @@ export async function PUT(
     }
     
     if (priority !== undefined) {
-      if (typeof priority !== 'number' || priority < 1 || priority > 6) {
+      // Handle both string and number priority values
+      const priorityNum = typeof priority === 'string' ? parseInt(priority) : priority;
+      if (isNaN(priorityNum) || priorityNum < 1 || priorityNum > 6) {
         throw new ApiError('Priority must be a number between 1 and 6', 400);
       }
-      updateData.priority = priority;
+      updateData.priority = priorityNum;
     }
     
     if (candidate_id !== undefined) {
-      updateData.candidate_id = candidate_id;
-    }
-    
-    if (organization_id !== undefined) {
-      updateData.organization_id = organization_id;
+      // Handle empty string for candidate_id
+      updateData.candidate_id = candidate_id === "" ? null : candidate_id;
     }
     
     if (subject !== undefined) {
@@ -100,7 +113,8 @@ export async function PUT(
     }
     
     if (assigned_to !== undefined) {
-      updateData.assigned_to = assigned_to;
+      // Handle empty string for assigned_to
+      updateData.assigned_to = assigned_to === "" ? null : assigned_to;
     }
     
     if (event_id !== undefined) {
@@ -109,6 +123,18 @@ export async function PUT(
     
     if (job_posting_id !== undefined) {
       updateData.job_posting_id = job_posting_id;
+    }
+
+    // First, verify the task exists and belongs to the user's organization
+    const { data: existingTask, error: taskError } = await supabase
+      .from("activities")
+      .select("id, organization_id")
+      .eq("id", id)
+      .eq("organization_id", profileData.organization_id)
+      .single();
+      
+    if (taskError || !existingTask) {
+      throw new ApiError('Task not found or you do not have permission to update it', 404);
     }
 
     // Update the task
@@ -160,7 +186,30 @@ export async function DELETE(
       throw new ApiError('Authentication required', 401);
     }
     
+    // Get the user's organization_id
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("organization_id")
+      .eq("id", session.user.id)
+      .single();
+      
+    if (profileError) {
+      throw new ApiError('Failed to get user organization', 500);
+    }
+    
     const { id } = params;
+
+    // First, check if the task exists and belongs to the user's organization
+    const { data: task, error: taskError } = await supabase
+      .from("activities")
+      .select("id, organization_id")
+      .eq("id", id)
+      .eq("organization_id", profileData.organization_id)
+      .single();
+      
+    if (taskError || !task) {
+      throw new ApiError('Task not found or you do not have permission to delete it', 404);
+    }
 
     // Delete the task
     const { error: deleteError } = await supabase
