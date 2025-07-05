@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import useSWRMutation from "swr/mutation";
@@ -50,17 +49,26 @@ function EditForm({ data, selectId }: Props) {
     url: string,
     { arg }: { arg: { selectId: string; formData: TaskSchema } }
   ) {
-    const { error } = await supabase
-      .from(url)
-      .update({
+    const response = await fetch(`/api/tasks/${arg.selectId}`, {
+      method: "PUT",
+      credentials: 'include',
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
         ...arg.formData,
         priority: Number(arg.formData.priority),
         event_id: arg.formData.event_id || null,
         job_posting_id: arg.formData.job_posting_id || null,
-      })
-      .eq("id", arg.selectId);
+      }),
+    });
 
-    if (error) throw new Error(error.message);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP ${response.status}: Failed to update task`);
+    }
+
+    return response.json();
   }
 
   const { trigger, isMutating } = useSWRMutation("activities", updateActivity);
