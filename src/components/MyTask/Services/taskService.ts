@@ -5,6 +5,7 @@ export async function insertTask(
   url: string,
   { arg }: { arg: TaskSchema & { userId: string } }
 ) {
+  console.log("Insert task called with userId:", arg.userId);
   // First, get the user's organization_id from their profile
   const { data: profileData, error: profileError } = await supabase
     .from("profiles")

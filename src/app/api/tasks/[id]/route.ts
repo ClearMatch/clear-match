@@ -8,31 +8,49 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log("PUT request received for task ID:", params.id);
+    
     const cookieStore = cookies();
+    console.log("Cookie store initialized");
+    
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
           get(name: string) {
-            return cookieStore.get(name)?.value;
+            const cookie = cookieStore.get(name);
+            console.log(`Getting cookie ${name}:`, cookie ? "found" : "not found");
+            return cookie?.value;
           },
           set(name: string, value: string, options: any) {
+            console.log(`Setting cookie ${name}`);
             cookieStore.set({ name, value, ...options });
           },
           remove(name: string, options: any) {
+            console.log(`Removing cookie ${name}`);
             cookieStore.set({ name, value: '', ...options });
           },
         },
       }
     );
+    console.log("Supabase client created");
     
     // Get the current session
+    console.log("Getting auth session...");
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    if (sessionError || !session || !session.user) {
-      throw new ApiError('Authentication required', 401);
+    if (sessionError) {
+      console.error("Session error:", sessionError);
+      throw new ApiError('Authentication error: ' + sessionError.message, 401);
     }
+    
+    if (!session || !session.user) {
+      console.error("No session or user found");
+      throw new ApiError('Authentication required - no session found', 401);
+    }
+    
+    console.log("Authenticated as user:", session.user.id);
     
     // Get the user's organization_id
     const { data: profileData, error: profileError } = await supabase
