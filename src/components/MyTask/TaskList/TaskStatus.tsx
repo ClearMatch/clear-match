@@ -45,6 +45,19 @@ const TaskStatus = ({ status, id }: Props) => {
     updateStatus(newStatus);
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "todo":
+        return "bg-red-100 border-red-300 text-red-800";
+      case "in-progress":
+        return "bg-yellow-100 border-yellow-300 text-yellow-800";
+      case "done":
+        return "bg-green-100 border-green-300 text-green-800";
+      default:
+        return "bg-gray-100 border-gray-300 text-gray-800";
+    }
+  };
+
   return (
     <div className="relative">
       <Select
@@ -53,7 +66,7 @@ const TaskStatus = ({ status, id }: Props) => {
         disabled={isMutating}
       >
         <SelectTrigger
-          className={"rounded-lg p-2 h-8 border-2 border-indigo-200 bg-white"}
+          className={`rounded-lg p-2 h-8 border-2 ${getStatusColor(taskStatus)}`}
         >
           <div className="flex items-center justify-between w-full">
             <SelectValue placeholder="Select status" />
