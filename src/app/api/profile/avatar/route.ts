@@ -1,37 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import { handleApiError, ApiError } from '@/lib/api-utils';
+import { handleApiError, ApiError, authenticateUser } from '@/lib/api-utils';
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options });
-          },
-        },
-      }
-    );
-    
-    // Get the current session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError || !session || !session.user) {
-      throw new ApiError('Authentication required', 401);
-    }
-    
-    const user = session.user;
+    const { user, supabase } = await authenticateUser();
 
     const formData = await request.formData();
     const file = formData.get("file") as File;

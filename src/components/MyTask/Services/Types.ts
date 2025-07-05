@@ -4,7 +4,7 @@ export interface ActivityData {
   organization_id: string | null;
   type: string;
   description: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   created_at: string;
   created_by: string;
   due_date: string;

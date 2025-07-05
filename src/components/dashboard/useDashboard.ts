@@ -14,7 +14,7 @@ interface DashboardData {
 interface UseDashboardReturn {
   data: DashboardData | undefined;
   loading: boolean;
-  error: any;
+  error: Error | null;
   refetch: () => Promise<DashboardData | undefined>;
   mutate: (data?: DashboardData) => Promise<DashboardData | undefined>;
 }

@@ -36,10 +36,10 @@ function AddCandidate() {
       });
       form.reset();
       router.push("/candidates");
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Something went wrong",
+        description: error instanceof Error ? error.message : "Something went wrong",
         variant: "destructive",
       });
     }

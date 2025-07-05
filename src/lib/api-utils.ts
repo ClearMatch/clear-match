@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Standardized API error responses
@@ -81,4 +84,77 @@ export function validatePassword(password: unknown): string {
   }
   
   return password;
+}
+
+/**
+ * Authentication and Supabase utilities
+ */
+export interface AuthenticatedUser {
+  id: string;
+  email: string;
+  organizationId: string;
+}
+
+export interface AuthResult {
+  user: AuthenticatedUser;
+  supabase: SupabaseClient;
+}
+
+/**
+ * Creates a Supabase server client with proper cookie handling
+ */
+export function createSupabaseServerClient(): SupabaseClient {
+  const cookieStore = cookies();
+  
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: { [key: string]: any }) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options: { [key: string]: any }) {
+          cookieStore.set({ name, value: '', ...options });
+        },
+      },
+    }
+  );
+}
+
+/**
+ * Authenticates the user and returns user info with organization ID
+ */
+export async function authenticateUser(): Promise<AuthResult> {
+  const supabase = createSupabaseServerClient();
+  
+  // Get the current session
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  
+  if (sessionError || !session || !session.user) {
+    throw new ApiError('Authentication required', 401);
+  }
+  
+  // Get the user's organization_id
+  const { data: profileData, error: profileError } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", session.user.id)
+    .single();
+    
+  if (profileError) {
+    throw new ApiError('Failed to get user organization', 500);
+  }
+  
+  return {
+    user: {
+      id: session.user.id,
+      email: session.user.email!,
+      organizationId: profileData.organization_id,
+    },
+    supabase,
+  };
 }
