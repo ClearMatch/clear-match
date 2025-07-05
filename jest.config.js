@@ -20,8 +20,17 @@ const customJestConfig = {
     '!src/**/*.config.{js,ts}',
     '!src/app/layout.tsx',
     '!src/app/page.tsx',
+    '!src/test-utils.tsx',
   ],
   coverageReporters: ['text', 'lcov', 'html'],
+  coverageThreshold: {
+    global: {
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70,
+    },
+  },
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
     '<rootDir>/src/**/*.{test,spec}.{js,jsx,ts,tsx}',

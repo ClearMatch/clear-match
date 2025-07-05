@@ -104,10 +104,12 @@ You have access to multiple MCP servers to enhance development efficiency:
 3. **Testing**: Run tests and ensure all pass
 4. **Browser Testing**: Use Playwright MCP server to test changes in browser
 5. **Quality Checks**: Run linting and type checking
-6. **Commit**: Use descriptive commit messages
-7. **Pull Request**: Create PR with comprehensive description
-8. **Review**: Address feedback and update as needed
-9. **Merge**: Use "Squash and Merge" option
+6. **Commit Locally**: Use descriptive commit messages (local commits only)
+7. **Request Approval**: Show completed work and ask "Does this look good?"
+8. **Wait for User Confirmation**: Do not proceed without explicit approval
+9. **Push & PR**: Only after approval, push commits and create PR
+10. **Review**: Address feedback and update as needed
+11. **Merge**: Use "Squash and Merge" option
 
 #### For Existing Branches
 1. **Update Branch**: Always rebase against main before starting work
@@ -143,9 +145,22 @@ You have access to multiple MCP servers to enhance development efficiency:
 1. **Get approval** before starting work
 2. **Update existing branches**: If working on existing branch, always rebase/merge against main first
 3. **Communicate progress** regularly
-4. **Request testing** when implementation is complete
-5. **Address feedback** promptly
-6. **Iterate** based on user feedback
+4. **Request review** when implementation is complete
+   - Show completed work and ask "Does this look good?"
+   - Wait for user approval before proceeding
+   - Make any requested changes
+5. **Create PR only after approval**
+   - Push commits to branch
+   - Create pull request with comprehensive description
+   - Link to original issue
+6. **Address feedback** promptly
+7. **Iterate** based on user feedback
+
+### 🚨 Important: Never push commits or create PRs without explicit user approval
+Claude should always ask "Does this look good?" and wait for confirmation before:
+- Pushing commits to remote repository
+- Creating pull requests
+- Making any changes that affect the remote repository
 
 ### Pull Request Management
 1. **Create descriptive PRs** with clear titles and descriptions
