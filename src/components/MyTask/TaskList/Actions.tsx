@@ -10,14 +10,18 @@ import { useRouter } from "next/navigation";
 
 interface Props {
   id: string;
+  onDelete: (id: string) => void;
 }
 
-function Actions({ id }: Props) {
+function Actions({ id, onDelete }: Props) {
   const router = useRouter();
+  
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <MoreVerticalIcon />
+        <button className="p-1 hover:bg-gray-100 rounded cursor-pointer">
+          <MoreVerticalIcon className="h-4 w-4" />
+        </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="bg-white w-fit !px-4">
         <div className="flex flex-col gap-2">
@@ -32,6 +36,12 @@ function Actions({ id }: Props) {
             onClick={() => router.push(`/task/edit/${id}`)}
           >
             Edit
+          </button>
+          <button
+            className="text-sm text-red-600 hover:text-red-800"
+            onClick={() => onDelete(id)}
+          >
+            Delete
           </button>
         </div>
       </PopoverContent>

@@ -214,14 +214,25 @@ const sortRecommendedActions = (
 
 export const fetchDashboardData = async (userId: string) => {
   // Get user's organization
-  const { data: profile } = await supabase
+  const { data: profiles, error: profileError } = await supabase
     .from("profiles")
     .select("organization_id")
-    .eq("id", userId)
-    .single();
+    .eq("id", userId);
+
+  if (profileError) {
+    throw new Error(`Profile query failed: ${profileError.message}`);
+  }
+
+  if (!profiles || profiles.length === 0) {
+    throw new Error(`No profile found for user ${userId}. Please complete your profile setup.`);
+  }
+
+
+  const profile = profiles[0];
+
 
   if (!profile?.organization_id) {
-    throw new Error("Organization not found");
+    throw new Error("User profile exists but no organization is associated");
   }
 
   // Fetch all data in parallel
