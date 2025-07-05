@@ -10,6 +10,7 @@ import { TaskSchema, useTaskForm } from "../Common/schema";
 import TaskFields from "../Common/TaskFields";
 import { ActivityData } from "../Services/Types";
 import { useTaskData } from "../Services/useTaskData";
+import { supabase } from "@/lib/supabase";
 
 interface Props {
   data: ActivityData;
@@ -53,38 +54,59 @@ function EditForm({ data, selectId }: Props) {
       console.log("Updating task with ID:", arg.selectId);
       console.log("Form data:", arg.formData);
       
-      const response = await fetch(`/api/tasks/${arg.selectId}`, {
-        method: "PUT",
-        credentials: 'include',
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...arg.formData,
-          priority: Number(arg.formData.priority),
-          event_id: arg.formData.event_id || null,
-          job_posting_id: arg.formData.job_posting_id || null,
-        }),
-      });
-
-      console.log("Response status:", response.status);
+      // Check if user is authenticated
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error response:", errorText);
-        
-        let errorData: any = {};
-        try {
-          errorData = JSON.parse(errorText);
-        } catch (e) {
-          console.error("Failed to parse error response as JSON");
-        }
-        
-        throw new Error(errorData.error || `HTTP ${response.status}: Failed to update task`);
+      if (sessionError || !session) {
+        throw new Error("You must be logged in to update tasks");
       }
-
-      const data = await response.json();
-      console.log("Success response:", data);
+      
+      console.log("Authenticated as user:", session.user.id);
+      
+      // Get the user's organization_id
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("organization_id")
+        .eq("id", session.user.id)
+        .single();
+        
+      if (profileError || !profileData) {
+        throw new Error("Failed to get user profile");
+      }
+      
+      // Build update data
+      const updateData: any = {
+        description: arg.formData.description,
+        type: arg.formData.type,
+        due_date: arg.formData.due_date || null,
+        status: arg.formData.status,
+        priority: Number(arg.formData.priority),
+        candidate_id: arg.formData.candidate_id || null,
+        subject: arg.formData.subject || "",
+        content: arg.formData.content || "",
+        assigned_to: arg.formData.assigned_to || null,
+        event_id: arg.formData.event_id || null,
+        job_posting_id: arg.formData.job_posting_id || null,
+        organization_id: profileData.organization_id
+      };
+      
+      console.log("Update data:", updateData);
+      
+      // Update the task directly using Supabase
+      const { data, error } = await supabase
+        .from("activities")
+        .update(updateData)
+        .eq("id", arg.selectId)
+        .eq("organization_id", profileData.organization_id) // Ensure user can only update tasks in their org
+        .select()
+        .single();
+      
+      if (error) {
+        console.error("Supabase update error:", error);
+        throw new Error(error.message || "Failed to update task");
+      }
+      
+      console.log("Task updated successfully:", data);
       return data;
     } catch (error) {
       console.error("Update activity error:", error);
