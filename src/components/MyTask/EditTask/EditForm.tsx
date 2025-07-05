@@ -49,26 +49,47 @@ function EditForm({ data, selectId }: Props) {
     url: string,
     { arg }: { arg: { selectId: string; formData: TaskSchema } }
   ) {
-    const response = await fetch(`/api/tasks/${arg.selectId}`, {
-      method: "PUT",
-      credentials: 'include',
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ...arg.formData,
-        priority: Number(arg.formData.priority),
-        event_id: arg.formData.event_id || null,
-        job_posting_id: arg.formData.job_posting_id || null,
-      }),
-    });
+    try {
+      console.log("Updating task with ID:", arg.selectId);
+      console.log("Form data:", arg.formData);
+      
+      const response = await fetch(`/api/tasks/${arg.selectId}`, {
+        method: "PUT",
+        credentials: 'include',
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...arg.formData,
+          priority: Number(arg.formData.priority),
+          event_id: arg.formData.event_id || null,
+          job_posting_id: arg.formData.job_posting_id || null,
+        }),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP ${response.status}: Failed to update task`);
+      console.log("Response status:", response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
+        
+        let errorData: any = {};
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          console.error("Failed to parse error response as JSON");
+        }
+        
+        throw new Error(errorData.error || `HTTP ${response.status}: Failed to update task`);
+      }
+
+      const data = await response.json();
+      console.log("Success response:", data);
+      return data;
+    } catch (error) {
+      console.error("Update activity error:", error);
+      throw error;
     }
-
-    return response.json();
   }
 
   const { trigger, isMutating } = useSWRMutation("activities", updateActivity);

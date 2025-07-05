@@ -40,6 +40,8 @@ Final Review:
    a. Add the "Needs Review" label to the PR.
    b. Notify the user that it's ready for review.
    c. Move the issue to the "Needs Review" lane.
+Merging
+   When its time to merge the PR, use the Squash and Merge option
 Throughout this process, maintain clear communication with the user and be prepared to iterate based on feedback and code review comments.
 Provide your response in the following format:
 <response>
