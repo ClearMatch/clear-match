@@ -48,7 +48,11 @@ function TasksTab({ candidateId, candidateName = "Contact" }: TasksTabProps) {
         <h3 className="text-lg font-semibold text-gray-900">
           Related Tasks ({tasks.length})
         </h3>
-        <Button onClick={handleAddTask} className="flex items-center gap-2">
+        <Button 
+          onClick={handleAddTask} 
+          variant="outline"
+          className="flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           Add Task
         </Button>
