@@ -101,7 +101,7 @@ describe('DashboardService', () => {
       const actions = dashboardService.generateContactActions(mockContacts)
 
       expect(actions).toHaveLength(1)
-      expect(actions[0].contactName).toBe('Unknown Candidate')
+      expect(actions[0].contactName).toBe('Unknown Contact')
     })
   })
 
