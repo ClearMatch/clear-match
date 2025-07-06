@@ -1,6 +1,6 @@
 export const relationshipOptions = [
   { value: "client", label: "Client" },
-  { value: "candidate", label: "Candidate" },
+  { value: "candidate", label: "Contact" },
   { value: "both", label: "Both" },
 ];
 

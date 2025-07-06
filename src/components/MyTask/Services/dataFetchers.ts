@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { Entity, Event, Organization } from "../AddTask/Types";
 
-export async function fetchCandidates(): Promise<Entity[]> {
+export async function fetchContacts(): Promise<Entity[]> {
   try {
     const { data, error } = await supabase
       .from("contacts")
@@ -11,17 +11,17 @@ export async function fetchCandidates(): Promise<Entity[]> {
       .order("first_name");
 
     if (error) {
-      console.error("Candidates error:", error);
+      console.error("Contacts error:", error);
       throw new Error(`Failed to fetch contacts: ${error.message}`);
     }
 
-    const uniqueCandidates =
+    const uniqueContacts =
       data?.filter(
-        (candidate, index, self) =>
-          index === self.findIndex((c) => c.id === candidate.id)
+        (contact, index, self) =>
+          index === self.findIndex((c) => c.id === contact.id)
       ) || [];
 
-    return uniqueCandidates;
+    return uniqueContacts;
   } catch (error) {
     console.error("Fetch contacts error:", error);
     throw error;

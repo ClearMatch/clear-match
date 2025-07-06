@@ -144,9 +144,9 @@ export const fetchAssigneeOptions = async (): Promise<
 
   if (!data) return [];
 
-  return data.map((candidate) => ({
-    value: candidate.id,
-    label: `${candidate.first_name} ${candidate.last_name}`.trim(),
+  return data.map((contact) => ({
+    value: contact.id,
+    label: `${contact.first_name} ${contact.last_name}`.trim(),
   }));
 };
 

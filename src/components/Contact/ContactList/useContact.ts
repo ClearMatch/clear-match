@@ -36,7 +36,7 @@ export function useContacts() {
   const fetchContacts = useCallback(() => {
     if (!auth.user?.id) return Promise.resolve({ contacts: [], hasMore: false, totalCount: 0 });
     
-    return contactService.fetchCandidatesCursor(
+    return contactService.fetchContactsCursor(
       auth.user.id,
       debouncedSearchQuery,
       filters,
@@ -72,7 +72,7 @@ export function useContacts() {
       const lastContact = contacts[contacts.length - 1];
       const newCursor = lastContact ? lastContact[sort.field] as string : undefined;
 
-      const response = await contactService.fetchCandidatesCursor(
+      const response = await contactService.fetchContactsCursor(
         auth.user.id,
         debouncedSearchQuery,
         filters,

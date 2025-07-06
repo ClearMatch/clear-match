@@ -59,7 +59,7 @@ function ShowContact() {
   if (!contact) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-500">Candidate not found.</p>
+        <p className="text-gray-500">Contact not found.</p>
       </div>
     );
   }
@@ -67,7 +67,7 @@ function ShowContact() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Candidate Information Header */}
+        {/* Contact Information Header */}
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="flex items-center gap-4">

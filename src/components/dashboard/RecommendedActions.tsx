@@ -57,7 +57,7 @@ const getTypeBadgeStyles = (type: RecommendedAction["type"]) => {
 const getTypeLabel = (type: RecommendedAction["type"]) => {
   switch (type) {
     case "contact":
-      return "Candidate";
+      return "Contact";
     case "client":
       return "Client";
     case "both":

@@ -12,7 +12,7 @@ import { TaskSchema, useTaskForm } from "../Common/schema";
 import { insertTask } from "../Services/taskService";
 
 interface AddTaskFormProps {
-  candidates: Entity[];
+  contacts: Entity[];
   organizations: Organization[];
   users: Entity[];
   events: Event[];
@@ -20,7 +20,7 @@ interface AddTaskFormProps {
 }
 
 export function AddTaskForm({
-  candidates,
+  contacts,
   organizations,
   users,
   events,
@@ -89,7 +89,7 @@ export function AddTaskForm({
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <TaskFields
             form={form}
-            candidates={candidates}
+            contacts={contacts}
             organizations={organizations}
             users={users}
             events={events}

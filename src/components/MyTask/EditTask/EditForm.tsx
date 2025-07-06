@@ -19,13 +19,13 @@ interface Props {
 
 function EditForm({ data, selectId }: Props) {
   const form = useTaskForm();
-  const { candidates, organizations, users } = useTaskData();
+  const { contacts, organizations, users } = useTaskData();
   const route = useRouter();
 
   useEffect(() => {
     if (
       data &&
-      candidates.length > 0 &&
+      contacts.length > 0 &&
       organizations.length > 0 &&
       users.length > 0
     ) {
@@ -44,7 +44,7 @@ function EditForm({ data, selectId }: Props) {
         priority: String(data.priority),
       });
     }
-  }, [data, candidates, organizations, form, users]);
+  }, [data, contacts, organizations, form, users]);
 
   async function updateActivity(
     url: string,
@@ -152,7 +152,7 @@ function EditForm({ data, selectId }: Props) {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <TaskFields
             form={form}
-            candidates={candidates}
+            contacts={contacts}
             organizations={organizations}
             users={users}
           />

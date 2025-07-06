@@ -98,7 +98,7 @@ const fetchRecentActivities = async (
   );
 };
 
-const generateCandidateActions = (
+const generateContactActions = (
   contacts: DashboardContact[]
 ): RecommendedAction[] => {
   return contacts
@@ -211,7 +211,7 @@ export const fetchDashboardData = async (userId: string) => {
   ]);
 
   // Generate actions from a smaller, more relevant subset
-  const contactActions = generateCandidateActions(contactsData.contacts.slice(0, 10));
+  const contactActions = generateContactActions(contactsData.contacts.slice(0, 10));
   const clientActions = generateClientActions(
     contactsData.clients.slice(0, 5),
     contactActions.length
@@ -248,7 +248,7 @@ export const dashboardService = {
   createEmptyFilters,
   fetchCandidatesData,
   fetchRecentActivities,
-  generateCandidateActions,
+  generateContactActions,
   generateClientActions,
   generateBothActions,
   sortRecommendedActions,

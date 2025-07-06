@@ -20,7 +20,7 @@ interface Props {
   selectId: string | null;
 }
 
-const deleteCandidateFn = async (
+const deleteContactFn = async (
   url: string,
   { arg: id }: { arg: string }
 ): Promise<void> => {
@@ -35,15 +35,15 @@ const DeleteContact = ({
   selectId,
 }: Props) => {
   const {
-    trigger: deleteCandidate,
+    trigger: deleteContact,
     isMutating: deleting,
     error,
-  } = useSWRMutation("delete-candidate", deleteCandidateFn);
+  } = useSWRMutation("delete-contact", deleteContactFn);
 
   const handleDelete = async () => {
     if (!selectId) return;
     try {
-      await deleteCandidate(selectId);
+      await deleteContact(selectId);
       onRefetchContacts();
       onClose();
     } catch (err) {

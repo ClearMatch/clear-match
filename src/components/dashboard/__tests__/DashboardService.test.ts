@@ -18,9 +18,9 @@ describe('DashboardService', () => {
     })
   })
 
-  describe('generateCandidateActions', () => {
+  describe('generateContactActions', () => {
     it('should generate actions for contacts', () => {
-      const mockCandidates = [
+      const mockContacts = [
         {
           id: 'contact-1',
           first_name: 'John',
@@ -39,7 +39,7 @@ describe('DashboardService', () => {
         },
       ]
 
-      const actions = dashboardService.generateCandidateActions(mockCandidates)
+      const actions = dashboardService.generateContactActions(mockContacts)
 
       expect(actions).toHaveLength(2)
       expect(actions[0]).toMatchObject({
@@ -61,7 +61,7 @@ describe('DashboardService', () => {
     })
 
     it('should filter out contacts without IDs', () => {
-      const mockCandidates = [
+      const mockContacts = [
         {
           id: 'contact-1',
           first_name: 'John',
@@ -80,14 +80,14 @@ describe('DashboardService', () => {
         },
       ]
 
-      const actions = dashboardService.generateCandidateActions(mockCandidates)
+      const actions = dashboardService.generateContactActions(mockContacts)
 
       expect(actions).toHaveLength(1)
       expect(actions[0].contactId).toBe('contact-1')
     })
 
     it('should handle contacts with missing names', () => {
-      const mockCandidates = [
+      const mockContacts = [
         {
           id: 'contact-1',
           first_name: '',
@@ -98,7 +98,7 @@ describe('DashboardService', () => {
         },
       ]
 
-      const actions = dashboardService.generateCandidateActions(mockCandidates)
+      const actions = dashboardService.generateContactActions(mockContacts)
 
       expect(actions).toHaveLength(1)
       expect(actions[0].contactName).toBe('Unknown Candidate')

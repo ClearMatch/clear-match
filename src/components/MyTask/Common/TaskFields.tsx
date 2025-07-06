@@ -30,26 +30,26 @@ interface JobPosting {
 
 function TaskFields({
   form,
-  candidates,
+  contacts,
   organizations,
   users = [],
   events = [],
   isLoading,
 }: {
   form: ReturnType<typeof useTaskForm>;
-  candidates: Array<{ id: string; first_name: string; last_name: string }>;
+  contacts: Array<{ id: string; first_name: string; last_name: string }>;
   organizations: Array<{ id: string; name: string }>;
   users?: Array<User>;
   events?: Array<Event>;
   isLoading?: boolean;
 }) {
-  const candidateOptions = useMemo(
+  const contactOptions = useMemo(
     () =>
-      candidates.map((candidate) => ({
-        value: candidate.id,
-        label: `${candidate.first_name} ${candidate.last_name}`,
+      contacts.map((contact) => ({
+        value: contact.id,
+        label: `${contact.first_name} ${contact.last_name}`,
       })),
-    [candidates]
+    [contacts]
   );
 
   const organizationOptions = useMemo(
@@ -87,9 +87,9 @@ function TaskFields({
           name="contact_id"
           label="Contact"
           placeholder={
-            candidates.length ? "Select a contact" : "Loading contacts..."
+            contacts.length ? "Select a contact" : "Loading contacts..."
           }
-          options={candidateOptions}
+          options={contactOptions}
           disabled={isLoading}
           required
         />

@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { ContactsResponse, FilterState, PaginationParams, SortConfig } from "./Types";
 
 export const contactService = {
-  async fetchCandidates(
+  async fetchContacts(
     searchQuery: string,
     filters: FilterState,
     pagination: PaginationParams,
@@ -116,7 +116,7 @@ export const contactService = {
     }
   },
 
-  async fetchCandidatesCursor(
+  async fetchContactsCursor(
     userId: string,
     searchQuery: string,
     filters: FilterState,

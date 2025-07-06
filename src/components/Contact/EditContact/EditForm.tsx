@@ -35,7 +35,7 @@ function EditForm({ data, id }: Props) {
   }
 
   const { trigger, isMutating } = useSWRMutation(
-    "update-candidate",
+    "update-contact",
     updateContact
   );
   useEffect(() => {

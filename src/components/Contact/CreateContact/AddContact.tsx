@@ -16,7 +16,7 @@ function AddContact() {
   const router = useRouter();
   const auth = useAuth();
 
-  async function insertCandidate(url: string, { arg }: { arg: Schema }) {
+  async function insertContact(url: string, { arg }: { arg: Schema }) {
     const { error } = await supabase.from(url).insert({
       ...arg,
       past_company_sizes: [arg.past_company_sizes],
@@ -25,14 +25,14 @@ function AddContact() {
     if (error) throw new Error(error.message);
   }
 
-  const { trigger, isMutating } = useSWRMutation("contacts", insertCandidate);
+  const { trigger, isMutating } = useSWRMutation("contacts", insertContact);
 
   const onSubmit = async (data: Schema) => {
     try {
       await trigger(data);
       toast({
         title: "Success",
-        description: "Candidate added successfully.",
+        description: "Contact added successfully.",
       });
       form.reset();
       router.push("/contacts");
