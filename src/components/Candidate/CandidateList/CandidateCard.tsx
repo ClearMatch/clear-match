@@ -14,33 +14,33 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type React from "react";
-import { Candidate } from "./Types";
+import { Contact } from "./Types";
 
-interface CandidateCardProps {
-  candidate: Candidate;
-  onEdit: (candidateId: string) => void;
-  onDelete: (candidateId: string) => void;
+interface ContactCardProps {
+  contact: Contact;
+  onEdit: (contactId: string) => void;
+  onDelete: (contactId: string) => void;
 }
 
-export function CandidateCard({
-  candidate,
+export function ContactCard({
+  contact,
   onEdit,
   onDelete,
-}: CandidateCardProps) {
+}: ContactCardProps) {
   const router = useRouter();
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow duration-200">
       <CardContent className="p-5 pr-12 cursor-pointer relative">
         <button
           className="absolute top-4 right-4 z-10"
-          onClick={() => router.push(`/contacts/edit/${candidate.id}`)}
+          onClick={() => router.push(`/contacts/edit/${contact.id}`)}
         >
           <Edit className="h-4 w-4" />
           <span className="sr-only">Edit</span>
         </button>
         <button
           className="absolute top-10 right-4 z-10"
-          onClick={() => onDelete(candidate.id)}
+          onClick={() => onDelete(contact.id)}
         >
           <Trash2 color="red" className="h-4 w-4" />
           <span className="sr-only">Delete</span>
@@ -52,12 +52,12 @@ export function CandidateCard({
                 className="text-lg font-medium text-indigo-600 hover:text-indigo-800 cursor-pointer transition-colors duration-200"
                 onClick={(e) => {
                   e.stopPropagation();
-                  router.push(`/contacts/show/${candidate.id}`);
+                  router.push(`/contacts/show/${contact.id}`);
                 }}
               >
-                {candidate.first_name} {candidate.last_name}
+                {contact.first_name} {contact.last_name}
               </h3>
-              {candidate?.is_active_looking && (
+              {contact?.is_active_looking && (
                 <Badge
                   variant="outline"
                   className="ml-2 bg-green-50 text-green-700 border-green-200"
@@ -69,53 +69,53 @@ export function CandidateCard({
             <div className="mt-2 flex items-center text-sm text-gray-500">
               <Briefcase className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
               <p>
-                {candidate.current_job_title} at {candidate.current_company}
+                {contact.current_job_title} at {contact.current_company}
               </p>
             </div>
             <div className="mt-2 flex items-center space-x-2 text-sm text-gray-500">
               <MapPin className="flex-shrink-0 h-4 w-4 text-gray-400" />
               <span>
-                {typeof candidate?.current_location === 'string' 
-                  ? candidate.current_location 
-                  : candidate?.current_location?.location || '-'}
+                {typeof contact?.current_location === 'string' 
+                  ? contact.current_location 
+                  : contact?.current_location?.location || '-'}
               </span>
             </div>
 
             <div className="mt-2 flex items-center space-x-2 text-sm text-gray-500">
               <Building className="flex-shrink-0 h-4 w-4 text-gray-400" />
-              <span>{candidate?.functional_role}</span>
+              <span>{contact?.functional_role}</span>
             </div>
 
-            {candidate?.tech_stack && candidate?.tech_stack.length > 0 && (
+            {contact?.tech_stack && contact?.tech_stack.length > 0 && (
               <div className="mt-2 flex items-center space-x-2 text-sm text-gray-500">
                 <Tags className="flex-shrink-0 h-4 w-4 text-gray-400" />
-                <span>{candidate?.tech_stack.join(", ")}</span>
+                <span>{contact?.tech_stack.join(", ")}</span>
               </div>
             )}
           </div>
           <div className="md:ml-4 mt-4 md:mt-0 flex flex-col space-y-2 md:items-end">
-            {candidate?.phone && (
+            {contact?.phone && (
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-gray-400" />
-                <span className="text-sm text-gray-500">{candidate.phone}</span>
+                <span className="text-sm text-gray-500">{contact.phone}</span>
               </div>
             )}
-            {candidate?.work_email && (
+            {contact?.work_email && (
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-gray-400" />
                 <a
-                  href={`mailto:${candidate.work_email}`}
+                  href={`mailto:${contact.work_email}`}
                   className="text-sm text-gray-500 hover:text-indigo-600"
                 >
-                  {candidate.work_email}
+                  {contact.work_email}
                 </a>
               </div>
             )}
           </div>
         </div>
-        {candidate.tags && candidate.tags.length > 0 && (
+        {contact.tags && contact.tags.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">
-            {candidate?.tags.map(
+            {contact?.tags.map(
               (tag: {
                 id: React.Key | null | undefined;
                 color: string;

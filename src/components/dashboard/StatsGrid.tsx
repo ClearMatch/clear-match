@@ -44,8 +44,8 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ stats }) => {
   const statItems = [
     {
       icon: Users,
-      label: "Total Candidates",
-      value: stats.totalCandidates,
+      label: "Total Contacts",
+      value: stats.totalContacts,
     },
     {
       icon: UserCheck,

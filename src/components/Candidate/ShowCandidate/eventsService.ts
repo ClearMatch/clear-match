@@ -16,13 +16,13 @@ export interface Event {
 }
 
 /**
- * Fetches all events related to a specific candidate
- * @param candidateId - The unique identifier for the candidate
+ * Fetches all events related to a specific contact
+ * @param contactId - The unique identifier for the contact
  * @returns Promise<Event[]> - Array of events with creator information
  */
-export async function fetchEventsByCandidate(candidateId: string): Promise<Event[]> {
-  if (!candidateId || typeof candidateId !== 'string') {
-    throw new Error('Invalid candidate ID provided');
+export async function fetchEventsByContact(contactId: string): Promise<Event[]> {
+  if (!contactId || typeof contactId !== 'string') {
+    throw new Error('Invalid contact ID provided');
   }
   const { data, error } = await supabase
     .from("events")
@@ -36,7 +36,7 @@ export async function fetchEventsByCandidate(candidateId: string): Promise<Event
       )
     `
     )
-    .eq("contact_id", candidateId)
+    .eq("contact_id", contactId)
     .order("created_at", { ascending: false }); // Newest first
 
   if (error) {

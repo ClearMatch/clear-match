@@ -2,13 +2,13 @@ import { supabase } from "@/lib/supabase";
 import { ActivityWithRelations } from "@/components/MyTask/Services/Types";
 
 /**
- * Fetches all tasks related to a specific candidate
- * @param candidateId - The unique identifier for the candidate
+ * Fetches all tasks related to a specific contact
+ * @param contactId - The unique identifier for the contact
  * @returns Promise<ActivityWithRelations[]> - Array of tasks with relations
  */
-export async function fetchTasksByCandidate(candidateId: string): Promise<ActivityWithRelations[]> {
-  if (!candidateId || typeof candidateId !== 'string') {
-    throw new Error('Invalid candidate ID provided');
+export async function fetchTasksByContact(contactId: string): Promise<ActivityWithRelations[]> {
+  if (!contactId || typeof contactId !== 'string') {
+    throw new Error('Invalid contact ID provided');
   }
   const { data, error } = await supabase
     .from("activities")
@@ -28,7 +28,7 @@ export async function fetchTasksByCandidate(candidateId: string): Promise<Activi
       )
     `
     )
-    .eq("contact_id", candidateId)
+    .eq("contact_id", contactId)
     .order("priority", { ascending: false }) // Most critical first
     .order("due_date", { ascending: true }); // Then by due date
 

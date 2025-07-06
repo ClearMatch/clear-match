@@ -4,12 +4,12 @@ import { emptyFragment } from "@/components/ui/emptyFragment";
 import InfiniteScroll from "@/components/ui/infiniteScroll";
 import { Loader2 } from "lucide-react";
 import { ContactsTable } from "./ContactsTable";
-import { Candidate, SortConfig, SortField } from "./Types";
+import { Contact, SortConfig, SortField } from "./Types";
 
 interface ContactsListProps {
-  candidates: Candidate[];
+  contacts: Contact[];
   loading: boolean;
-  onDeleteCandidate: (candidateId: string) => void;
+  onDeleteContact: (contactId: string) => void;
   hasMore: boolean;
   onLoadMore: () => void;
   sort: SortConfig;
@@ -17,16 +17,16 @@ interface ContactsListProps {
 }
 
 export function ContactsList({
-  candidates,
+  contacts,
   loading,
   hasMore,
   onLoadMore,
-  onDeleteCandidate,
+  onDeleteContact,
   sort,
   onSortChange,
 }: ContactsListProps) {
-  const scrollableContainerId = "candidates-scroll-container";
-  if (loading && candidates.length === 0) {
+  const scrollableContainerId = "contacts-scroll-container";
+  if (loading && contacts.length === 0) {
     return (
       <div className="flex justify-center items-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
@@ -34,23 +34,23 @@ export function ContactsList({
     );
   }
 
-  if (!loading && candidates.length === 0) {
+  if (!loading && contacts.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-500">No candidates found</div>
+      <div className="text-center py-12 text-gray-500">No contacts found</div>
     );
   }
 
   return (
     <div className="space-y-6">
       <div className="text-sm text-gray-600">
-        Showing {candidates.length} candidates
+        Showing {contacts.length} contacts
       </div>
       <div
         id={scrollableContainerId}
         className="max-h-[70vh] overflow-y-auto"
       >
         <InfiniteScroll
-          dataLength={candidates.length}
+          dataLength={contacts.length}
           next={onLoadMore}
           hasMore={hasMore}
           loader={
@@ -63,11 +63,11 @@ export function ContactsList({
           scrollableTarget={scrollableContainerId}
         >
           <ContactsTable
-            candidates={candidates}
+            contacts={contacts}
             sort={sort}
             onSortChange={onSortChange}
             onEdit={() => {}} // Not used anymore, navigation handled in table
-            onDelete={(candidate) => onDeleteCandidate(candidate.id)}
+            onDelete={(contact) => onDeleteContact(contact.id)}
           />
         </InfiniteScroll>
       </div>

@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
-import { Candidate } from "../CandidateList/Types";
+import { Contact } from "../CandidateList/Types";
 
-interface CandidateTag {
+interface ContactTag {
   tags: {
     id: string;
     name: string;
@@ -10,13 +10,13 @@ interface CandidateTag {
 }
 
 /**
- * Fetches a candidate by ID with associated tags
- * @param candidateId - The unique identifier for the candidate
- * @returns Promise<Candidate> - The candidate with transformed tags
+ * Fetches a contact by ID with associated tags
+ * @param contactId - The unique identifier for the contact
+ * @returns Promise<Contact> - The contact with transformed tags
  */
-export async function fetchCandidateById(candidateId: string): Promise<Candidate> {
-  if (!candidateId || typeof candidateId !== 'string') {
-    throw new Error('Invalid candidate ID provided');
+export async function fetchContactById(contactId: string): Promise<Contact> {
+  if (!contactId || typeof contactId !== 'string') {
+    throw new Error('Invalid contact ID provided');
   }
   const { data, error } = await supabase
     .from("contacts")
@@ -32,21 +32,21 @@ export async function fetchCandidateById(candidateId: string): Promise<Candidate
       )
     `
     )
-    .eq("id", candidateId)
+    .eq("id", contactId)
     .single();
 
   if (error) {
-    throw new Error(`Failed to fetch candidate: ${error.message}`);
+    throw new Error(`Failed to fetch contact: ${error.message}`);
   }
 
   if (!data) {
-    throw new Error("Candidate not found");
+    throw new Error("Contact not found");
   }
 
   // Transform the tags data to match the expected format
   const transformedData = {
     ...data,
-    tags: data.tags?.map((ct: CandidateTag) => ct.tags).filter(Boolean) || [],
+    tags: data.tags?.map((ct: ContactTag) => ct.tags).filter(Boolean) || [],
   };
 
   return transformedData;

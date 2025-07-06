@@ -16,7 +16,7 @@ import {
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onRefetchCandidates: () => void;
+  onRefetchContacts: () => void;
   selectId: string | null;
 }
 
@@ -31,7 +31,7 @@ const deleteCandidateFn = async (
 const DeleteCandidate = ({
   isOpen,
   onClose,
-  onRefetchCandidates,
+  onRefetchContacts,
   selectId,
 }: Props) => {
   const {
@@ -44,7 +44,7 @@ const DeleteCandidate = ({
     if (!selectId) return;
     try {
       await deleteCandidate(selectId);
-      onRefetchCandidates();
+      onRefetchContacts();
       onClose();
     } catch (err) {
       console.error("Delete error:", err);
@@ -55,15 +55,15 @@ const DeleteCandidate = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-white max-w-[30%] h-[180px]">
         <DialogHeader>
-          <DialogTitle className="mb-2">Delete Candidate</DialogTitle>
+          <DialogTitle className="mb-2">Delete Contact</DialogTitle>
           <DialogDescription>
             {error ? (
               <div className="text-base font-normal text-red-500">
-                Failed to delete candidate.
+                Failed to delete contact.
               </div>
             ) : (
               <span className="text-base font-normal mt-4">
-                Are you sure you want to delete this candidate?
+                Are you sure you want to delete this contact?
               </span>
             )}
           </DialogDescription>

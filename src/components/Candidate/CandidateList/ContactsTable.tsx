@@ -11,14 +11,14 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Candidate, SortConfig, SortField, SortDirection } from "./Types";
+import { Contact, SortConfig, SortField, SortDirection } from "./Types";
 
 interface ContactsTableProps {
-  candidates: Candidate[];
+  contacts: Contact[];
   sort: SortConfig;
   onSortChange: (field: SortField) => void;
-  onEdit: (candidate: Candidate) => void;
-  onDelete: (candidate: Candidate) => void;
+  onEdit: (contact: Contact) => void;
+  onDelete: (contact: Contact) => void;
 }
 
 interface SortableHeaderProps {
@@ -51,7 +51,7 @@ function SortableHeader({ field, label, currentSort, onSortChange }: SortableHea
 }
 
 export function ContactsTable({
-  candidates,
+  contacts,
   sort,
   onSortChange,
   onEdit,
@@ -124,96 +124,96 @@ export function ContactsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {candidates.map((candidate) => (
-            <TableRow key={candidate.id} className="hover:bg-gray-50">
+          {contacts.map((contact) => (
+            <TableRow key={contact.id} className="hover:bg-gray-50">
               <TableCell className="font-medium text-indigo-600">
                 <span 
                   className="cursor-pointer hover:text-indigo-800 transition-colors duration-200"
-                  onClick={() => router.push(`/contacts/show/${candidate.id}`)}
+                  onClick={() => router.push(`/contacts/show/${contact.id}`)}
                 >
-                  {candidate.first_name}
+                  {contact.first_name}
                 </span>
               </TableCell>
               <TableCell className="font-medium text-indigo-600">
                 <span 
                   className="cursor-pointer hover:text-indigo-800 transition-colors duration-200"
-                  onClick={() => router.push(`/contacts/show/${candidate.id}`)}
+                  onClick={() => router.push(`/contacts/show/${contact.id}`)}
                 >
-                  {candidate.last_name}
+                  {contact.last_name}
                 </span>
               </TableCell>
               <TableCell>
                 <div className="space-y-1">
-                  {candidate.current_job_title && (
+                  {contact.current_job_title && (
                     <div className="font-medium text-sm text-gray-500">
-                      {candidate.current_job_title}
+                      {contact.current_job_title}
                     </div>
                   )}
-                  {candidate.current_company && (
+                  {contact.current_company && (
                     <div className="text-sm text-gray-500">
-                      {candidate.current_company}
+                      {contact.current_company}
                     </div>
                   )}
                 </div>
               </TableCell>
               <TableCell>
                 <div className="space-y-1 text-sm">
-                  {candidate.personal_email && (
+                  {contact.personal_email && (
                     <div className="flex items-center space-x-2">
                       <Mail className="h-4 w-4 text-gray-400" />
                       <a
-                        href={`mailto:${candidate.personal_email}`}
+                        href={`mailto:${contact.personal_email}`}
                         className="text-gray-500 hover:text-indigo-600"
                       >
-                        {candidate.personal_email}
+                        {contact.personal_email}
                       </a>
                     </div>
                   )}
-                  {candidate.phone && (
+                  {contact.phone && (
                     <div className="flex items-center space-x-2">
                       <Phone className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-500">{candidate.phone}</span>
+                      <span className="text-gray-500">{contact.phone}</span>
                     </div>
                   )}
                 </div>
               </TableCell>
               <TableCell className="text-sm text-gray-500">
-                {typeof candidate.current_location === 'string' 
-                  ? candidate.current_location 
-                  : candidate.current_location?.location || '-'}
+                {typeof contact.current_location === 'string' 
+                  ? contact.current_location 
+                  : contact.current_location?.location || '-'}
               </TableCell>
               <TableCell className="text-sm text-gray-500">
-                {candidate.years_of_experience ? `${candidate.years_of_experience} years` : '-'}
+                {contact.years_of_experience ? `${contact.years_of_experience} years` : '-'}
               </TableCell>
               <TableCell>
-                {candidate.engagement_score ? (
+                {contact.engagement_score ? (
                   <Badge variant="outline" className="text-xs">
-                    {formatEngagementScore(candidate.engagement_score)}
+                    {formatEngagementScore(contact.engagement_score)}
                   </Badge>
                 ) : '-'}
               </TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1">
-                  {candidate.tech_stack?.slice(0, 3).map((tech, index) => (
+                  {contact.tech_stack?.slice(0, 3).map((tech, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">
                       {tech}
                     </Badge>
                   ))}
-                  {candidate.tech_stack && candidate.tech_stack.length > 3 && (
+                  {contact.tech_stack && contact.tech_stack.length > 3 && (
                     <Badge variant="secondary" className="text-xs">
-                      +{candidate.tech_stack.length - 3}
+                      +{contact.tech_stack.length - 3}
                     </Badge>
                   )}
                 </div>
               </TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1">
-                  {candidate.is_active_looking && (
+                  {contact.is_active_looking && (
                     <Badge className="text-xs bg-green-100 text-green-800">
                       Active
                     </Badge>
                   )}
-                  {candidate.tags?.map((tag) => (
+                  {contact.tags?.map((tag) => (
                     <Badge
                       key={tag.id}
                       variant="outline"
@@ -229,24 +229,24 @@ export function ContactsTable({
                 </div>
               </TableCell>
               <TableCell className="text-sm text-gray-600">
-                {formatDate(candidate.created_at)}
+                {formatDate(contact.created_at)}
               </TableCell>
               <TableCell className="text-sm text-gray-600">
-                {formatDate(candidate.updated_at)}
+                {formatDate(contact.updated_at)}
               </TableCell>
               <TableCell>
                 <div className="flex space-x-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => router.push(`/contacts/edit/${candidate.id}`)}
+                    onClick={() => router.push(`/contacts/edit/${contact.id}`)}
                   >
                     Edit
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onDelete(candidate)}
+                    onClick={() => onDelete(contact)}
                   >
                     Delete
                   </Button>

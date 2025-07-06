@@ -2,14 +2,14 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { candidateService } from "./candidateService";
-import { Candidate, FilterState, SortConfig, SortField } from "./Types";
+import { Contact, FilterState, SortConfig, SortField } from "./Types";
 import { useAuth } from "@/hooks/useAuth";
 
 const PAGE_SIZE = 25;
 
-export function useCandidates() {
+export function useContacts() {
   const auth = useAuth();
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [searchInputValue, setSearchInputValue] = useState("");
   const [cursor, setCursor] = useState<string | undefined>();
   const [hasMore, setHasMore] = useState(true);
@@ -33,8 +33,8 @@ export function useCandidates() {
   const debouncedSearchQuery = useDebounce(searchInputValue, 500);
   const isSearching = searchInputValue !== debouncedSearchQuery;
 
-  const fetchCandidates = useCallback(() => {
-    if (!auth.user?.id) return Promise.resolve({ candidates: [], hasMore: false, totalCount: 0 });
+  const fetchContacts = useCallback(() => {
+    if (!auth.user?.id) return Promise.resolve({ contacts: [], hasMore: false, totalCount: 0 });
     
     return candidateService.fetchCandidatesCursor(
       auth.user.id,
@@ -47,13 +47,13 @@ export function useCandidates() {
   }, [auth.user?.id, debouncedSearchQuery, filters, sort]);
 
   const { data, error, isLoading, mutate } = useSWR(
-    auth.user?.id ? ["candidates", debouncedSearchQuery, filters, sort] : null,
-    fetchCandidates
+    auth.user?.id ? ["contacts", debouncedSearchQuery, filters, sort] : null,
+    fetchContacts
   );
 
   useEffect(() => {
     if (data) {
-      setCandidates(data.candidates);
+      setContacts(data.contacts);
       setHasMore(data.hasMore);
       setCursor(undefined); // Reset cursor on new search/filter/sort
     }
@@ -68,9 +68,9 @@ export function useCandidates() {
     isLoadingMoreRef.current = true;
 
     try {
-      // Get cursor from the last candidate based on sort field
-      const lastCandidate = candidates[candidates.length - 1];
-      const newCursor = lastCandidate ? lastCandidate[sort.field] as string : undefined;
+      // Get cursor from the last contact based on sort field
+      const lastContact = contacts[contacts.length - 1];
+      const newCursor = lastContact ? lastContact[sort.field] as string : undefined;
 
       const response = await candidateService.fetchCandidatesCursor(
         auth.user.id,
@@ -81,18 +81,18 @@ export function useCandidates() {
         PAGE_SIZE
       );
       
-      setCandidates((prev) => [...prev, ...response.candidates]);
+      setContacts((prev) => [...prev, ...response.contacts]);
       setHasMore(response.hasMore);
       setCursor(newCursor);
     } catch (err) {
-      console.error("Error loading more candidates:", err);
+      console.error("Error loading more contacts:", err);
     } finally {
       setIsFetchingMore(false);
       isLoadingMoreRef.current = false;
     }
-  }, [hasMore, isFetchingMore, candidates, sort, debouncedSearchQuery, filters, auth.user?.id]);
+  }, [hasMore, isFetchingMore, contacts, sort, debouncedSearchQuery, filters, auth.user?.id]);
 
-  const refetchCandidates = useCallback(() => {
+  const refetchContacts = useCallback(() => {
     mutate();
   }, [mutate]);
 
@@ -105,7 +105,7 @@ export function useCandidates() {
 
   return {
     // Data
-    candidates,
+    contacts,
 
     // Search
     searchInputValue,
@@ -131,6 +131,6 @@ export function useCandidates() {
     onLoadMore: handleLoadMore,
 
     // Actions
-    refetchCandidates,
+    refetchContacts,
   };
 }

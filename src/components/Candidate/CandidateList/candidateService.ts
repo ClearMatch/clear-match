@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { CandidatesResponse, FilterState, PaginationParams, SortConfig } from "./Types";
+import { ContactsResponse, FilterState, PaginationParams, SortConfig } from "./Types";
 
 export const candidateService = {
   async fetchCandidates(
@@ -7,7 +7,7 @@ export const candidateService = {
     filters: FilterState,
     pagination: PaginationParams,
     signal?: AbortSignal
-  ): Promise<CandidatesResponse> {
+  ): Promise<ContactsResponse> {
     const { page, pageSize } = pagination;
     const from = page * pageSize;
     const to = from + pageSize - 1;
@@ -106,7 +106,7 @@ export const candidateService = {
       const hasMore = from + contacts.length < totalCount;
 
       return {
-        candidates: contacts,
+        contacts: contacts,
         hasMore,
         totalCount,
       };
@@ -124,7 +124,7 @@ export const candidateService = {
     cursor?: string,
     pageSize: number = 20,
     signal?: AbortSignal
-  ): Promise<CandidatesResponse> {
+  ): Promise<ContactsResponse> {
     // Check if already aborted before starting
     if (signal?.aborted) {
       throw new DOMException("Request was aborted", "AbortError");
@@ -228,7 +228,7 @@ export const candidateService = {
       }
 
       return {
-        candidates: contacts,
+        contacts: contacts,
         hasMore,
         totalCount: 0, // Not available with cursor pagination
       };

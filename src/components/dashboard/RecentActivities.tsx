@@ -46,7 +46,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ activity, isLast }) => {
             <div>
               <div className="text-sm text-gray-500">
                 <a href="#" className="font-medium text-gray-900">
-                  {activity.candidateName}
+                  {activity.contactName}
                 </a>{" "}
                 {activity.description}
               </div>

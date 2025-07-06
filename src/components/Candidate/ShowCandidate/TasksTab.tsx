@@ -13,14 +13,14 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import useSWR from "swr";
 import AddTaskForm from "./AddTaskForm";
-import { fetchTasksByCandidate } from "./tasksService";
+import { fetchTasksByContact } from "./tasksService";
 
 interface TasksTabProps {
-  candidateId: string;
-  candidateName?: string;
+  contactId: string;
+  contactName?: string;
 }
 
-function TasksTab({ candidateId, candidateName = "Contact" }: TasksTabProps) {
+function TasksTab({ contactId, contactName = "Contact" }: TasksTabProps) {
   const [showAddTask, setShowAddTask] = useState(false);
 
   const {
@@ -29,8 +29,8 @@ function TasksTab({ candidateId, candidateName = "Contact" }: TasksTabProps) {
     error,
     mutate,
   } = useSWR<ActivityWithRelations[]>(
-    candidateId ? ["candidate-tasks", candidateId] : null,
-    () => fetchTasksByCandidate(candidateId)
+    contactId ? ["contact-tasks", contactId] : null,
+    () => fetchTasksByContact(contactId)
   );
 
   const handleAddTask = () => {
@@ -74,8 +74,8 @@ function TasksTab({ candidateId, candidateName = "Contact" }: TasksTabProps) {
       <Dialog open={showAddTask} onOpenChange={setShowAddTask}>
         <DialogContent className="max-w-2xl bg-white border border-gray-200 shadow-xl p-0">
           <AddTaskForm
-            candidateId={candidateId}
-            candidateName={candidateName}
+            contactId={contactId}
+            contactName={contactName}
             onSuccess={handleTaskAdded}
             onCancel={() => setShowAddTask(false)}
           />

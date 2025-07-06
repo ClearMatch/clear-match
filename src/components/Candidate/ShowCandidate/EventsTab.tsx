@@ -12,14 +12,14 @@ import { Plus, Loader } from "lucide-react";
 import { useState } from "react";
 import useSWR from "swr";
 import AddEventForm from "./AddEventForm";
-import { fetchEventsByCandidate, Event } from "./eventsService";
+import { fetchEventsByContact, Event } from "./eventsService";
 
 interface EventsTabProps {
-  candidateId: string;
-  candidateName?: string;
+  contactId: string;
+  contactName?: string;
 }
 
-function EventsTab({ candidateId, candidateName = "Contact" }: EventsTabProps) {
+function EventsTab({ contactId, contactName = "Contact" }: EventsTabProps) {
   const [showAddEvent, setShowAddEvent] = useState(false);
 
   const {
@@ -28,8 +28,8 @@ function EventsTab({ candidateId, candidateName = "Contact" }: EventsTabProps) {
     error,
     mutate,
   } = useSWR<Event[]>(
-    candidateId ? ["candidate-events", candidateId] : null,
-    () => fetchEventsByCandidate(candidateId)
+    contactId ? ["contact-events", contactId] : null,
+    () => fetchEventsByContact(contactId)
   );
 
   const handleAddEvent = () => {
@@ -120,8 +120,8 @@ function EventsTab({ candidateId, candidateName = "Contact" }: EventsTabProps) {
       <Dialog open={showAddEvent} onOpenChange={setShowAddEvent}>
         <DialogContent className="max-w-2xl bg-white border border-gray-200 shadow-xl p-0">
           <AddEventForm
-            candidateId={candidateId}
-            candidateName={candidateName}
+            contactId={contactId}
+            contactName={contactName}
             onSuccess={handleEventAdded}
             onCancel={() => setShowAddEvent(false)}
           />

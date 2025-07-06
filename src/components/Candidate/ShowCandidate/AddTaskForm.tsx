@@ -19,15 +19,15 @@ import TextAreaField from "@/components/MyTask/Common/TextAreaField";
 import { insertTask } from "@/components/MyTask/Services/taskService";
 
 interface AddTaskFormProps {
-  candidateId: string;
-  candidateName: string;
+  contactId: string;
+  contactName: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
 function AddTaskForm({
-  candidateId,
-  candidateName,
+  contactId,
+  contactName,
   onSuccess,
   onCancel,
 }: AddTaskFormProps) {
@@ -38,8 +38,8 @@ function AddTaskForm({
 
   // Set the contact_id in the form when component mounts
   useMemo(() => {
-    form.setValue("contact_id", candidateId);
-  }, [candidateId, form]);
+    form.setValue("contact_id", contactId);
+  }, [contactId, form]);
 
   const onSubmit = async (data: TaskSchema) => {
     if (!data.type) {
@@ -65,7 +65,7 @@ function AddTaskForm({
 
       const taskData = {
         ...data,
-        contact_id: candidateId,
+        contact_id: contactId,
         userId: auth.user.id,
       };
 
@@ -93,7 +93,7 @@ function AddTaskForm({
       <div className="border-b border-gray-200 pb-4">
         <h3 className="text-lg font-semibold text-gray-900">Add New Task</h3>
         <p className="text-sm text-gray-600 mt-1">
-          Creating task for: <span className="font-medium text-gray-900">{candidateName}</span>
+          Creating task for: <span className="font-medium text-gray-900">{contactName}</span>
         </p>
       </div>
 

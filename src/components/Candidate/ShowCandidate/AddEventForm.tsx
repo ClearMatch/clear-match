@@ -12,15 +12,15 @@ import SelectField from "@/components/Event/Common/SelectField";
 import { eventTypes } from "@/components/Event/Common/constants";
 
 interface AddEventFormProps {
-  candidateId: string;
-  candidateName: string;
+  contactId: string;
+  contactName: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
 function AddEventForm({
-  candidateId,
-  candidateName,
+  contactId,
+  contactName,
   onSuccess,
   onCancel,
 }: AddEventFormProps) {
@@ -31,8 +31,8 @@ function AddEventForm({
 
   // Set the contact_id in the form when component mounts
   useMemo(() => {
-    form.setValue("contact_id", candidateId);
-  }, [candidateId, form]);
+    form.setValue("contact_id", contactId);
+  }, [contactId, form]);
 
   const onSubmit = async (data: EventSchema) => {
     if (!data.type) {
@@ -57,7 +57,7 @@ function AddEventForm({
 
       const eventData = {
         ...data,
-        contact_id: candidateId,
+        contact_id: contactId,
         userId: auth.user.id,
       };
 
@@ -85,7 +85,7 @@ function AddEventForm({
       <div className="border-b border-gray-200 pb-4">
         <h3 className="text-lg font-semibold text-gray-900">Add New Event</h3>
         <p className="text-sm text-gray-600 mt-1">
-          Creating event for: <span className="font-medium text-gray-900">{candidateName}</span>
+          Creating event for: <span className="font-medium text-gray-900">{contactName}</span>
         </p>
       </div>
 

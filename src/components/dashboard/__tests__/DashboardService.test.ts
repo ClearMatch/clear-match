@@ -19,21 +19,21 @@ describe('DashboardService', () => {
   })
 
   describe('generateCandidateActions', () => {
-    it('should generate actions for candidates', () => {
+    it('should generate actions for contacts', () => {
       const mockCandidates = [
         {
-          id: 'candidate-1',
+          id: 'contact-1',
           first_name: 'John',
           last_name: 'Doe',
-          contact_type: 'candidate',
+          contact_type: 'contact',
           is_active_looking: true,
           updated_at: '2025-01-01',
         },
         {
-          id: 'candidate-2',
+          id: 'contact-2',
           first_name: 'Jane',
           last_name: 'Smith',
-          contact_type: 'candidate',
+          contact_type: 'contact',
           is_active_looking: false,
           updated_at: '2025-01-02',
         },
@@ -43,30 +43,30 @@ describe('DashboardService', () => {
 
       expect(actions).toHaveLength(2)
       expect(actions[0]).toMatchObject({
-        id: 'candidate-1',
-        candidateId: 'candidate-1',
-        candidateName: 'John Doe',
+        id: 'contact-1',
+        contactId: 'contact-1',
+        contactName: 'John Doe',
         actionType: 'follow_up',
         priority: 'high',
-        type: 'candidate',
+        type: 'contact',
       })
       expect(actions[1]).toMatchObject({
-        id: 'candidate-2',
-        candidateId: 'candidate-2',
-        candidateName: 'Jane Smith',
+        id: 'contact-2',
+        contactId: 'contact-2',
+        contactName: 'Jane Smith',
         actionType: 'follow_up',
         priority: 'medium',
-        type: 'candidate',
+        type: 'contact',
       })
     })
 
-    it('should filter out candidates without IDs', () => {
+    it('should filter out contacts without IDs', () => {
       const mockCandidates = [
         {
-          id: 'candidate-1',
+          id: 'contact-1',
           first_name: 'John',
           last_name: 'Doe',
-          contact_type: 'candidate',
+          contact_type: 'contact',
           is_active_looking: true,
           updated_at: '2025-01-01',
         },
@@ -74,7 +74,7 @@ describe('DashboardService', () => {
           id: '', // Empty ID should be filtered out
           first_name: 'Jane',
           last_name: 'Smith',
-          contact_type: 'candidate',
+          contact_type: 'contact',
           is_active_looking: false,
           updated_at: '2025-01-02',
         },
@@ -83,16 +83,16 @@ describe('DashboardService', () => {
       const actions = dashboardService.generateCandidateActions(mockCandidates)
 
       expect(actions).toHaveLength(1)
-      expect(actions[0].candidateId).toBe('candidate-1')
+      expect(actions[0].contactId).toBe('contact-1')
     })
 
-    it('should handle candidates with missing names', () => {
+    it('should handle contacts with missing names', () => {
       const mockCandidates = [
         {
-          id: 'candidate-1',
+          id: 'contact-1',
           first_name: '',
           last_name: '',
-          contact_type: 'candidate',
+          contact_type: 'contact',
           is_active_looking: true,
           updated_at: '2025-01-01',
         },
@@ -101,7 +101,7 @@ describe('DashboardService', () => {
       const actions = dashboardService.generateCandidateActions(mockCandidates)
 
       expect(actions).toHaveLength(1)
-      expect(actions[0].candidateName).toBe('Unknown Candidate')
+      expect(actions[0].contactName).toBe('Unknown Candidate')
     })
   })
 
@@ -110,33 +110,33 @@ describe('DashboardService', () => {
       const actions = [
         {
           id: '1',
-          candidateId: '1',
-          candidateName: 'Test 1',
+          contactId: '1',
+          contactName: 'Test 1',
           actionType: 'follow_up' as const,
           reason: 'Test',
           priority: 'medium' as const,
           dueDate: '2025-01-03',
-          type: 'candidate' as const,
+          type: 'contact' as const,
         },
         {
           id: '2',
-          candidateId: '2',
-          candidateName: 'Test 2',
+          contactId: '2',
+          contactName: 'Test 2',
           actionType: 'follow_up' as const,
           reason: 'Test',
           priority: 'high' as const,
           dueDate: '2025-01-02',
-          type: 'candidate' as const,
+          type: 'contact' as const,
         },
         {
           id: '3',
-          candidateId: '3',
-          candidateName: 'Test 3',
+          contactId: '3',
+          contactName: 'Test 3',
           actionType: 'follow_up' as const,
           reason: 'Test',
           priority: 'high' as const,
           dueDate: '2025-01-01',
-          type: 'candidate' as const,
+          type: 'contact' as const,
         },
       ]
 

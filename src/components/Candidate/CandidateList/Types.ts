@@ -1,4 +1,4 @@
-export interface Candidate {
+export interface Contact {
   id: string;
   first_name: string;
   last_name: string;
@@ -41,8 +41,8 @@ export interface PaginationParams {
   pageSize: number;
 }
 
-export interface CandidatesResponse {
-  candidates: Candidate[];
+export interface ContactsResponse {
+  contacts: Contact[];
   hasMore: boolean;
   totalCount: number;
 }

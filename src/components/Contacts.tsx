@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { ContactsList } from "./Candidate/CandidateList";
 import { SearchAndFilterBar } from "./Candidate/CandidateList/SearchAndFilterBar";
-import { useCandidates } from "./Candidate/CandidateList/useCandidate";
+import { useContacts } from "./Candidate/CandidateList/useCandidate";
 import DeleteCandidate from "./Candidate/DeleteCandidate";
 import Header from "./Candidate/Header";
 
@@ -21,7 +21,7 @@ export function Contacts() {
   } = useOpenable();
 
   const {
-    candidates,
+    contacts,
     loading,
     searchInputValue,
     setSearchInputValue,
@@ -30,14 +30,14 @@ export function Contacts() {
     isSearching,
     hasMore,
     onLoadMore,
-    refetchCandidates,
+    refetchContacts,
     sort,
     onSortChange,
-  } = useCandidates();
+  } = useContacts();
 
   // Edit is now handled directly in the table component
-  const handleDeleteClick = (candidateId: string) => {
-    setSelectId(candidateId);
+  const handleDeleteClick = (contactId: string) => {
+    setSelectId(contactId);
     onDeleteOpen();
   };
 
@@ -78,9 +78,9 @@ export function Contacts() {
         clearFilter={handleToggleFilters}
       />
       <ContactsList
-        candidates={candidates}
+        contacts={contacts}
         loading={loading}
-        onDeleteCandidate={handleDeleteClick}
+        onDeleteContact={handleDeleteClick}
         hasMore={hasMore}
         onLoadMore={onLoadMore}
         sort={sort}
@@ -90,7 +90,7 @@ export function Contacts() {
         selectId={selectId}
         isOpen={isDeleteOpen}
         onClose={onDeleteClose}
-        onRefetchCandidates={refetchCandidates}
+        onRefetchContacts={refetchContacts}
       />
     </div>
   );

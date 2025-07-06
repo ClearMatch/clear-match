@@ -15,29 +15,29 @@ import {
 import { useParams, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import useSWR from "swr";
-import { fetchCandidateById } from "./candidateService";
+import { fetchContactById } from "./candidateService";
 import TasksTab from "./TasksTab";
 import EventsTab from "./EventsTab";
 
-function ShowCandidate() {
+function ShowContact() {
   const params = useParams();
-  const candidateId = params?.id as string;
+  const contactId = params?.id as string;
   const router = useRouter();
 
   const {
-    data: candidate,
+    data: contact,
     error,
     isLoading,
   } = useSWR(
-    candidateId ? ["candidates", candidateId] : null,
-    () => fetchCandidateById(candidateId),
+    contactId ? ["contacts", contactId] : null,
+    () => fetchContactById(contactId),
     { errorRetryCount: 3 }
   );
 
-  // Optimize candidate name computation
-  const candidateFullName = useMemo(
-    () => candidate ? `${candidate.first_name} ${candidate.last_name}` : '',
-    [candidate?.first_name, candidate?.last_name]
+  // Optimize contact name computation
+  const contactFullName = useMemo(
+    () => contact ? `${contact.first_name} ${contact.last_name}` : '',
+    [contact?.first_name, contact?.last_name]
   );
 
   if (isLoading) {
@@ -51,12 +51,12 @@ function ShowCandidate() {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-red-500">Error loading candidate data.</p>
+        <p className="text-red-500">Error loading contact data.</p>
       </div>
     );
   }
 
-  if (!candidate) {
+  if (!contact) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-gray-500">Candidate not found.</p>
@@ -76,16 +76,16 @@ function ShowCandidate() {
               </div>
               <div>
                 <h1 className="text-4xl font-bold text-gray-800 mb-2">
-                  {candidateFullName}
+                  {contactFullName}
                 </h1>
                 <p className="text-gray-500 font-mono text-sm">
-                  ID: {candidate.id}
+                  ID: {contact.id}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Button
-                onClick={() => router.push(`/contacts/edit/${candidateId}`)}
+                onClick={() => router.push(`/contacts/edit/${contactId}`)}
                 variant="outline"
                 className="flex items-center gap-2"
               >
@@ -102,7 +102,7 @@ function ShowCandidate() {
               <div>
                 <p className="text-sm text-gray-500">Current Role</p>
                 <p className="font-medium text-gray-900">
-                  {candidate.current_job_title || "Not specified"}
+                  {contact.current_job_title || "Not specified"}
                 </p>
               </div>
             </div>
@@ -111,7 +111,7 @@ function ShowCandidate() {
               <div>
                 <p className="text-sm text-gray-500">Company</p>
                 <p className="font-medium text-gray-900">
-                  {candidate.current_company || "Not specified"}
+                  {contact.current_company || "Not specified"}
                 </p>
               </div>
             </div>
@@ -120,9 +120,9 @@ function ShowCandidate() {
               <div>
                 <p className="text-sm text-gray-500">Location</p>
                 <p className="font-medium text-gray-900">
-                  {typeof candidate.current_location === "string"
-                    ? candidate.current_location
-                    : candidate.current_location?.location || "Not specified"}
+                  {typeof contact.current_location === "string"
+                    ? contact.current_location
+                    : contact.current_location?.location || "Not specified"}
                 </p>
               </div>
             </div>
@@ -131,7 +131,7 @@ function ShowCandidate() {
               <div>
                 <p className="text-sm text-gray-500">Personal Email</p>
                 <p className="font-medium text-gray-900">
-                  {candidate.personal_email || "Not specified"}
+                  {contact.personal_email || "Not specified"}
                 </p>
               </div>
             </div>
@@ -140,7 +140,7 @@ function ShowCandidate() {
               <div>
                 <p className="text-sm text-gray-500">Work Email</p>
                 <p className="font-medium text-gray-900">
-                  {candidate.work_email || "Not specified"}
+                  {contact.work_email || "Not specified"}
                 </p>
               </div>
             </div>
@@ -149,7 +149,7 @@ function ShowCandidate() {
               <div>
                 <p className="text-sm text-gray-500">Phone</p>
                 <p className="font-medium text-gray-900">
-                  {candidate.phone || "Not specified"}
+                  {contact.phone || "Not specified"}
                 </p>
               </div>
             </div>
@@ -161,19 +161,19 @@ function ShowCandidate() {
               <div>
                 <span className="text-gray-500">Relationship:</span>
                 <span className="ml-2 font-medium capitalize">
-                  {candidate.contact_type}
+                  {contact.contact_type}
                 </span>
               </div>
               <div>
                 <span className="text-gray-500">Functional Role:</span>
                 <span className="ml-2 font-medium">
-                  {candidate.functional_role}
+                  {contact.functional_role}
                 </span>
               </div>
               <div>
                 <span className="text-gray-500">Active Looking:</span>
                 <span className="ml-2 font-medium">
-                  {candidate.is_active_looking ? "Yes" : "No"}
+                  {contact.is_active_looking ? "Yes" : "No"}
                 </span>
               </div>
             </div>
@@ -189,14 +189,14 @@ function ShowCandidate() {
             </TabsList>
             <TabsContent value="tasks">
               <TasksTab 
-                candidateId={candidateId} 
-                candidateName={candidateFullName}
+                contactId={contactId} 
+                contactName={contactFullName}
               />
             </TabsContent>
             <TabsContent value="events">
               <EventsTab 
-                candidateId={candidateId} 
-                candidateName={candidateFullName}
+                contactId={contactId} 
+                contactName={contactFullName}
               />
             </TabsContent>
           </Tabs>
@@ -206,4 +206,4 @@ function ShowCandidate() {
   );
 }
 
-export default ShowCandidate;
+export default ShowContact;
