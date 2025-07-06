@@ -1,11 +1,20 @@
 import { supabase } from "@/lib/supabase";
 import { EventSchema } from "../Common/schema";
 
+/**
+ * Inserts a new event with automatic organization_id lookup
+ * @param url - SWR mutation URL (unused but required by SWR)
+ * @param arg - Event data with user ID
+ * @returns Promise with inserted event data
+ */
 export async function insertEvent(
   url: string,
   { arg }: { arg: EventSchema & { userId: string } }
 ) {
-  console.log("Insert event called with userId:", arg.userId);
+  if (!arg.userId) {
+    throw new Error('User ID is required');
+  }
+
   // First, get the user's organization_id from their profile
   const { data: profileData, error: profileError } = await supabase
     .from("profiles")
@@ -14,8 +23,7 @@ export async function insertEvent(
     .single();
 
   if (profileError) {
-    console.error("Error fetching user profile:", profileError);
-    throw new Error("Failed to get user organization");
+    throw new Error(`Failed to get user organization: ${profileError.message}`);
   }
 
   const eventData = {
@@ -26,7 +34,6 @@ export async function insertEvent(
     created_by: arg.userId,
   };
 
-  console.log("Event data to insert:", eventData);
 
   const { data, error } = await supabase
     .from("events")
@@ -34,10 +41,7 @@ export async function insertEvent(
     .select();
 
   if (error) {
-    console.error("Supabase error:", error);
-    throw new Error(error.message);
+    throw new Error(`Failed to insert event: ${error.message}`);
   }
-
-  console.log("Successfully inserted event:", data);
   return data;
 }

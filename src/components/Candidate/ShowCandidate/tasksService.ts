@@ -1,7 +1,15 @@
 import { supabase } from "@/lib/supabase";
 import { ActivityWithRelations } from "@/components/MyTask/Services/Types";
 
+/**
+ * Fetches all tasks related to a specific candidate
+ * @param candidateId - The unique identifier for the candidate
+ * @returns Promise<ActivityWithRelations[]> - Array of tasks with relations
+ */
 export async function fetchTasksByCandidate(candidateId: string): Promise<ActivityWithRelations[]> {
+  if (!candidateId || typeof candidateId !== 'string') {
+    throw new Error('Invalid candidate ID provided');
+  }
   const { data, error } = await supabase
     .from("activities")
     .select(

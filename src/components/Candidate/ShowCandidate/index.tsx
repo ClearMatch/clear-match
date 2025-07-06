@@ -13,6 +13,7 @@ import {
   User,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+import { useMemo } from "react";
 import useSWR from "swr";
 import { fetchCandidateById } from "./candidateService";
 import TasksTab from "./TasksTab";
@@ -29,7 +30,14 @@ function ShowCandidate() {
     isLoading,
   } = useSWR(
     candidateId ? ["candidates", candidateId] : null,
-    () => fetchCandidateById(candidateId)
+    () => fetchCandidateById(candidateId),
+    { errorRetryCount: 3 }
+  );
+
+  // Optimize candidate name computation
+  const candidateFullName = useMemo(
+    () => candidate ? `${candidate.first_name} ${candidate.last_name}` : '',
+    [candidate?.first_name, candidate?.last_name]
   );
 
   if (isLoading) {
@@ -68,7 +76,7 @@ function ShowCandidate() {
               </div>
               <div>
                 <h1 className="text-4xl font-bold text-gray-800 mb-2">
-                  {candidate.first_name} {candidate.last_name}
+                  {candidateFullName}
                 </h1>
                 <p className="text-gray-500 font-mono text-sm">
                   ID: {candidate.id}
@@ -182,13 +190,13 @@ function ShowCandidate() {
             <TabsContent value="tasks">
               <TasksTab 
                 candidateId={candidateId} 
-                candidateName={`${candidate.first_name} ${candidate.last_name}`}
+                candidateName={candidateFullName}
               />
             </TabsContent>
             <TabsContent value="events">
               <EventsTab 
                 candidateId={candidateId} 
-                candidateName={`${candidate.first_name} ${candidate.last_name}`}
+                candidateName={candidateFullName}
               />
             </TabsContent>
           </Tabs>

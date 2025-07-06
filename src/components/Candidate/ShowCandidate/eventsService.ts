@@ -15,7 +15,15 @@ export interface Event {
   };
 }
 
+/**
+ * Fetches all events related to a specific candidate
+ * @param candidateId - The unique identifier for the candidate
+ * @returns Promise<Event[]> - Array of events with creator information
+ */
 export async function fetchEventsByCandidate(candidateId: string): Promise<Event[]> {
+  if (!candidateId || typeof candidateId !== 'string') {
+    throw new Error('Invalid candidate ID provided');
+  }
   const { data, error } = await supabase
     .from("events")
     .select(
