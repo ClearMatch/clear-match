@@ -48,7 +48,13 @@ export function CandidateCard({
         <div className="flex flex-col md:flex-row justify-between">
           <div className="flex-1">
             <div className="flex items-center">
-              <h3 className="text-lg font-medium text-indigo-600">
+              <h3 
+                className="text-lg font-medium text-indigo-600 hover:text-indigo-800 cursor-pointer transition-colors duration-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/candidates/show/${candidate.id}`);
+                }}
+              >
                 {candidate.first_name} {candidate.last_name}
               </h3>
               {candidate?.is_active_looking && (
