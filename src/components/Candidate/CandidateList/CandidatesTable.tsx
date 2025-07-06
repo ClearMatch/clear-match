@@ -127,10 +127,20 @@ export function CandidatesTable({
           {candidates.map((candidate) => (
             <TableRow key={candidate.id} className="hover:bg-gray-50">
               <TableCell className="font-medium text-indigo-600">
-                {candidate.first_name}
+                <span 
+                  className="cursor-pointer hover:text-indigo-800 transition-colors duration-200"
+                  onClick={() => router.push(`/candidates/show/${candidate.id}`)}
+                >
+                  {candidate.first_name}
+                </span>
               </TableCell>
               <TableCell className="font-medium text-indigo-600">
-                {candidate.last_name}
+                <span 
+                  className="cursor-pointer hover:text-indigo-800 transition-colors duration-200"
+                  onClick={() => router.push(`/candidates/show/${candidate.id}`)}
+                >
+                  {candidate.last_name}
+                </span>
               </TableCell>
               <TableCell>
                 <div className="space-y-1">

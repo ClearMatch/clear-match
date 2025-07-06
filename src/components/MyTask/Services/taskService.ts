@@ -1,11 +1,20 @@
 import { supabase } from "@/lib/supabase";
 import { TaskSchema } from "../Common/schema";
 
+/**
+ * Inserts a new task with automatic organization_id lookup
+ * @param url - SWR mutation URL (unused but required by SWR)
+ * @param arg - Task data with user ID
+ * @returns Promise with inserted task data
+ */
 export async function insertTask(
   url: string,
   { arg }: { arg: TaskSchema & { userId: string } }
 ) {
-  console.log("Insert task called with userId:", arg.userId);
+  if (!arg.userId) {
+    throw new Error('User ID is required');
+  }
+
   // First, get the user's organization_id from their profile
   const { data: profileData, error: profileError } = await supabase
     .from("profiles")
@@ -14,8 +23,7 @@ export async function insertTask(
     .single();
 
   if (profileError) {
-    console.error("Error fetching user profile:", profileError);
-    throw new Error("Failed to get user organization");
+    throw new Error(`Failed to get user organization: ${profileError.message}`);
   }
 
   const taskData = {
@@ -36,7 +44,6 @@ export async function insertTask(
     created_by: arg.userId,
   };
 
-  console.log("Task data to insert:", taskData);
 
   const { data, error } = await supabase
     .from("activities")
@@ -44,10 +51,7 @@ export async function insertTask(
     .select();
 
   if (error) {
-    console.error("Supabase error:", error);
-    throw new Error(error.message);
+    throw new Error(`Failed to insert task: ${error.message}`);
   }
-
-  console.log("Successfully inserted:", data);
   return data;
 }
