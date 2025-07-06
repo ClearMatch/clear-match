@@ -13,7 +13,7 @@ const EditCandidate = () => {
 
   const fetchCandidateById = async (id: string): Promise<Candidate> => {
     const { data, error } = await supabase
-      .from("candidates")
+      .from("contacts")
       .select("*")
       .eq("id", id)
       .single();

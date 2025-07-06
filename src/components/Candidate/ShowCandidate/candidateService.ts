@@ -19,11 +19,11 @@ export async function fetchCandidateById(candidateId: string): Promise<Candidate
     throw new Error('Invalid candidate ID provided');
   }
   const { data, error } = await supabase
-    .from("candidates")
+    .from("contacts")
     .select(
       `
       *,
-      tags:candidate_tags (
+      tags:contact_tags (
         tags (
           id,
           name,

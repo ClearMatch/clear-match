@@ -4,7 +4,7 @@ import { Entity, Event, Organization } from "../AddTask/Types";
 export async function fetchCandidates(): Promise<Entity[]> {
   try {
     const { data, error } = await supabase
-      .from("candidates")
+      .from("contacts")
       .select("id, first_name, last_name")
       .not("first_name", "is", null)
       .not("last_name", "is", null)
@@ -12,7 +12,7 @@ export async function fetchCandidates(): Promise<Entity[]> {
 
     if (error) {
       console.error("Candidates error:", error);
-      throw new Error(`Failed to fetch candidates: ${error.message}`);
+      throw new Error(`Failed to fetch contacts: ${error.message}`);
     }
 
     const uniqueCandidates =
@@ -23,7 +23,7 @@ export async function fetchCandidates(): Promise<Entity[]> {
 
     return uniqueCandidates;
   } catch (error) {
-    console.error("Fetch candidates error:", error);
+    console.error("Fetch contacts error:", error);
     throw error;
   }
 }

@@ -3,13 +3,13 @@
 import { useOpenable } from "@/hooks";
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { CandidatesList } from "./Candidate/CandidateList";
+import { ContactsList } from "./Candidate/CandidateList";
 import { SearchAndFilterBar } from "./Candidate/CandidateList/SearchAndFilterBar";
 import { useCandidates } from "./Candidate/CandidateList/useCandidate";
 import DeleteCandidate from "./Candidate/DeleteCandidate";
 import Header from "./Candidate/Header";
 
-export function Candidates() {
+export function Contacts() {
   const { user } = useAuth();
   const [selectId, setSelectId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -43,7 +43,7 @@ export function Candidates() {
 
   const handleToggleFilters = () => {
     setFilters({
-      relationship_type: [],
+      contact_type: [],
       location_category: [],
       functional_role: [],
       is_active_looking: null,
@@ -58,7 +58,7 @@ export function Candidates() {
     return (
       <div>
         <div className="flex justify-center items-center py-12">
-          <div className="text-gray-500">Please log in to view candidates</div>
+          <div className="text-gray-500">Please log in to view contacts</div>
         </div>
       </div>
     );
@@ -77,7 +77,7 @@ export function Candidates() {
         onToggleFilters={() => setShowFilters(!showFilters)}
         clearFilter={handleToggleFilters}
       />
-      <CandidatesList
+      <ContactsList
         candidates={candidates}
         loading={loading}
         onDeleteCandidate={handleDeleteClick}

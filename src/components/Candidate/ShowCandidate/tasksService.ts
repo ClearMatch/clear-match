@@ -15,7 +15,7 @@ export async function fetchTasksByCandidate(candidateId: string): Promise<Activi
     .select(
       `
       *,
-      candidates:candidate_id (
+      contacts:contact_id (
         id,
         first_name,
         last_name,
@@ -28,7 +28,7 @@ export async function fetchTasksByCandidate(candidateId: string): Promise<Activi
       )
     `
     )
-    .eq("candidate_id", candidateId)
+    .eq("contact_id", candidateId)
     .order("priority", { ascending: false }) // Most critical first
     .order("due_date", { ascending: true }); // Then by due date
 

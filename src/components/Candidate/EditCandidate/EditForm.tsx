@@ -27,7 +27,7 @@ function EditForm({ data, id }: Props) {
     { arg }: { arg: { id: string; formData: Schema } }
   ) {
     const { error } = await supabase
-      .from("candidates")
+      .from("contacts")
       .update({ ...arg.formData, updated_by: auth.user?.id })
       .eq("id", arg.id);
 
@@ -55,7 +55,7 @@ function EditForm({ data, id }: Props) {
         current_job_title: data.current_job_title || "",
         current_company: data.current_company || "",
         current_company_size: data.current_company_size || "",
-        relationship_type: data.relationship_type || "",
+        contact_type: data.contact_type || "",
         workplace_preferences: data.workplace_preferences || "",
         compensation_expectations: data.compensation_expectations || "",
         visa_requirements: data.visa_requirements || false,
@@ -91,7 +91,7 @@ function EditForm({ data, id }: Props) {
           <Button
             variant="outline"
             className="w-40"
-            onClick={() => router.push("/candidates")}
+            onClick={() => router.push("/contacts")}
           >
             Cancel
           </Button>

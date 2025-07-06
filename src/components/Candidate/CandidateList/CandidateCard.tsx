@@ -33,7 +33,7 @@ export function CandidateCard({
       <CardContent className="p-5 pr-12 cursor-pointer relative">
         <button
           className="absolute top-4 right-4 z-10"
-          onClick={() => router.push(`/candidates/edit/${candidate.id}`)}
+          onClick={() => router.push(`/contacts/edit/${candidate.id}`)}
         >
           <Edit className="h-4 w-4" />
           <span className="sr-only">Edit</span>
@@ -52,7 +52,7 @@ export function CandidateCard({
                 className="text-lg font-medium text-indigo-600 hover:text-indigo-800 cursor-pointer transition-colors duration-200"
                 onClick={(e) => {
                   e.stopPropagation();
-                  router.push(`/candidates/show/${candidate.id}`);
+                  router.push(`/contacts/show/${candidate.id}`);
                 }}
               >
                 {candidate.first_name} {candidate.last_name}

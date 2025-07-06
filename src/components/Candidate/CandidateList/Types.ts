@@ -10,7 +10,7 @@ export interface Candidate {
   current_job_title: string;
   current_company: string;
   current_location: string | { location: string };
-  relationship_type: string;
+  contact_type: string;
   functional_role: string;
   is_active_looking: boolean;
   tech_stack: string[];
@@ -26,7 +26,7 @@ export interface Candidate {
 }
 
 export interface FilterState {
-  relationship_type: string[];
+  contact_type: string[];
   functional_role: string[];
   is_active_looking: boolean | null;
   location_category: string[];

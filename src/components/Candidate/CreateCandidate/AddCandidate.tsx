@@ -25,7 +25,7 @@ function AddCandidate() {
     if (error) throw new Error(error.message);
   }
 
-  const { trigger, isMutating } = useSWRMutation("candidates", insertCandidate);
+  const { trigger, isMutating } = useSWRMutation("contacts", insertCandidate);
 
   const onSubmit = async (data: Schema) => {
     try {
@@ -35,7 +35,7 @@ function AddCandidate() {
         description: "Candidate added successfully.",
       });
       form.reset();
-      router.push("/candidates");
+      router.push("/contacts");
     } catch (error) {
       toast({
         title: "Error",
@@ -58,7 +58,7 @@ function AddCandidate() {
                 type="button"
                 variant="outline"
                 className="w-40"
-                onClick={() => router.push("/candidates")}
+                onClick={() => router.push("/contacts")}
               >
                 Cancel
               </Button>

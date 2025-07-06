@@ -36,9 +36,9 @@ function AddTaskForm({
   const auth = useAuth();
   const { trigger, isMutating } = useSWRMutation("activities", insertTask);
 
-  // Set the candidate_id in the form when component mounts
+  // Set the contact_id in the form when component mounts
   useMemo(() => {
-    form.setValue("candidate_id", candidateId);
+    form.setValue("contact_id", candidateId);
   }, [candidateId, form]);
 
   const onSubmit = async (data: TaskSchema) => {
@@ -52,7 +52,7 @@ function AddTaskForm({
     }
 
     try {
-      // Ensure candidate_id and userId are set
+      // Ensure contact_id and userId are set
       // Ensure we have a valid user ID
       if (!auth.user?.id) {
         toast({
@@ -65,7 +65,7 @@ function AddTaskForm({
 
       const taskData = {
         ...data,
-        candidate_id: candidateId,
+        contact_id: candidateId,
         userId: auth.user.id,
       };
 

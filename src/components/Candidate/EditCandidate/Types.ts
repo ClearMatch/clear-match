@@ -12,7 +12,7 @@ export interface Candidate {
   current_job_title: string;
   current_company: string;
   current_company_size: string;
-  relationship_type: string;
+  contact_type: string;
   workplace_preferences: string;
   compensation_expectations: string;
   visa_requirements: boolean;

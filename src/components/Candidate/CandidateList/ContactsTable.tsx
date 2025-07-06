@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Candidate, SortConfig, SortField, SortDirection } from "./Types";
 
-interface CandidatesTableProps {
+interface ContactsTableProps {
   candidates: Candidate[];
   sort: SortConfig;
   onSortChange: (field: SortField) => void;
@@ -50,13 +50,13 @@ function SortableHeader({ field, label, currentSort, onSortChange }: SortableHea
   );
 }
 
-export function CandidatesTable({
+export function ContactsTable({
   candidates,
   sort,
   onSortChange,
   onEdit,
   onDelete,
-}: CandidatesTableProps) {
+}: ContactsTableProps) {
   const router = useRouter();
   const formatEngagementScore = (score?: number) => {
     if (!score) return '';
@@ -129,7 +129,7 @@ export function CandidatesTable({
               <TableCell className="font-medium text-indigo-600">
                 <span 
                   className="cursor-pointer hover:text-indigo-800 transition-colors duration-200"
-                  onClick={() => router.push(`/candidates/show/${candidate.id}`)}
+                  onClick={() => router.push(`/contacts/show/${candidate.id}`)}
                 >
                   {candidate.first_name}
                 </span>
@@ -137,7 +137,7 @@ export function CandidatesTable({
               <TableCell className="font-medium text-indigo-600">
                 <span 
                   className="cursor-pointer hover:text-indigo-800 transition-colors duration-200"
-                  onClick={() => router.push(`/candidates/show/${candidate.id}`)}
+                  onClick={() => router.push(`/contacts/show/${candidate.id}`)}
                 >
                   {candidate.last_name}
                 </span>
@@ -239,7 +239,7 @@ export function CandidatesTable({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => router.push(`/candidates/edit/${candidate.id}`)}
+                    onClick={() => router.push(`/contacts/edit/${candidate.id}`)}
                   >
                     Edit
                   </Button>

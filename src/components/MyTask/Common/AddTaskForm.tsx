@@ -33,10 +33,10 @@ export function AddTaskForm({
   const { trigger, isMutating } = useSWRMutation("activities", insertTask);
 
   const onSubmit = async (data: TaskSchema) => {
-    if (!data.candidate_id) {
+    if (!data.contact_id) {
       toast({
         title: "Error",
-        description: "Please select a candidate",
+        description: "Please select a contact",
         variant: "destructive",
       });
       return;

@@ -6,7 +6,7 @@ describe('DashboardService', () => {
       const filters = dashboardService.createEmptyFilters()
 
       expect(filters).toEqual({
-        relationship_type: [],
+        contact_type: [],
         location_category: [],
         functional_role: [],
         is_active_looking: null,
@@ -25,7 +25,7 @@ describe('DashboardService', () => {
           id: 'candidate-1',
           first_name: 'John',
           last_name: 'Doe',
-          relationship_type: 'candidate',
+          contact_type: 'candidate',
           is_active_looking: true,
           updated_at: '2025-01-01',
         },
@@ -33,7 +33,7 @@ describe('DashboardService', () => {
           id: 'candidate-2',
           first_name: 'Jane',
           last_name: 'Smith',
-          relationship_type: 'candidate',
+          contact_type: 'candidate',
           is_active_looking: false,
           updated_at: '2025-01-02',
         },
@@ -66,7 +66,7 @@ describe('DashboardService', () => {
           id: 'candidate-1',
           first_name: 'John',
           last_name: 'Doe',
-          relationship_type: 'candidate',
+          contact_type: 'candidate',
           is_active_looking: true,
           updated_at: '2025-01-01',
         },
@@ -74,7 +74,7 @@ describe('DashboardService', () => {
           id: '', // Empty ID should be filtered out
           first_name: 'Jane',
           last_name: 'Smith',
-          relationship_type: 'candidate',
+          contact_type: 'candidate',
           is_active_looking: false,
           updated_at: '2025-01-02',
         },
@@ -92,7 +92,7 @@ describe('DashboardService', () => {
           id: 'candidate-1',
           first_name: '',
           last_name: '',
-          relationship_type: 'candidate',
+          contact_type: 'candidate',
           is_active_looking: true,
           updated_at: '2025-01-01',
         },

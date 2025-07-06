@@ -45,8 +45,8 @@ export default function ProfessionalInfoFields({ form }: ProfessionalInfoFieldsP
         />
         <SelectField
           control={form.control}
-          name="relationship_type"
-          label="Relationship Type"
+          name="contact_type"
+          label="Contact Type"
           placeholder="Select a Relationship"
           options={relationshipOptions}
           required

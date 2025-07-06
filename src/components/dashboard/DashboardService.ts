@@ -10,14 +10,14 @@ interface DashboardCandidate {
   id: string;
   first_name: string;
   last_name: string;
-  relationship_type: string;
+  contact_type: string;
   is_active_looking: boolean;
   updated_at: string;
 }
 
 const createEmptyFilters = (): FilterState => {
   return {
-    relationship_type: [],
+    contact_type: [],
     location_category: [],
     functional_role: [],
     is_active_looking: null,
@@ -43,8 +43,8 @@ const fetchCandidatesData = async (userId: string) => {
 
   // Single optimized query to get all candidate data at once
   const { data: allCandidates, error: candidatesError } = await supabase
-    .from("candidates")
-    .select("id, first_name, last_name, relationship_type, is_active_looking, updated_at")
+    .from("contacts")
+    .select("id, first_name, last_name, contact_type, is_active_looking, updated_at")
     .eq("organization_id", organizationId)
     .order("updated_at", { ascending: false })
     .limit(200); // Much smaller limit for dashboard stats
@@ -56,14 +56,14 @@ const fetchCandidatesData = async (userId: string) => {
   const candidates: DashboardCandidate[] = allCandidates || [];
 
   // Filter the results locally instead of making multiple queries
-  const candidatesOnly = candidates.filter(c => c.relationship_type === "candidate");
-  const clientsOnly = candidates.filter(c => c.relationship_type === "client");
-  const bothOnly = candidates.filter(c => c.relationship_type === "both");
+  const candidatesOnly = candidates.filter(c => c.contact_type === "candidate");
+  const clientsOnly = candidates.filter(c => c.contact_type === "client");
+  const bothOnly = candidates.filter(c => c.contact_type === "both");
   const candidatesAndBoth = candidates.filter(c => 
-    c.relationship_type === "candidate" || c.relationship_type === "both"
+    c.contact_type === "candidate" || c.contact_type === "both"
   );
   const activeSearching = candidates.filter(c => 
-    (c.relationship_type === "candidate" || c.relationship_type === "both") && 
+    (c.contact_type === "candidate" || c.contact_type === "both") && 
     c.is_active_looking === true
   );
 
@@ -90,7 +90,7 @@ const fetchRecentActivities = async (
     activitiesResult?.map((activity) => ({
       id: activity.id,
       candidateName: "Activity",
-      candidateId: activity.candidate_id || "",
+      candidateId: activity.contact_id || "",
       type: activity.type,
       description: activity.description,
       createdAt: activity.created_at,

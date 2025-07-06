@@ -19,7 +19,7 @@ export function useCandidates() {
     direction: 'desc' 
   });
   const [filters, setFilters] = useState<FilterState>({
-    relationship_type: [],
+    contact_type: [],
     functional_role: [],
     is_active_looking: null,
     location_category: [],

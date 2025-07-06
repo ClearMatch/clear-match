@@ -18,11 +18,11 @@ export const candidateService = {
     }
 
     let query = supabase
-      .from("candidates")
+      .from("contacts")
       .select(
         `
       *,
-      tags:candidate_tags (
+      tags:contact_tags (
         tags (
           id,
           name,
@@ -45,8 +45,8 @@ export const candidateService = {
     }
 
     // Apply filters
-    if (filters.relationship_type.length > 0) {
-      query = query.in("relationship_type", filters.relationship_type);
+    if (filters.contact_type.length > 0) {
+      query = query.in("contact_type", filters.contact_type);
     }
     if (filters.location_category.length > 0) {
       query = query.contains(
@@ -101,12 +101,12 @@ export const candidateService = {
 
       if (error) throw error;
 
-      const candidates = data || [];
+      const contacts = data || [];
       const totalCount = count || 0;
-      const hasMore = from + candidates.length < totalCount;
+      const hasMore = from + contacts.length < totalCount;
 
       return {
-        candidates,
+        candidates: contacts,
         hasMore,
         totalCount,
       };
@@ -131,11 +131,11 @@ export const candidateService = {
     }
 
     let query = supabase
-      .from("candidates")
+      .from("contacts")
       .select(
         `
         *,
-        tags:candidate_tags (
+        tags:contact_tags (
           tags (
             id,
             name,
@@ -163,8 +163,8 @@ export const candidateService = {
     }
 
     // Apply filters
-    if (filters.relationship_type.length > 0) {
-      query = query.in("relationship_type", filters.relationship_type);
+    if (filters.contact_type.length > 0) {
+      query = query.in("contact_type", filters.contact_type);
     }
 
     if (filters.location_category.length > 0) {
@@ -219,16 +219,16 @@ export const candidateService = {
 
       if (error) throw error;
 
-      const candidates = data || [];
-      const hasMore = candidates.length > pageSize;
+      const contacts = data || [];
+      const hasMore = contacts.length > pageSize;
 
       // Remove the extra item if it exists
       if (hasMore) {
-        candidates.pop();
+        contacts.pop();
       }
 
       return {
-        candidates,
+        candidates: contacts,
         hasMore,
         totalCount: 0, // Not available with cursor pagination
       };

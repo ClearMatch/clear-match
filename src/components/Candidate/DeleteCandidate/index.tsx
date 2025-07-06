@@ -24,7 +24,7 @@ const deleteCandidateFn = async (
   url: string,
   { arg: id }: { arg: string }
 ): Promise<void> => {
-  const { error } = await supabase.from("candidates").delete().eq("id", id);
+  const { error } = await supabase.from("contacts").delete().eq("id", id);
   if (error) throw error;
 };
 

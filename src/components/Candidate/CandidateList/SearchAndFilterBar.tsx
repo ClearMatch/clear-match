@@ -82,11 +82,11 @@ export function SearchAndFilterBar({
             </button>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <FilterSelect
-                selected={filters.relationship_type[0] || ""}
-                onChange={createFilterHandler("relationship_type")}
+                selected={filters.contact_type[0] || ""}
+                onChange={createFilterHandler("contact_type")}
                 options={relationshipOptions}
-                placeholder="Select relationship type"
-                label="Relationship Type"
+                placeholder="Select contact type"
+                label="Contact Type"
               />
 
               <FilterSelect

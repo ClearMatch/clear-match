@@ -84,7 +84,7 @@ function TaskFields({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <SelectField
           control={form.control}
-          name="candidate_id"
+          name="contact_id"
           label="Contact"
           placeholder={
             candidates.length ? "Select a contact" : "Loading contacts..."

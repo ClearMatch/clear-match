@@ -85,7 +85,7 @@ function ShowCandidate() {
             </div>
             <div className="flex items-center gap-3">
               <Button
-                onClick={() => router.push(`/candidates/edit/${candidateId}`)}
+                onClick={() => router.push(`/contacts/edit/${candidateId}`)}
                 variant="outline"
                 className="flex items-center gap-2"
               >
@@ -161,7 +161,7 @@ function ShowCandidate() {
               <div>
                 <span className="text-gray-500">Relationship:</span>
                 <span className="ml-2 font-medium capitalize">
-                  {candidate.relationship_type}
+                  {candidate.contact_type}
                 </span>
               </div>
               <div>
