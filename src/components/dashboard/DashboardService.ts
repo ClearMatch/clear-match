@@ -108,7 +108,7 @@ const generateContactActions = (
       contactId: contact.id || "",
       contactName:
         `${contact.first_name || ""} ${contact.last_name || ""}`.trim() ||
-        "Unknown Candidate",
+        "Unknown Contact",
       actionType: "follow_up",
       reason: contact.is_active_looking
         ? "Active job seeker - schedule interview"
