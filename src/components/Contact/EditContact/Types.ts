@@ -1,4 +1,4 @@
-export interface Candidate {
+export interface Contact {
   first_name: string;
   last_name: string;
   personal_email: string;

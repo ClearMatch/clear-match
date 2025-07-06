@@ -1,7 +1,7 @@
 "use client";
 
-import AddCandidate from "@/components/Candidate/CreateCandidate/AddCandidate";
+import AddContact from "@/components/Contact/CreateContact/AddContact";
 
 export default function New() {
-  return <AddCandidate />;
+  return <AddContact />;
 }

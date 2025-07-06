@@ -8,12 +8,12 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import useSWRMutation from "swr/mutation";
-import CandidateFields from "../Common/CandidateFields";
+import ContactFields from "../Common/ContactFields";
 import { Schema, useUserForm } from "../Common/schema";
-import { Candidate } from "./Types";
+import { Contact } from "./Types";
 
 interface Props {
-  data: Candidate;
+  data: Contact;
   id: string;
 }
 
@@ -22,7 +22,7 @@ function EditForm({ data, id }: Props) {
   const auth = useAuth();
   const router = useRouter();
 
-  async function updateCandidate(
+  async function updateContact(
     _: string,
     { arg }: { arg: { id: string; formData: Schema } }
   ) {
@@ -36,7 +36,7 @@ function EditForm({ data, id }: Props) {
 
   const { trigger, isMutating } = useSWRMutation(
     "update-candidate",
-    updateCandidate
+    updateContact
   );
   useEffect(() => {
     if (data) {
@@ -70,7 +70,7 @@ function EditForm({ data, id }: Props) {
     try {
       await trigger({ id, formData });
       toast({
-        title: "Candidate updated successfully",
+        title: "Contact updated successfully",
       });
       form.reset();
     } catch (error) {
@@ -85,7 +85,7 @@ function EditForm({ data, id }: Props) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <CandidateFields form={form} />
+        <ContactFields form={form} />
         <hr className="color-black" />
         <div className="flex justify-center space-x-8 pt-6">
           <Button

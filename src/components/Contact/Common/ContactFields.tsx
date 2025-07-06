@@ -4,7 +4,7 @@ import ContactInfoFields from "./ContactInfoFields";
 import ProfessionalInfoFields from "./ProfessionalInfoFields";
 import PreferencesFields from "./PreferencesFields";
 
-function CandidateFields({ form }: { form: ReturnType<typeof useUserForm> }) {
+function ContactFields({ form }: { form: ReturnType<typeof useUserForm> }) {
   return (
     <>
       <BasicInfoFields form={form} />
@@ -15,4 +15,4 @@ function CandidateFields({ form }: { form: ReturnType<typeof useUserForm> }) {
   );
 }
 
-export default CandidateFields;
+export default ContactFields;

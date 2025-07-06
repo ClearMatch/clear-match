@@ -1,8 +1,8 @@
 "use client";
 
-import EditCandidate from "@/components/Candidate/EditCandidate";
+import EditContact from "@/components/Contact/EditContact";
 
 function Edit() {
-  return <EditCandidate />;
+  return <EditContact />;
 }
 export default Edit;

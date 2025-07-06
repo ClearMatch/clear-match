@@ -3,11 +3,11 @@
 import { useOpenable } from "@/hooks";
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { ContactsList } from "./Candidate/CandidateList";
-import { SearchAndFilterBar } from "./Candidate/CandidateList/SearchAndFilterBar";
-import { useContacts } from "./Candidate/CandidateList/useCandidate";
-import DeleteCandidate from "./Candidate/DeleteCandidate";
-import Header from "./Candidate/Header";
+import { ContactsList } from "./Contact/ContactList";
+import { SearchAndFilterBar } from "./Contact/ContactList/SearchAndFilterBar";
+import { useContacts } from "./Contact/ContactList/useContact";
+import DeleteContact from "./Contact/DeleteContact";
+import Header from "./Contact/Header";
 
 export function Contacts() {
   const { user } = useAuth();
@@ -86,7 +86,7 @@ export function Contacts() {
         sort={sort}
         onSortChange={onSortChange}
       />
-      <DeleteCandidate
+      <DeleteContact
         selectId={selectId}
         isOpen={isDeleteOpen}
         onClose={onDeleteClose}

@@ -15,7 +15,7 @@ import {
 import { useParams, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import useSWR from "swr";
-import { fetchContactById } from "./candidateService";
+import { fetchContactById } from "./contactService";
 import TasksTab from "./TasksTab";
 import EventsTab from "./EventsTab";
 

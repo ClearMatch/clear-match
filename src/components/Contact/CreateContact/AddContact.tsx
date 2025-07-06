@@ -7,10 +7,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import useSWRMutation from "swr/mutation";
-import CandidateFields from "../Common/CandidateFields";
+import ContactFields from "../Common/ContactFields";
 import { Schema, useUserForm } from "../Common/schema";
 
-function AddCandidate() {
+function AddContact() {
   const form = useUserForm();
   const { toast } = useToast();
   const router = useRouter();
@@ -48,10 +48,10 @@ function AddCandidate() {
   return (
     <div className="p-4 bg-white">
       <div className="p-4 bg-white shadow-lg rounded-lg">
-        <h1 className="font-bold text-md mb-4">Add Candidate</h1>
+        <h1 className="font-bold text-md mb-4">Add Contact</h1>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <CandidateFields form={form} />
+            <ContactFields form={form} />
             <hr className="color-black" />
             <div className="flex justify-center space-x-8 pt-6">
               <Button
@@ -77,4 +77,4 @@ function AddCandidate() {
   );
 }
 
-export default AddCandidate;
+export default AddContact;

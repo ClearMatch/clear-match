@@ -1,7 +1,7 @@
 import { useDebounce } from "@/hooks/useDebounce";
 import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
-import { candidateService } from "./candidateService";
+import { contactService } from "./contactService";
 import { Contact, FilterState, SortConfig, SortField } from "./Types";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -36,7 +36,7 @@ export function useContacts() {
   const fetchContacts = useCallback(() => {
     if (!auth.user?.id) return Promise.resolve({ contacts: [], hasMore: false, totalCount: 0 });
     
-    return candidateService.fetchCandidatesCursor(
+    return contactService.fetchCandidatesCursor(
       auth.user.id,
       debouncedSearchQuery,
       filters,
@@ -72,7 +72,7 @@ export function useContacts() {
       const lastContact = contacts[contacts.length - 1];
       const newCursor = lastContact ? lastContact[sort.field] as string : undefined;
 
-      const response = await candidateService.fetchCandidatesCursor(
+      const response = await contactService.fetchCandidatesCursor(
         auth.user.id,
         debouncedSearchQuery,
         filters,

@@ -1,9 +1,9 @@
 "use client";
 
-import ShowCandidate from "@/components/Candidate/ShowCandidate";
+import ShowContact from "@/components/Contact/ShowContact";
 
 function Show() {
-  return <ShowCandidate />;
+  return <ShowContact />;
 }
 
 export default Show;

@@ -28,7 +28,7 @@ const deleteCandidateFn = async (
   if (error) throw error;
 };
 
-const DeleteCandidate = ({
+const DeleteContact = ({
   isOpen,
   onClose,
   onRefetchContacts,
@@ -93,4 +93,4 @@ const DeleteCandidate = ({
   );
 };
 
-export default DeleteCandidate;
+export default DeleteContact;

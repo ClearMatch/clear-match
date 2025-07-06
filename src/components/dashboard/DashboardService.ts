@@ -1,8 +1,8 @@
 "use client";
 
 import { supabase } from "@/lib/supabase";
-import { Contact, FilterState } from "../Candidate/CandidateList/Types";
-import { candidateService } from "../Candidate/CandidateList/candidateService";
+import { Contact, FilterState } from "../Contact/ContactList/Types";
+import { contactService } from "../Contact/ContactList/contactService";
 import { DashboardStats, RecentActivity, RecommendedAction } from "./Types";
 
 // Minimal contact interface for dashboard stats

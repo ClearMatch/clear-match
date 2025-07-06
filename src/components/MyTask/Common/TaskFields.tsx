@@ -1,6 +1,6 @@
 "use client";
 
-import TextInputField from "@/components/Candidate/Common/TextInputField";
+import TextInputField from "@/components/Contact/Common/TextInputField";
 import { useMemo } from "react";
 import {
   activityTypeOptions,

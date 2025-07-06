@@ -1,6 +1,6 @@
 "use client";
 
-import FilterSelect from "@/components/Candidate/FilterSelect";
+import FilterSelect from "@/components/Contact/FilterSelect";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ChevronDown, Eraser, Filter, Loader2, Search, X } from "lucide-react";

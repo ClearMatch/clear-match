@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import TextInputField from "@/components/Candidate/Common/TextInputField";
+import TextInputField from "@/components/Contact/Common/TextInputField";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useMemo } from "react";

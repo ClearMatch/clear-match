@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { ContactsResponse, FilterState, PaginationParams, SortConfig } from "./Types";
 
-export const candidateService = {
+export const contactService = {
   async fetchCandidates(
     searchQuery: string,
     filters: FilterState,

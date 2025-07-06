@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { Contact } from "../CandidateList/Types";
+import { Contact } from "../ContactList/Types";
 
 interface ContactTag {
   tags: {
