@@ -12,7 +12,6 @@ export interface Event {
     id: string;
     first_name: string;
     last_name: string;
-    email: string;
   };
 }
 
@@ -22,11 +21,10 @@ export async function fetchEventsByCandidate(candidateId: string): Promise<Event
     .select(
       `
       *,
-      profiles (
+      profiles:created_by (
         id,
         first_name,
-        last_name,
-        email
+        last_name
       )
     `
     )

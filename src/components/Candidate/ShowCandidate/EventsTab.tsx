@@ -1,33 +1,44 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import DataTable from "@/components/ui/DataTable";
 import { Column } from "@/components/ui/DataTable/Types";
 import { formatDate } from "@/lib/utils";
 import { Plus, Loader } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import useSWR from "swr";
+import AddEventForm from "./AddEventForm";
 import { fetchEventsByCandidate, Event } from "./eventsService";
 
 interface EventsTabProps {
   candidateId: string;
+  candidateName?: string;
 }
 
-function EventsTab({ candidateId }: EventsTabProps) {
-  const router = useRouter();
+function EventsTab({ candidateId, candidateName = "Contact" }: EventsTabProps) {
+  const [showAddEvent, setShowAddEvent] = useState(false);
 
   const {
     data: events = [],
     isLoading,
     error,
+    mutate,
   } = useSWR<Event[]>(
     candidateId ? ["candidate-events", candidateId] : null,
     () => fetchEventsByCandidate(candidateId)
   );
 
   const handleAddEvent = () => {
-    // Navigate to add event page with candidate pre-selected
-    router.push(`/event/new?contact_id=${candidateId}`);
+    setShowAddEvent(true);
+  };
+
+  const handleEventAdded = () => {
+    setShowAddEvent(false);
+    mutate(); // Refresh the events list
   };
 
   const eventColumns: Column<Event>[] = [
@@ -76,7 +87,11 @@ function EventsTab({ candidateId }: EventsTabProps) {
         <h3 className="text-lg font-semibold text-gray-900">
           Related Events ({events.length})
         </h3>
-        <Button onClick={handleAddEvent} className="flex items-center gap-2">
+        <Button 
+          onClick={handleAddEvent} 
+          variant="outline"
+          className="flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           Add Event
         </Button>
@@ -101,6 +116,17 @@ function EventsTab({ candidateId }: EventsTabProps) {
           hideRowCheckBox
         />
       )}
+
+      <Dialog open={showAddEvent} onOpenChange={setShowAddEvent}>
+        <DialogContent className="max-w-2xl bg-white border border-gray-200 shadow-xl p-0">
+          <AddEventForm
+            candidateId={candidateId}
+            candidateName={candidateName}
+            onSuccess={handleEventAdded}
+            onCancel={() => setShowAddEvent(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

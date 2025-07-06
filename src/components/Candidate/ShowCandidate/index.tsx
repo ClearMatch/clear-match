@@ -186,7 +186,10 @@ function ShowCandidate() {
               />
             </TabsContent>
             <TabsContent value="events">
-              <EventsTab candidateId={candidateId} />
+              <EventsTab 
+                candidateId={candidateId} 
+                candidateName={`${candidate.first_name} ${candidate.last_name}`}
+              />
             </TabsContent>
           </Tabs>
         </div>
