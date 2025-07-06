@@ -1,47 +1,15 @@
 import { cn } from "@/lib/utils";
 import { menuItems } from "./Types";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import MenuItem from "./MenuItem";
-import { supabase } from "@/lib/supabase";
-import { CircleChevronLeft, CircleChevronRight, LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { CircleChevronLeft, CircleChevronRight } from "lucide-react";
 
 function Sidebar() {
-  const router = useRouter();
   const [isOpen, setIsOpen] = useState(true);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-  };
 
   const toggleSidebar = () => {
     setIsOpen((prev) => !prev);
   };
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        router.push("/auth");
-      }
-    };
-
-    checkAuth();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        router.push("/auth");
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [router]);
 
   return (
     <aside
@@ -87,27 +55,6 @@ function Sidebar() {
           </div>
         ))}
       </nav>
-      <div className="border-t border-gray-300 pt-4 mt-4">
-        <button
-          onClick={handleSignOut}
-          className={`flex w-full cursor-pointer items-center p-2 text-left text-sm font-normal uppercase transition-all duration-300 lg:p-4 text-gray-900 hover:bg-gray-300 ${
-            isOpen ? "justify-start" : "justify-center"
-          }`}
-        >
-          <LogOut className="flex-shrink-0 h-5 w-5" />
-          {isOpen && (
-            <span
-              className={`ml-3 text-base whitespace-nowrap transition-all duration-300 ${
-                isOpen
-                  ? "opacity-100 translate-x-0 delay-100"
-                  : "opacity-0 -translate-x-2"
-              }`}
-            >
-              Sign Out
-            </span>
-          )}
-        </button>
-      </div>
       <button
         onClick={toggleSidebar}
         className="absolute -right-2 top-5 z-10  shadow-lg hover:shadow-xl transition-all duration-300"
