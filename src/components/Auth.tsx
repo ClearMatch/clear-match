@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -15,6 +15,11 @@ export function Auth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Check for messages from middleware
+  const messageFromUrl = searchParams.get('message');
+  const errorFromUrl = searchParams.get('error');
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,7 +96,9 @@ export function Auth() {
         if (signInError) throw signInError;
       }
 
-      router.push('/dashboard');
+      // Redirect to the original page or dashboard
+      const redirectTo = searchParams.get('redirectTo') || '/dashboard';
+      router.push(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -203,8 +210,30 @@ export function Auth() {
               </div>
             </div>
 
+            {/* Display middleware messages */}
+            {messageFromUrl && (
+              <div className="text-orange-600 text-sm bg-orange-50 p-3 rounded-md">
+                {messageFromUrl}
+              </div>
+            )}
+            
+            {/* Display service error messages */}
+            {errorFromUrl === 'service_unavailable' && (
+              <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
+                Authentication service is temporarily unavailable. Please try again later.
+              </div>
+            )}
+            
+            {/* Display rate limit error */}
+            {errorFromUrl === 'rate_limit_exceeded' && (
+              <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
+                Too many requests. Please wait a moment before trying again.
+              </div>
+            )}
+
+            {/* Display form errors */}
             {error && (
-              <div className="text-red-600 text-sm">{error}</div>
+              <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">{error}</div>
             )}
 
             <div>
