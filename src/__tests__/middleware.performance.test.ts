@@ -4,13 +4,14 @@
  */
 
 import { NextRequest } from 'next/server';
-import { middleware } from '../../middleware';
+import { middleware, clearTestState } from '../../middleware';
 
 // Mock Supabase for performance testing
+const mockGetUser = jest.fn();
 jest.mock('@supabase/ssr', () => ({
   createServerClient: jest.fn(() => ({
     auth: {
-      getUser: jest.fn(),
+      getUser: mockGetUser,
     },
   })),
 }));
@@ -52,12 +53,11 @@ function createMockRequest(pathname: string, cookies: Record<string, string> = {
 describe('Middleware Performance Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    clearTestState(); // Clear middleware state between tests
   });
 
   test('should meet 50ms requirement for authenticated requests', async () => {
-    const { createServerClient } = require('@supabase/ssr');
-    const mockSupabase = createServerClient();
-    mockSupabase.auth.getUser.mockResolvedValue({ 
+    mockGetUser.mockResolvedValue({ 
       data: { user: { id: 'user123' } }, 
       error: null 
     });
@@ -81,9 +81,7 @@ describe('Middleware Performance Tests', () => {
   });
 
   test('should be even faster for cached requests', async () => {
-    const { createServerClient } = require('@supabase/ssr');
-    const mockSupabase = createServerClient();
-    mockSupabase.auth.getUser.mockResolvedValue({ 
+    mockGetUser.mockResolvedValue({ 
       data: { user: { id: 'user123' } }, 
       error: null 
     });
@@ -150,9 +148,7 @@ describe('Middleware Performance Tests', () => {
   });
 
   test('should handle unauthorized requests within limit', async () => {
-    const { createServerClient } = require('@supabase/ssr');
-    const mockSupabase = createServerClient();
-    mockSupabase.auth.getUser.mockResolvedValue({ 
+    mockGetUser.mockResolvedValue({ 
       data: { user: null }, 
       error: null 
     });
@@ -172,9 +168,7 @@ describe('Middleware Performance Tests', () => {
   });
 
   test('should maintain performance under load', async () => {
-    const { createServerClient } = require('@supabase/ssr');
-    const mockSupabase = createServerClient();
-    mockSupabase.auth.getUser.mockResolvedValue({ 
+    mockGetUser.mockResolvedValue({ 
       data: { user: { id: 'user123' } }, 
       error: null 
     });
@@ -206,11 +200,8 @@ describe('Middleware Performance Tests', () => {
   });
 
   test('should report performance warnings for slow requests', async () => {
-    const { createServerClient } = require('@supabase/ssr');
-    const mockSupabase = createServerClient();
-    
     // Simulate slow auth service
-    mockSupabase.auth.getUser.mockImplementation(() => 
+    mockGetUser.mockImplementation(() => 
       new Promise(resolve => 
         setTimeout(() => resolve({ 
           data: { user: { id: 'user123' } }, 

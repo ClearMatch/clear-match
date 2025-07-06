@@ -110,6 +110,9 @@ The middleware adds several monitoring headers:
 3. **Session Security**: Automatic cleanup of invalid sessions
 4. **Rate Limiting**: Protection against brute force and DoS attacks
 5. **Audit Trail**: Comprehensive logging for security monitoring
+6. **Secure Cache Keys**: Session tokens are hashed before use in cache keys
+7. **Sanitized Logging**: Sensitive data (IPs, user agents) are hashed in logs
+8. **Input Validation**: IP addresses and session data are properly sanitized
 
 ## Monitoring
 
@@ -152,9 +155,12 @@ The middleware includes comprehensive test coverage:
 ### Production Checklist
 - [ ] Environment variables configured
 - [ ] Monitoring service integration
-- [ ] Rate limiting storage (Redis recommended)
+- [ ] **CRITICAL**: Replace in-memory storage with Redis for persistence
 - [ ] Performance monitoring alerts
 - [ ] Security event alerting
+- [ ] Review and configure log sanitization for your monitoring service
+- [ ] Set up alerts for rate limiting events
+- [ ] Test session cache performance under load
 
 ### Environment Variables Required
 ```bash

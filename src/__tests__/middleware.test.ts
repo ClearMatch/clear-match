@@ -5,7 +5,10 @@ import { middleware } from '../../middleware';
 jest.mock('@supabase/ssr', () => ({
   createServerClient: jest.fn(() => ({
     auth: {
-      getUser: jest.fn(),
+      getUser: jest.fn().mockResolvedValue({
+        data: { user: null },
+        error: null
+      }),
     },
   })),
 }));

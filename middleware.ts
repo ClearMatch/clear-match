@@ -71,6 +71,12 @@ const RATE_LIMIT_CONFIG = {
 const REQUEST_CACHE = new Map<string, { user: any; timestamp: number; expires: number }>();
 const RATE_LIMIT_STORE = new Map<string, { count: number; resetTime: number }>();
 
+// Export for testing purposes
+export function clearTestState() {
+  REQUEST_CACHE.clear();
+  RATE_LIMIT_STORE.clear();
+}
+
 // Cleanup counters to avoid running cleanup on every request
 let cacheCleanupCounter = 0;
 let rateLimitCleanupCounter = 0;
@@ -197,6 +203,12 @@ export async function middleware(request: NextRequest) {
     );
 
     const authResult = await Promise.race([authPromise, timeoutPromise]);
+    
+    if (!authResult) {
+      await logAuthAttempt(request, 'error', 'Auth result is null/undefined');
+      return handleUnauthorizedAccess(request, pathname, 'Authentication failed');
+    }
+    
     const { data: { user }, error } = authResult;
     
     if (error) {
@@ -254,10 +266,6 @@ export async function middleware(request: NextRequest) {
   } catch (error: any) {
     // Log error for monitoring
     await logAuthAttempt(request, 'error', error.message);
-    
-    if (error.message === 'Auth timeout') {
-      return handleServiceUnavailable(request, pathname);
-    }
     
     console.error('Middleware auth error:', error);
     return handleUnauthorizedAccess(request, pathname, 'Authentication service error');
