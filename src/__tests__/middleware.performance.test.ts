@@ -15,14 +15,24 @@ jest.mock('@supabase/ssr', () => ({
   })),
 }));
 
-function createMockRequest(pathname: string): NextRequest {
+function createMockRequest(pathname: string, cookies: Record<string, string> = {}): NextRequest {
+  const mockCookies = new Map();
+  // Add default cookie if none provided
+  if (Object.keys(cookies).length === 0) {
+    mockCookies.set('sb-access-token', { value: 'mock-token', name: 'sb-access-token' });
+  } else {
+    Object.entries(cookies).forEach(([key, value]) => {
+      mockCookies.set(key, { value, name: key });
+    });
+  }
+  
   return {
     nextUrl: {
       pathname,
       toString: () => `http://localhost:3000${pathname}`,
     },
     cookies: {
-      get: jest.fn().mockReturnValue({ value: 'mock-token' }),
+      get: jest.fn((name: string) => mockCookies.get(name)),
       set: jest.fn(),
       delete: jest.fn(),
     },

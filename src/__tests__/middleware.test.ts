@@ -11,14 +11,19 @@ jest.mock('@supabase/ssr', () => ({
 }));
 
 // Helper function to create mock request
-function createMockRequest(pathname: string): NextRequest {
+function createMockRequest(pathname: string, cookies: Record<string, string> = {}): NextRequest {
+  const mockCookies = new Map();
+  Object.entries(cookies).forEach(([key, value]) => {
+    mockCookies.set(key, { value, name: key });
+  });
+  
   return {
     nextUrl: {
       pathname,
       toString: () => `http://localhost:3000${pathname}`,
     },
     cookies: {
-      get: jest.fn().mockReturnValue(undefined),
+      get: jest.fn((name: string) => mockCookies.get(name)),
       set: jest.fn(),
       delete: jest.fn(),
     },
