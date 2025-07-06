@@ -162,10 +162,108 @@ The middleware includes comprehensive test coverage:
 - [ ] Set up alerts for rate limiting events
 - [ ] Test session cache performance under load
 
-### Environment Variables Required
+### Redis Migration (CRITICAL for Production)
+
+**Current Implementation Issue**: The middleware currently uses in-memory Maps for session caching and rate limiting, which will **NOT persist between serverless function invocations**.
+
+#### Why Redis is Required
+1. **Serverless Cold Starts**: In-memory data is lost when functions shut down
+2. **Multi-Instance Deployments**: Each instance has its own memory space
+3. **Rate Limiting Effectiveness**: Without persistence, rate limiting resets on every cold start
+4. **Session Cache Efficiency**: Cache hits become misses after function restarts
+
+#### Implementation Steps
+
+1. **Install Redis Client**
+```bash
+npm install redis @types/redis
+```
+
+2. **Create Redis Connection**
+```typescript
+import { createClient } from 'redis';
+
+const redis = createClient({
+  url: process.env.REDIS_URL,
+  // Add additional Redis configuration as needed
+});
+
+redis.on('error', (err) => logger.error('Redis Client Error', err));
+```
+
+3. **Replace Cache Implementation**
+```typescript
+// Replace REQUEST_CACHE Map operations with Redis
+async function getCachedAuth(key: string): Promise<CacheEntry | null> {
+  const cached = await redis.get(key);
+  return cached ? JSON.parse(cached) : null;
+}
+
+async function setCachedAuth(key: string, value: CacheEntry): Promise<void> {
+  await redis.setex(key, Math.ceil(CONFIG.CACHE_DURATION_MS / 1000), JSON.stringify(value));
+}
+```
+
+4. **Replace Rate Limiting Implementation**
+```typescript
+// Replace RATE_LIMIT_STORE Map operations with Redis
+async function getRateLimit(key: string): Promise<RateLimitEntry | null> {
+  const record = await redis.get(key);
+  return record ? JSON.parse(record) : null;
+}
+
+async function setRateLimit(key: string, value: RateLimitEntry): Promise<void> {
+  const ttl = Math.ceil((value.resetTime - Date.now()) / 1000);
+  await redis.setex(key, ttl, JSON.stringify(value));
+}
+```
+
+5. **Environment Variables for Redis**
+```bash
+REDIS_URL=redis://localhost:6379  # or your Redis instance URL
+REDIS_PASSWORD=your_redis_password # if required
+```
+
+#### Performance Considerations
+- Use Redis connection pooling for high traffic
+- Consider Redis Cluster for high availability
+- Monitor Redis memory usage and set appropriate TTLs
+- Use Redis pipelining for batch operations if needed
+
+#### Alternative Storage Options
+If Redis is not available, consider:
+- **Database storage**: Store cache/rate limit data in your main database
+- **External services**: Use managed caching services (AWS ElastiCache, Google Memorystore)
+- **File-based storage**: For development/testing only (not recommended for production)
+
+### Environment Variables
+
+#### Required Variables
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+#### Optional Configuration Variables
+```bash
+# Performance & Timeout Configuration
+AUTH_TIMEOUT_MS=5000                        # Auth timeout in milliseconds (default: 5000)
+CACHE_DURATION_MS=5000                       # Cache duration in milliseconds (default: 5000)
+PERFORMANCE_WARNING_THRESHOLD_MS=50          # Performance warning threshold (default: 50)
+
+# Rate Limiting Configuration
+RATE_LIMIT_WINDOW_MS=60000                   # Rate limit window in milliseconds (default: 60000 = 1 minute)
+RATE_LIMIT_MAX_ATTEMPTS=100                  # Max attempts per window per IP (default: 100)
+RATE_LIMIT_CLEANUP_INTERVAL=1000             # Cleanup interval for rate limiting (default: 1000 requests)
+
+# Session Management
+SESSION_INITIAL_DURATION_MS=604800000        # Initial session duration (default: 7 days)
+SESSION_EXTENSION_DURATION_MS=604800000      # Session extension duration (default: 7 days)
+SESSION_MAX_DURATION_MS=2592000000           # Maximum session duration (default: 30 days)
+
+# Logging Configuration
+LOG_LEVEL=info                               # Logging level: debug, info, warn, error (default: info)
+ENABLE_PERFORMANCE_LOGGING=true              # Enable performance logging (default: true)
 ```
 
 ## Support

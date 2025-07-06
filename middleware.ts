@@ -26,6 +26,31 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createHash } from 'crypto';
 
+// Type definitions for better type safety
+interface User {
+  id: string;
+  email?: string;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: any; // Allow for additional Supabase user properties
+}
+
+interface AuthResult {
+  data: { user: User | null };
+  error: Error | null;
+}
+
+interface CacheEntry {
+  user: User;
+  timestamp: number;
+  expires: number;
+}
+
+interface RateLimitEntry {
+  count: number;
+  resetTime: number;
+}
+
 // Public routes that don't require authentication (whitelist approach for security)
 const PUBLIC_ROUTES = [
   '/auth',           // Main authentication page
@@ -47,29 +72,42 @@ const PROTECTED_API_ROUTES = [
   // Catch-all: any other API route not explicitly public
 ];
 
-// Performance and timeout constants
-const AUTH_TIMEOUT_MS = 5000; // 5 seconds timeout for auth checks
-const CACHE_DURATION_MS = 5000; // 5 seconds cache per request
-const PERFORMANCE_WARNING_THRESHOLD_MS = 50; // Warn if middleware takes longer than 50ms
-
-// Session configuration
-const SESSION_CONFIG = {
-  INITIAL_DURATION: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
-  EXTENSION_DURATION: 7 * 24 * 60 * 60 * 1000, // 7 days extension
-  MAX_DURATION: 30 * 24 * 60 * 60 * 1000, // 30 days maximum
-} as const;
-
-// Rate limiting configuration
-const RATE_LIMIT_CONFIG = {
-  WINDOW_MS: 60000, // 1 minute
-  MAX_ATTEMPTS: 100, // 100 requests per minute per IP
-  CLEANUP_INTERVAL: 1000, // Cleanup every 1000 requests
+// Configuration constants - many configurable via environment variables
+const CONFIG = {
+  // Performance and timeout constants
+  AUTH_TIMEOUT_MS: parseInt(process.env.AUTH_TIMEOUT_MS || '5000'), // 5 seconds timeout for auth checks
+  CACHE_DURATION_MS: parseInt(process.env.CACHE_DURATION_MS || '5000'), // 5 seconds cache per request
+  PERFORMANCE_WARNING_THRESHOLD_MS: parseInt(process.env.PERFORMANCE_WARNING_THRESHOLD_MS || '50'), // Performance warning threshold
+  
+  // Cache and logging constants
+  CACHE_KEY_HASH_LENGTH: 16, // Length of cache key hash for efficiency
+  USER_AGENT_LOG_LENGTH: 50, // Maximum user agent length in logs
+  IP_HASH_LENGTH: 8, // Length of IP hash in logs
+  
+  // Session configuration
+  SESSION: {
+    INITIAL_DURATION: parseInt(process.env.SESSION_INITIAL_DURATION_MS || String(7 * 24 * 60 * 60 * 1000)), // 7 days
+    EXTENSION_DURATION: parseInt(process.env.SESSION_EXTENSION_DURATION_MS || String(7 * 24 * 60 * 60 * 1000)), // 7 days extension
+    MAX_DURATION: parseInt(process.env.SESSION_MAX_DURATION_MS || String(30 * 24 * 60 * 60 * 1000)), // 30 days maximum
+  },
+  
+  // Rate limiting configuration - fully configurable
+  RATE_LIMIT: {
+    WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000'), // 1 minute
+    MAX_ATTEMPTS: parseInt(process.env.RATE_LIMIT_MAX_ATTEMPTS || '100'), // 100 requests per minute per IP
+    CLEANUP_INTERVAL: parseInt(process.env.RATE_LIMIT_CLEANUP_INTERVAL || '1000'), // Cleanup every 1000 requests
+  },
+  
+  // Logging configuration
+  LOG_LEVEL: process.env.LOG_LEVEL || 'info', // debug, info, warn, error
+  ENABLE_PERFORMANCE_LOGGING: process.env.ENABLE_PERFORMANCE_LOGGING !== 'false',
 } as const;
 
 // In-memory storage (NOTE: In production, replace with Redis for persistence)
 // These Maps will not persist between serverless function invocations
-const REQUEST_CACHE = new Map<string, { user: any; timestamp: number; expires: number }>();
-const RATE_LIMIT_STORE = new Map<string, { count: number; resetTime: number }>();
+// TODO: Replace with Redis or database-backed storage for production deployment
+const REQUEST_CACHE = new Map<string, CacheEntry>();
+const RATE_LIMIT_STORE = new Map<string, RateLimitEntry>();
 
 // Export for testing purposes
 export function clearTestState() {
@@ -80,6 +118,50 @@ export function clearTestState() {
 // Cleanup counters to avoid running cleanup on every request
 let cacheCleanupCounter = 0;
 let rateLimitCleanupCounter = 0;
+
+// Configurable logging service
+interface Logger {
+  debug(message: string, data?: any): void;
+  info(message: string, data?: any): void;
+  warn(message: string, data?: any): void;
+  error(message: string, data?: any): void;
+}
+
+class ProductionLogger implements Logger {
+  private shouldLog(level: string): boolean {
+    const levels = ['debug', 'info', 'warn', 'error'];
+    const configLevel = CONFIG.LOG_LEVEL.toLowerCase();
+    return levels.indexOf(level) >= levels.indexOf(configLevel);
+  }
+
+  debug(message: string, data?: any): void {
+    if (this.shouldLog('debug')) {
+      console.debug(`[DEBUG] ${message}`, data ? JSON.stringify(data) : '');
+    }
+  }
+
+  info(message: string, data?: any): void {
+    if (this.shouldLog('info')) {
+      console.info(`[INFO] ${message}`, data ? JSON.stringify(data) : '');
+    }
+  }
+
+  warn(message: string, data?: any): void {
+    if (this.shouldLog('warn')) {
+      console.warn(`[WARN] ${message}`, data ? JSON.stringify(data) : '');
+    }
+  }
+
+  error(message: string, data?: any): void {
+    if (this.shouldLog('error')) {
+      console.error(`[ERROR] ${message}`, data ? JSON.stringify(data) : '');
+    }
+  }
+}
+
+const logger: Logger = process.env.NODE_ENV === 'production' 
+  ? new ProductionLogger() 
+  : console;
 
 /**
  * Creates a secure cache key by hashing sensitive session data
@@ -92,7 +174,7 @@ function createSecureCacheKey(ip: string, sessionData: string): string {
   const sessionHash = createHash('sha256')
     .update(sessionData || 'no-session')
     .digest('hex')
-    .slice(0, 16); // First 16 chars for efficiency
+    .slice(0, CONFIG.CACHE_KEY_HASH_LENGTH); // Configurable hash length for efficiency
   
   return `auth:${sanitizedIP}:${sessionHash}`;
 }
@@ -105,8 +187,8 @@ function createSecureCacheKey(ip: string, sessionData: string): string {
 function sanitizeLogData(data: any): any {
   return {
     ...data,
-    ip: data.ip ? createHash('sha256').update(data.ip).digest('hex').slice(0, 8) : 'unknown',
-    userAgent: data.userAgent ? data.userAgent.slice(0, 50) + '...' : undefined,
+    ip: data.ip ? createHash('sha256').update(data.ip).digest('hex').slice(0, CONFIG.IP_HASH_LENGTH) : 'unknown',
+    userAgent: data.userAgent ? data.userAgent.slice(0, CONFIG.USER_AGENT_LOG_LENGTH) + '...' : undefined,
   };
 }
 
@@ -166,7 +248,7 @@ export async function middleware(request: NextRequest) {
   try {
     // Check for required environment variables
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      console.error('Missing required Supabase environment variables');
+      logger.error('Missing required Supabase environment variables');
       return handleServiceUnavailable(request, pathname);
     }
 
@@ -199,10 +281,10 @@ export async function middleware(request: NextRequest) {
     // Add timeout for auth check
     const authPromise = supabase.auth.getUser();
     const timeoutPromise: Promise<never> = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Auth timeout')), AUTH_TIMEOUT_MS)
+      setTimeout(() => reject(new Error('Auth timeout')), CONFIG.AUTH_TIMEOUT_MS)
     );
 
-    const authResult = await Promise.race([authPromise, timeoutPromise]);
+    const authResult = await Promise.race([authPromise, timeoutPromise]) as AuthResult;
     
     if (!authResult) {
       await logAuthAttempt(request, 'error', 'Auth result is null/undefined');
@@ -233,12 +315,12 @@ export async function middleware(request: NextRequest) {
     REQUEST_CACHE.set(cacheKey, {
       user,
       timestamp: Date.now(),
-      expires: Date.now() + CACHE_DURATION_MS
+      expires: Date.now() + CONFIG.CACHE_DURATION_MS
     });
     
     // Periodic cleanup - only run occasionally to avoid performance impact
     cacheCleanupCounter++;
-    if (cacheCleanupCounter >= RATE_LIMIT_CONFIG.CLEANUP_INTERVAL) {
+    if (cacheCleanupCounter >= CONFIG.RATE_LIMIT.CLEANUP_INTERVAL) {
       cacheCleanupCounter = 0;
       // Run cleanup asynchronously to avoid blocking the response
       setImmediate(() => cleanupExpiredCacheAsync());
@@ -255,11 +337,11 @@ export async function middleware(request: NextRequest) {
     response.headers.set('x-middleware-duration', duration.toString());
     response.headers.set('x-auth-cache', 'miss');
     response.headers.set('x-session-user', user.id);
-    response.headers.set('x-rate-limit-remaining', (RATE_LIMIT_CONFIG.MAX_ATTEMPTS - rateLimitResult.count).toString());
+    response.headers.set('x-rate-limit-remaining', (CONFIG.RATE_LIMIT.MAX_ATTEMPTS - rateLimitResult.count).toString());
     
     // Performance monitoring - warn if over threshold
-    if (duration > PERFORMANCE_WARNING_THRESHOLD_MS) {
-      console.warn(`Middleware performance warning: ${duration}ms for ${pathname} (threshold: ${PERFORMANCE_WARNING_THRESHOLD_MS}ms)`);
+    if (CONFIG.ENABLE_PERFORMANCE_LOGGING && duration > CONFIG.PERFORMANCE_WARNING_THRESHOLD_MS) {
+      logger.warn(`Middleware performance warning: ${duration}ms for ${pathname} (threshold: ${CONFIG.PERFORMANCE_WARNING_THRESHOLD_MS}ms)`);
     }
     
     return response;
@@ -267,7 +349,7 @@ export async function middleware(request: NextRequest) {
     // Log error for monitoring
     await logAuthAttempt(request, 'error', error.message);
     
-    console.error('Middleware auth error:', error);
+    logger.error('Middleware auth error:', error);
     return handleUnauthorizedAccess(request, pathname, 'Authentication service error');
   }
 }
@@ -332,7 +414,7 @@ function handleServiceUnavailable(request: NextRequest, pathname: string) {
 }
 
 // Session management functions
-async function extendSessionIfNeeded(user: any, response: NextResponse): Promise<boolean> {
+async function extendSessionIfNeeded(user: User, response: NextResponse): Promise<boolean> {
   try {
     // In a real implementation, you'd check the session creation time
     // and extend it if it's close to expiry
@@ -344,7 +426,7 @@ async function extendSessionIfNeeded(user: any, response: NextResponse): Promise
     
     return true;
   } catch (error) {
-    console.error('Error extending session:', error);
+    logger.error('Error extending session:', error);
     return false;
   }
 }
@@ -366,15 +448,15 @@ async function logAuthAttempt(request: NextRequest, type: 'success' | 'error' | 
     // Sanitize sensitive data for logging
     const sanitizedLogData = sanitizeLogData(rawLogData);
     
-    // Log to console (in production, send to monitoring service)
-    console.log(`[AUTH ${type.toUpperCase()}]`, JSON.stringify(sanitizedLogData));
+    // Use configurable logger
+    logger.info(`AUTH ${type.toUpperCase()}`, sanitizedLogData);
     
     // TODO: In production, send to your monitoring/logging service
     // await sendToMonitoringService(sanitizedLogData);
     
   } catch (error) {
     // Don't let logging errors break the middleware
-    console.error('Error logging auth attempt:', error);
+    logger.error('Error logging auth attempt:', error);
   }
 }
 
@@ -394,7 +476,7 @@ function checkRateLimit(ip: string): { allowed: boolean; count: number } {
   
   // Reset if window expired
   if (!record || now > record.resetTime) {
-    record = { count: 0, resetTime: now + RATE_LIMIT_CONFIG.WINDOW_MS };
+    record = { count: 0, resetTime: now + CONFIG.RATE_LIMIT.WINDOW_MS };
   }
   
   record.count++;
@@ -402,13 +484,13 @@ function checkRateLimit(ip: string): { allowed: boolean; count: number } {
   
   // Periodic cleanup for rate limit store
   rateLimitCleanupCounter++;
-  if (rateLimitCleanupCounter >= RATE_LIMIT_CONFIG.CLEANUP_INTERVAL) {
+  if (rateLimitCleanupCounter >= CONFIG.RATE_LIMIT.CLEANUP_INTERVAL) {
     rateLimitCleanupCounter = 0;
     setImmediate(() => cleanupRateLimitStoreAsync());
   }
   
   return {
-    allowed: record.count <= RATE_LIMIT_CONFIG.MAX_ATTEMPTS,
+    allowed: record.count <= CONFIG.RATE_LIMIT.MAX_ATTEMPTS,
     count: record.count
   };
 }
@@ -452,10 +534,10 @@ async function cleanupExpiredCacheAsync(): Promise<void> {
     });
     
     if (deletedCount > 0) {
-      console.log(`Cleaned up ${deletedCount} expired cache entries`);
+      logger.debug(`Cleaned up ${deletedCount} expired cache entries`);
     }
   } catch (error) {
-    console.error('Error during cache cleanup:', error);
+    logger.error('Error during cache cleanup:', error);
   }
 }
 
@@ -473,10 +555,10 @@ async function cleanupRateLimitStoreAsync(): Promise<void> {
     });
     
     if (deletedCount > 0) {
-      console.log(`Cleaned up ${deletedCount} expired rate limit entries`);
+      logger.debug(`Cleaned up ${deletedCount} expired rate limit entries`);
     }
   } catch (error) {
-    console.error('Error during rate limit cleanup:', error);
+    logger.error('Error during rate limit cleanup:', error);
   }
 }
 
