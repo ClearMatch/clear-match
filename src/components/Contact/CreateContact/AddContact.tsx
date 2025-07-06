@@ -17,10 +17,39 @@ function AddContact() {
   const auth = useAuth();
 
   async function insertContact(url: string, { arg }: { arg: Schema }) {
+    // Debug user authentication
+    console.log('Contact creation - User ID:', auth.user?.id);
+    
+    if (!auth.user?.id) {
+      throw new Error('User not authenticated');
+    }
+
+    // Get user's organization_id
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("organization_id")
+      .eq("id", auth.user.id)
+      .maybeSingle();
+
+    console.log('Contact creation - Profile lookup:', { profileData, profileError });
+
+    if (profileError) {
+      throw new Error(`Failed to get user organization: ${profileError.message}`);
+    }
+
+    if (!profileData) {
+      throw new Error('User profile not found. Please ensure you are properly signed in.');
+    }
+
+    if (!profileData.organization_id) {
+      throw new Error('User organization not set. Please contact support.');
+    }
+
     const { error } = await supabase.from(url).insert({
       ...arg,
       past_company_sizes: [arg.past_company_sizes],
-      created_by: auth.user?.id,
+      organization_id: profileData.organization_id,
+      created_by: auth.user.id,
     });
     if (error) throw new Error(error.message);
   }

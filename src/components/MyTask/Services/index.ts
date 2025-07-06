@@ -219,7 +219,8 @@ export const fetchTaskById = async (
       contacts:contact_id (
         id,
         first_name,
-        last_name
+        last_name,
+        phone
       ),
       profiles:created_by (
         id,

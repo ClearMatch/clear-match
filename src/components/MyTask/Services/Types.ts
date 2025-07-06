@@ -22,6 +22,7 @@ export interface ActivityWithRelations extends ActivityData {
     id: string;
     first_name: string;
     last_name: string;
+    phone?: string;
   };
   profiles?: {
     id: string;

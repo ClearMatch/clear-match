@@ -28,7 +28,11 @@ function EditForm({ data, id }: Props) {
   ) {
     const { error } = await supabase
       .from("contacts")
-      .update({ ...arg.formData, updated_by: auth.user?.id })
+      .update({ 
+        ...arg.formData, 
+        past_company_sizes: [arg.formData.past_company_sizes],
+        updated_by: auth.user?.id 
+      })
       .eq("id", arg.id);
 
     if (error) throw new Error(error.message);

@@ -9,9 +9,11 @@ import {
   FileVideo,
   Loader,
   User,
+  MessageSquare,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
+import { useState } from "react";
 import { fetchTaskById } from "../Services";
 import {
   ActivityWithRelations,
@@ -19,11 +21,15 @@ import {
   getPriorityLabel,
 } from "../Services/Types";
 import { getPriorityColor, getStatusColor } from "./Types";
+import { useProfile } from "@/hooks/useProfile";
+import MessageComposer from "./MessageComposer";
+import MessageHistory from "./MessageHistory";
 
 function ShowTask() {
   const params = useParams();
   const selectId = params?.id as string;
   const router = useRouter();
+  const [messageRefreshTrigger, setMessageRefreshTrigger] = useState(0);
 
   const {
     data: taskData,
@@ -33,6 +39,8 @@ function ShowTask() {
     selectId ? ["activities", selectId] : null,
     () => fetchTaskById(selectId)
   );
+
+  const { phoneNumber: userPhone, refreshProfile } = useProfile();
 
   if (isLoading) {
     return (
@@ -144,6 +152,36 @@ function ShowTask() {
                 </div>
               </div>
             </div>
+            
+            {/* SMS Interface for Text Tasks */}
+            {taskData?.type === 'text' && (
+              <div className="space-y-8">
+                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+                    <MessageSquare className="w-6 h-6 text-indigo-600" />
+                    Text Messaging
+                  </h2>
+                  <div className="space-y-6">
+                    <MessageComposer
+                      activityId={selectId}
+                      contactId={taskData?.contact_id || ""}
+                      contactName={getFullName(
+                        taskData?.contacts?.first_name,
+                        taskData?.contacts?.last_name
+                      )}
+                      contactPhone={taskData?.contacts?.phone}
+                      userPhone={userPhone || undefined}
+                      onMessageSent={() => setMessageRefreshTrigger(prev => prev + 1)}
+                      onPhoneUpdated={refreshProfile}
+                    />
+                    <MessageHistory
+                      activityId={selectId}
+                      refreshTrigger={messageRefreshTrigger}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           <div className="space-y-8">
             <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
