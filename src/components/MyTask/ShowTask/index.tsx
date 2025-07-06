@@ -152,15 +152,15 @@ function ShowTask() {
                 People Involved
               </h2>
               <div className="space-y-4">
-                {/* Candidate */}
+                {/* Contact */}
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
                   <h3 className="font-semibold text-blue-800 mb-2">
-                    Candidate
+                    Contact
                   </h3>
                   <p className="text-blue-700 font-medium">
                     {getFullName(
-                      taskData?.candidates?.first_name,
-                      taskData?.candidates?.last_name
+                      taskData?.contacts?.first_name,
+                      taskData?.contacts?.last_name
                     )}
                   </p>
                 </div>

@@ -28,7 +28,7 @@ export const fetchActivitiesWithRelations = async (
     .select(
       `
       *,
-      candidates:candidate_id (
+      contacts:contact_id (
         id,
         first_name,
         last_name
@@ -61,7 +61,7 @@ export const fetchActivitiesWithRelations = async (
     }
 
     if (filters?.assigned_to?.length > 0) {
-      query = query.in("candidate_id", filters.assigned_to);
+      query = query.in("contact_id", filters.assigned_to);
     }
 
     if (filters?.created_by?.length > 0) {
@@ -130,9 +130,9 @@ export const fetchAssigneeOptions = async (): Promise<
     throw new Error('Failed to get user organization');
   }
 
-  // Only fetch candidates from the same organization
+  // Only fetch contacts from the same organization
   const { data, error } = await supabase
-    .from("candidates")
+    .from("contacts")
     .select("id, first_name, last_name")
     .eq("organization_id", profileData.organization_id)
     .order("first_name");
@@ -144,9 +144,9 @@ export const fetchAssigneeOptions = async (): Promise<
 
   if (!data) return [];
 
-  return data.map((candidate) => ({
-    value: candidate.id,
-    label: `${candidate.first_name} ${candidate.last_name}`.trim(),
+  return data.map((contact) => ({
+    value: contact.id,
+    label: `${contact.first_name} ${contact.last_name}`.trim(),
   }));
 };
 
@@ -216,7 +216,7 @@ export const fetchTaskById = async (
     .select(
       `
       *,
-      candidates:candidate_id (
+      contacts:contact_id (
         id,
         first_name,
         last_name

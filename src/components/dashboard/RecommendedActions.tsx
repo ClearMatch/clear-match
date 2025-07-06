@@ -30,7 +30,7 @@ const TypeIndicator: React.FC<{ type: RecommendedAction["type"] }> = ({
   type,
 }) => {
   switch (type) {
-    case "candidate":
+    case "contact":
       return <User className="h-4 w-4 text-blue-600" />;
     case "client":
       return <Building2 className="h-4 w-4 text-green-600" />;
@@ -43,7 +43,7 @@ const TypeIndicator: React.FC<{ type: RecommendedAction["type"] }> = ({
 
 const getTypeBadgeStyles = (type: RecommendedAction["type"]) => {
   switch (type) {
-    case "candidate":
+    case "contact":
       return "bg-blue-100 text-blue-800";
     case "client":
       return "bg-green-100 text-green-800";
@@ -56,8 +56,8 @@ const getTypeBadgeStyles = (type: RecommendedAction["type"]) => {
 
 const getTypeLabel = (type: RecommendedAction["type"]) => {
   switch (type) {
-    case "candidate":
-      return "Candidate";
+    case "contact":
+      return "Contact";
     case "client":
       return "Client";
     case "both":
@@ -87,7 +87,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ action, onTakeAction }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <h3 className="text-sm font-medium text-gray-900">
-              {action.candidateName || "Unknown"}
+              {action.contactName || "Unknown"}
             </h3>
             <span
               className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTypeBadgeStyles(

@@ -67,7 +67,7 @@ export function Dashboard() {
     <div className="p-6 max-w-7xl mx-auto">
       <DashboardHeader
         title="Dashboard"
-        subtitle="Overview of your candidate pipeline and recommended actions"
+        subtitle="Overview of your contact pipeline and recommended actions"
       />
 
       <StatsGrid stats={data.stats} />

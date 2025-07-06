@@ -18,7 +18,7 @@ export async function PUT(
       due_date,
       status,
       priority,
-      candidate_id,
+      contact_id,
       subject,
       content,
       assigned_to,
@@ -34,7 +34,7 @@ export async function PUT(
       due_date?: string | null;
       status?: string;
       priority?: number;
-      candidate_id?: string | null;
+      contact_id?: string | null;
       subject?: string | null;
       content?: string | null;
       assigned_to?: string | null;
@@ -75,9 +75,9 @@ export async function PUT(
       updateData.priority = priorityNum;
     }
     
-    if (candidate_id !== undefined) {
-      // Handle empty string for candidate_id
-      updateData.candidate_id = candidate_id === "" ? null : candidate_id;
+    if (contact_id !== undefined) {
+      // Handle empty string for contact_id
+      updateData.contact_id = contact_id === "" ? null : contact_id;
     }
     
     if (subject !== undefined) {

@@ -1,5 +1,5 @@
 export interface DashboardStats {
-  totalCandidates: number;
+  totalContacts: number;
   totalClients: number;
   activeSearching: number;
   recentActivities: number;
@@ -8,30 +8,30 @@ export interface DashboardStats {
 
 export interface RecommendedAction {
   id: string;
-  candidateId: string;
-  candidateName: string;
+  contactId: string;
+  contactName: string;
   actionType: string;
   reason: string;
   priority: "high" | "medium" | "low";
   dueDate?: string;
-  type: "candidate" | "client" | "both";
+  type: "contact" | "client" | "both";
 }
 
 export interface RecentActivity {
   id: string;
-  candidateId: string;
-  candidateName: string;
+  contactId: string;
+  contactName: string;
   type: string;
   description: string;
   createdAt: string;
 }
 
-export interface ActivityWithCandidate {
+export interface ActivityWithContact {
   id: string;
   type: string;
   description: string;
   created_at: string;
-  candidates: {
+  contacts: {
     id: string;
     first_name: string;
     last_name: string;

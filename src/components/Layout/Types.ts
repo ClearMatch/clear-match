@@ -24,7 +24,7 @@ export const menuItems = [
     group: "Main",
     items: [
       { name: "Dashboard", icon: ChartNoAxesCombined, path: "/dashboard" },
-      { name: "Candidates", icon: Users, path: "/candidates" },
+      { name: "Contacts", icon: Users, path: "/contacts" },
       { name: "Templates", icon: FileText, path: "/templates" },
       { name: "My Task", icon: ListChecks, path: "/task" },
       { name: "Inbox", icon: MailCheck, path: "/inbox" },

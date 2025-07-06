@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "ClearMatch AI",
-  description: "Candidate Relationship Management System",
+  description: "Contact Relationship Management System",
 };
 
 export default function RootLayout({

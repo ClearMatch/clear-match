@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 export const taskSchema = z.object({
-  candidate_id: z.string().min(1, "Contact is required"),
+  contact_id: z.string().min(1, "Contact is required"),
   organization_id: z.string().optional(),
   type: z.string().min(1, "Activity type is required"),
   subject: z.string().optional(),
@@ -29,7 +29,7 @@ export function useTaskForm() {
   const form = useForm<TaskSchema>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
-      candidate_id: "",
+      contact_id: "",
       organization_id: "",
       type: "",
       subject: "",

@@ -2,7 +2,7 @@ import { useToast } from "@/hooks/use-toast";
 import React from "react";
 import useSWR from "swr";
 import {
-  fetchCandidates,
+  fetchContacts,
   fetchEvents,
   fetchOrganizations,
   fetchUsers,
@@ -27,13 +27,13 @@ export function useTaskData() {
   } = useSWR(
     "task-form-data",
     async () => {
-      const [candidates, organizations, users, events] = await Promise.all([
-        fetchCandidates(),
+      const [contacts, organizations, users, events] = await Promise.all([
+        fetchContacts(),
         fetchOrganizations(),
         fetchUsers(),
         fetchEvents(),
       ]);
-      return { candidates, organizations, users, events };
+      return { contacts, organizations, users, events };
     },
     SWR_CONFIG
   );
@@ -49,7 +49,7 @@ export function useTaskData() {
   }, [error, toast]);
 
   return {
-    candidates: allData?.candidates || [],
+    contacts: allData?.contacts || [],
     organizations: allData?.organizations || [],
     users: allData?.users || [],
     events: allData?.events || [],

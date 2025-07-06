@@ -19,13 +19,13 @@ interface Props {
 
 function EditForm({ data, selectId }: Props) {
   const form = useTaskForm();
-  const { candidates, organizations, users } = useTaskData();
+  const { contacts, organizations, users } = useTaskData();
   const route = useRouter();
 
   useEffect(() => {
     if (
       data &&
-      candidates.length > 0 &&
+      contacts.length > 0 &&
       organizations.length > 0 &&
       users.length > 0
     ) {
@@ -36,7 +36,7 @@ function EditForm({ data, selectId }: Props) {
         status: data.status || "",
         event_id: data.event_id || "",
         job_posting_id: data.job_posting_id || "",
-        candidate_id: data.candidate_id || "",
+        contact_id: data.contact_id || "",
         organization_id: data.organization_id || "",
         subject: data.subject || "",
         content: data.content || "",
@@ -44,7 +44,7 @@ function EditForm({ data, selectId }: Props) {
         priority: String(data.priority),
       });
     }
-  }, [data, candidates, organizations, form, users]);
+  }, [data, contacts, organizations, form, users]);
 
   async function updateActivity(
     url: string,
@@ -81,7 +81,7 @@ function EditForm({ data, selectId }: Props) {
         due_date: string | null;
         status: string;
         priority: number;
-        candidate_id: string | null;
+        contact_id: string | null;
         subject: string;
         content: string;
         assigned_to: string | null;
@@ -94,7 +94,7 @@ function EditForm({ data, selectId }: Props) {
         due_date: arg.formData.due_date || null,
         status: arg.formData.status,
         priority: Number(arg.formData.priority),
-        candidate_id: arg.formData.candidate_id || null,
+        contact_id: arg.formData.contact_id || null,
         subject: arg.formData.subject || "",
         content: arg.formData.content || "",
         assigned_to: arg.formData.assigned_to || null,
@@ -152,7 +152,7 @@ function EditForm({ data, selectId }: Props) {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <TaskFields
             form={form}
-            candidates={candidates}
+            contacts={contacts}
             organizations={organizations}
             users={users}
           />

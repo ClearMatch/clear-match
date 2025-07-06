@@ -1,6 +1,6 @@
 export interface ActivityData {
   id: string;
-  candidate_id: string | null;
+  contact_id: string | null;
   organization_id: string | null;
   type: string;
   description: string;
@@ -18,7 +18,7 @@ export interface ActivityData {
 }
 
 export interface ActivityWithRelations extends ActivityData {
-  candidates?: {
+  contacts?: {
     id: string;
     first_name: string;
     last_name: string;

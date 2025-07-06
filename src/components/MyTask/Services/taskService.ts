@@ -27,7 +27,7 @@ export async function insertTask(
   }
 
   const taskData = {
-    candidate_id: arg.candidate_id,
+    contact_id: arg.contact_id,
     organization_id: profileData.organization_id, // Always use the organization_id from the user's profile
     type: arg.type,
     subject: arg.subject || null,

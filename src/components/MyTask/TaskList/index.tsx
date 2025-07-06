@@ -54,10 +54,10 @@ function TaskList({
       ),
     },
     {
-      key: "candidate_id",
+      key: "contact_id",
       header: "Assigned To",
       render: (row) => {
-        const { first_name, last_name } = row.candidates || {};
+        const { first_name, last_name } = row.contacts || {};
         return (
           <span className="text-sm">{getFullName(first_name, last_name)}</span>
         );

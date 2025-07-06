@@ -27,13 +27,13 @@ const EditTask = () => {
           </div>
         ) : error ? (
           <div className="text-red-500 text-center py-4">
-            Failed to load candidate data.
+            Failed to load contact data.
           </div>
         ) : data ? (
           <EditForm data={data} selectId={selectId} />
         ) : (
           <div className="text-center py-4 text-gray-600">
-            No candidate found.
+            No contact found.
           </div>
         )}
       </div>
