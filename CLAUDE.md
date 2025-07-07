@@ -222,6 +222,33 @@ export async function GET(request: Request) {
 }
 ```
 
+### Middleware Authentication (Critical Setup)
+
+#### File Placement Requirements
+- **Location**: Place middleware.ts in `src/middleware.ts` (NOT in project root)
+- **Next.js 15+ Requirement**: App Router projects require middleware in src/ directory
+- **Restart Required**: Always restart dev server after middleware changes
+
+#### Implementation Features
+- **Supabase Integration**: Uses Supabase SSR client for session validation
+- **Route Protection**: Protects all routes except `/auth` by default
+- **Smart Redirects**: Redirects to `/auth?redirectTo=<original-path>` for pages
+- **API Security**: Returns 401 Unauthorized for unauthenticated API requests
+- **Performance Monitoring**: Tracks execution time with warnings for slow operations (>100ms)
+
+#### Error Handling Scenarios
+- **Missing Config**: Returns 503 Service Unavailable for missing environment variables
+- **Unauthenticated**: Redirects pages to auth, returns 401 for API routes
+- **Auth Errors**: Comprehensive error responses with user-friendly messages
+- **Security Headers**: Adds performance and security headers to responses
+
+#### Testing Checklist
+- ✅ Signed out user accessing protected page → Redirect to auth with redirectTo
+- ✅ Signed out user accessing API → 401 Unauthorized response
+- ✅ Signed in user → Normal access with security headers
+- ✅ Missing environment variables → Service unavailable error
+- ✅ Performance monitoring → Logs warnings for slow operations
+
 ### Environment Security
 - **Never commit secrets**: Use environment variables for all sensitive data
 - **Validate environment**: Check required environment variables on startup
