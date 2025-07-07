@@ -47,6 +47,8 @@ export function useEventData() {
 
       return () => clearTimeout(timeoutId);
     }
+    
+    return undefined;
   }, [error, toast]);
 
   return {
