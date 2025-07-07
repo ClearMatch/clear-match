@@ -41,17 +41,18 @@
 
 ### Required Tools
 - Node.js 18.17.0 or later 
-- npm or yarn
+- pnpm (via corepack)
 - Supabase CLI
 - Git
 
 ### Environment Setup
 1. Clone the repository
-2. Install dependencies: `npm install`
-3. Set up Supabase local development: `supabase start`
-4. Configure environment variables
-5. Run migrations: `supabase db reset`
-6. Start development server: `npm run dev`
+2. Enable corepack: `corepack enable`
+3. Install dependencies: `pnpm install`
+4. Set up Supabase local development: `supabase start`
+5. Configure environment variables
+6. Run migrations: `supabase db reset`
+7. Start development server: `pnpm dev`
 
 ## MCP Servers
 
@@ -282,19 +283,19 @@ export async function GET(request: Request) {
 ### Development Commands
 ```bash
 # Start development server
-npm run dev
+pnpm dev
 
 # Build for production
-npm run build
+pnpm build
 
 # Start production server
-npm start
+pnpm start
 
 # Run linting
-npm run lint
+pnpm lint
 
 # Type checking
-npx tsc --noEmit
+pnpm exec tsc --noEmit
 ```
 
 ### Supabase Commands
