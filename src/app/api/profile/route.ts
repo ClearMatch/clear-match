@@ -5,14 +5,12 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createSupabaseServerClient();
     
-    // Get the current session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // Get the current user (secure method)
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     
-    if (sessionError || !session || !session.user) {
+    if (userError || !user) {
       throw new ApiError('Authentication required', 401);
     }
-    
-    const user = session.user;
 
     // Fetch user profile from the profiles table
     const { data: profile, error: profileError } = await supabase
@@ -35,14 +33,12 @@ export async function PUT(request: NextRequest) {
   try {
     const supabase = await createSupabaseServerClient();
     
-    // Get the current session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // Get the current user (secure method)
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     
-    if (sessionError || !session || !session.user) {
+    if (userError || !user) {
       throw new ApiError('Authentication required', 401);
     }
-    
-    const user = session.user;
 
     const body = await request.json();
     const { firstName, lastName, occupation } = body;

@@ -7,7 +7,10 @@ const createJestConfig = nextJest({
 
 // Add any custom config to be passed to Jest
 const customJestConfig = {
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  setupFilesAfterEnv: [
+    '<rootDir>/jest.setup.js',
+    '<rootDir>/src/lib/__tests__/setup.ts'
+  ],
   testEnvironment: 'jsdom',
   moduleNameMapper: {
     // Handle module aliases
@@ -43,6 +46,10 @@ const customJestConfig = {
     '/node_modules/',
     '/__tests__/middleware.*test.ts',
     '/lib/__tests__/api-utils.test.ts',
+    '/lib/__tests__/setup.ts',
+  ],
+  transformIgnorePatterns: [
+    'node_modules/(?!(@upstash/.*|uncrypto)/)'
   ],
   testTimeout: 10000,
   maxWorkers: '50%',
