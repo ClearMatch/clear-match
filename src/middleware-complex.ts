@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { generateNonce, addSecurityHeaders } from './lib/security'
+import { checkRateLimit } from './lib/rate-limit'
+import { checkCSRFToken, setCSRFToken } from './lib/csrf'
 
 /**
  * Enhanced Security Middleware for Clear Match
  * 
  * Features:
  * - Authentication with Supabase
- * - Basic security headers
+ * - Content Security Policy with nonce
+ * - Rate limiting
+ * - CSRF protection
+ * - Security headers
  */
 
 // Public routes that don't require authentication
@@ -32,18 +38,46 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Generate nonce for CSP
+  const nonce = generateNonce()
+  
+  // Create response for cookie and header management
+  let response = NextResponse.next()
+  
+  // Apply security headers with nonce
+  response = addSecurityHeaders(response, nonce)
+  
+  // Apply rate limiting based on route type
+  let rateLimitType: 'auth' | 'api' | 'public' = 'public'
+  if (pathname.startsWith('/auth')) {
+    rateLimitType = 'auth'
+  } else if (pathname.startsWith('/api/')) {
+    rateLimitType = 'api'
+  }
+  
+  const rateLimitResponse = await checkRateLimit(request, rateLimitType)
+  if (rateLimitResponse) {
+    return rateLimitResponse
+  }
+
   // Allow public routes
   if (PUBLIC_ROUTES.some(route => pathname.startsWith(route))) {
     console.log(`🔓 Public route: ${pathname}`)
     
-    let response = NextResponse.next()
-    
-    // Add basic security headers
-    response.headers.set('X-Frame-Options', 'DENY')
-    response.headers.set('X-Content-Type-Options', 'nosniff')
-    response.headers.set('X-XSS-Protection', '1; mode=block')
+    // Set CSRF token for public routes (needed for forms)
+    if (pathname.startsWith('/auth')) {
+      setCSRFToken(response)
+    }
     
     return response
+  }
+  
+  // Check CSRF token for API routes
+  if (pathname.startsWith('/api/')) {
+    const csrfResponse = checkCSRFToken(request)
+    if (csrfResponse) {
+      return csrfResponse
+    }
   }
 
   // Check for required environment variables
@@ -53,8 +87,6 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    let response = NextResponse.next()
-    
     // Create Supabase client with cookie handling
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -92,16 +124,15 @@ export async function middleware(request: NextRequest) {
 
     console.log(`✅ Authenticated user: ${user.id}`)
     
-    // Add basic security headers
-    response.headers.set('X-Frame-Options', 'DENY')
-    response.headers.set('X-Content-Type-Options', 'nosniff')
-    response.headers.set('X-XSS-Protection', '1; mode=block')
+    // Set CSRF token for authenticated users
+    setCSRFToken(response)
     
     // Add performance and monitoring headers
     const duration = Date.now() - startTime
     response.headers.set('x-middleware-cache', 'miss')
     response.headers.set('x-authenticated-user', user.id)
     response.headers.set('x-middleware-duration', duration.toString())
+    response.headers.set('x-nonce', nonce)
     
     // Log performance warning if over threshold
     if (duration > 100) {

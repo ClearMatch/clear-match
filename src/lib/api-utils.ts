@@ -1,7 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { validateCSRFForAPI } from './csrf';
+import { sanitize, validateFileUpload } from './security';
+import { z } from 'zod';
 
 /**
  * Standardized API error responses
@@ -45,7 +48,7 @@ export function handleApiError(error: unknown): NextResponse {
 }
 
 /**
- * Validation helpers
+ * Enhanced validation helpers with security
  */
 export function validateString(
   value: unknown,
@@ -67,7 +70,24 @@ export function validateString(
     throw new ApiError(`${fieldName} must be less than ${maxLength} characters`, 400);
   }
   
-  return value.trim();
+  // Sanitize the string for security
+  const sanitized = sanitize.string(value);
+  return sanitized || null;
+}
+
+export function validateEmail(value: unknown): string {
+  if (!value || typeof value !== 'string') {
+    throw new ApiError('Email is required', 400);
+  }
+  
+  const emailSchema = z.string().email('Invalid email format');
+  const result = emailSchema.safeParse(value);
+  
+  if (!result.success) {
+    throw new ApiError('Invalid email format', 400);
+  }
+  
+  return sanitize.email(value);
 }
 
 export function validatePassword(password: unknown): string {
@@ -83,7 +103,60 @@ export function validatePassword(password: unknown): string {
     throw new ApiError('Password must be less than 128 characters', 400);
   }
   
+  // Enhanced password validation
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasNumbers = /\d/.test(password);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  
+  if (!hasUpperCase || !hasLowerCase || !hasNumbers || !hasSpecialChar) {
+    throw new ApiError(
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+      400
+    );
+  }
+  
   return password;
+}
+
+/**
+ * Validate file upload with security checks
+ */
+export function validateFile(file: File): File {
+  const validation = validateFileUpload(file);
+  
+  if (!validation.valid) {
+    throw new ApiError(validation.error || 'Invalid file', 400);
+  }
+  
+  return file;
+}
+
+/**
+ * API wrapper with built-in security checks
+ */
+export function secureApiHandler(
+  handler: (request: NextRequest, context?: any) => Promise<NextResponse>
+) {
+  return async function(request: NextRequest, context?: any): Promise<NextResponse> {
+    try {
+      // Validate CSRF token for state-changing requests
+      if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
+        validateCSRFForAPI(request);
+      }
+      
+      return await handler(request, context);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Invalid CSRF token') {
+        return NextResponse.json(
+          { error: 'Invalid CSRF token' },
+          { status: 403 }
+        );
+      }
+      
+      return handleApiError(error);
+    }
+  };
 }
 
 /**
@@ -131,10 +204,10 @@ export async function createSupabaseServerClient(): Promise<SupabaseClient> {
 export async function authenticateUser(): Promise<AuthResult> {
   const supabase = await createSupabaseServerClient();
   
-  // Get the current session
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  // Get the current user (secure method)
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
   
-  if (sessionError || !session || !session.user) {
+  if (userError || !user) {
     throw new ApiError('Authentication required', 401);
   }
   
@@ -142,7 +215,7 @@ export async function authenticateUser(): Promise<AuthResult> {
   const { data: profileData, error: profileError } = await supabase
     .from("profiles")
     .select("organization_id")
-    .eq("id", session.user.id)
+    .eq("id", user.id)
     .single();
     
   if (profileError) {
@@ -151,8 +224,8 @@ export async function authenticateUser(): Promise<AuthResult> {
   
   return {
     user: {
-      id: session.user.id,
-      email: session.user.email!,
+      id: user.id,
+      email: user.email!,
       organizationId: profileData.organization_id,
     },
     supabase,
