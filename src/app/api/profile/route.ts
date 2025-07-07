@@ -3,7 +3,7 @@ import { handleApiError, validateString, ApiError, createSupabaseServerClient } 
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     
     // Get the current session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     
     // Get the current session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();

@@ -103,8 +103,8 @@ export interface AuthResult {
 /**
  * Creates a Supabase server client with proper cookie handling
  */
-export function createSupabaseServerClient(): SupabaseClient {
-  const cookieStore = cookies();
+export async function createSupabaseServerClient(): Promise<SupabaseClient> {
+  const cookieStore = await cookies();
   
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -129,7 +129,7 @@ export function createSupabaseServerClient(): SupabaseClient {
  * Authenticates the user and returns user info with organization ID
  */
 export async function authenticateUser(): Promise<AuthResult> {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   
   // Get the current session
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
