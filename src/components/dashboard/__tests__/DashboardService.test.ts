@@ -83,7 +83,7 @@ describe('DashboardService', () => {
       const actions = dashboardService.generateContactActions(mockContacts)
 
       expect(actions).toHaveLength(1)
-      expect(actions[0].contactId).toBe('contact-1')
+      expect(actions[0]?.contactId).toBe('contact-1')
     })
 
     it('should handle contacts with missing names', () => {
@@ -101,7 +101,7 @@ describe('DashboardService', () => {
       const actions = dashboardService.generateContactActions(mockContacts)
 
       expect(actions).toHaveLength(1)
-      expect(actions[0].contactName).toBe('Unknown Contact')
+      expect(actions[0]?.contactName).toBe('Unknown Contact')
     })
   })
 
@@ -143,9 +143,9 @@ describe('DashboardService', () => {
       const sorted = dashboardService.sortRecommendedActions(actions)
 
       // Should be sorted by priority (high first), then by due date (earliest first)
-      expect(sorted[0].id).toBe('3') // high priority, earliest date
-      expect(sorted[1].id).toBe('2') // high priority, later date
-      expect(sorted[2].id).toBe('1') // medium priority
+      expect(sorted[0]?.id).toBe('3') // high priority, earliest date
+      expect(sorted[1]?.id).toBe('2') // high priority, later date
+      expect(sorted[2]?.id).toBe('1') // medium priority
     })
   })
 })

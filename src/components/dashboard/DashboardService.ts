@@ -39,7 +39,7 @@ const fetchCandidatesData = async (userId: string) => {
     throw new Error("Could not fetch user profile");
   }
 
-  const organizationId = profiles[0].organization_id;
+  const organizationId = profiles[0]?.organization_id;
 
   // Single optimized query to get all contact data at once
   const { data: allContacts, error: contactsError } = await supabase
