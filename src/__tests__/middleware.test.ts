@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { middleware } from '../../middleware';
+import { middleware } from '../middleware';
 
 // Mock Supabase
 jest.mock('@supabase/ssr', () => ({

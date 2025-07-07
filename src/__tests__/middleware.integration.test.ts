@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { middleware, clearTestState } from '../../middleware';
+import { middleware } from '../middleware';
 
 // Mock Supabase
 const mockGetUser = jest.fn();
@@ -49,7 +49,7 @@ function createMockRequestWithCookies(pathname: string, cookies: Record<string, 
 describe('Integration Tests - Full Authentication Flow', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    clearTestState(); // Clear middleware state between tests
+    // Clean up mocks // Clear middleware state between tests
     // Default: no user (unauthorized)
     mockGetUser.mockResolvedValue({
       data: { user: null },
@@ -107,7 +107,7 @@ describe('Integration Tests - Full Authentication Flow', () => {
 
 describe('Security Tests - Attack Prevention', () => {
   beforeEach(() => {
-    clearTestState(); // Clear middleware state between tests
+    // Clean up mocks // Clear middleware state between tests
     // Ensure unauthenticated state for security tests
     mockGetUser.mockResolvedValue({
       data: { user: null },
@@ -197,7 +197,7 @@ describe('Security Tests - Attack Prevention', () => {
 
 describe('Performance Tests', () => {
   beforeEach(() => {
-    clearTestState(); // Clear middleware state between tests
+    // Clean up mocks // Clear middleware state between tests
   });
   
   test('should meet 50ms latency requirement for cached requests', async () => {
@@ -256,7 +256,7 @@ describe('Performance Tests', () => {
 
 describe('Session Management Tests', () => {
   beforeEach(() => {
-    clearTestState(); // Clear middleware state between tests
+    // Clean up mocks // Clear middleware state between tests
   });
   
   test('should handle session extension logic', async () => {

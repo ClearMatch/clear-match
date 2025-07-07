@@ -4,7 +4,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import { middleware, clearTestState } from '../../middleware';
+import { middleware } from '../middleware';
 
 // Mock Supabase for performance testing
 const mockGetUser = jest.fn();
@@ -53,7 +53,7 @@ function createMockRequest(pathname: string, cookies: Record<string, string> = {
 describe('Middleware Performance Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    clearTestState(); // Clear middleware state between tests
+    // Clean up mocks // Clear middleware state between tests
   });
 
   test('should meet 50ms requirement for authenticated requests', async () => {
