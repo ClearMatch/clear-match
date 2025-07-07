@@ -3,12 +3,12 @@ import { handleApiError, validateString, ApiError, authenticateUser } from '@/li
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { user, supabase } = await authenticateUser();
     
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     
     // Extract and validate task data
@@ -133,12 +133,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { user, supabase } = await authenticateUser();
     
-    const { id } = params;
+    const { id } = await params;
 
     // First, check if the task exists and belongs to the user's organization
     const { data: task, error: taskError } = await supabase

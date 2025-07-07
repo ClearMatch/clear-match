@@ -73,21 +73,6 @@ You have access to multiple MCP servers to enhance development efficiency:
   - Find React Hook Form validation examples
   - Understand Supabase authentication patterns
 
-### Playwright MCP Server
-- **Purpose**: Browser automation and testing
-- **Usage**: Test changes directly in the browser, automate user interactions, capture screenshots
-- **When to use**: 
-  - Verify new features work correctly in the browser
-  - Test user workflows and interactions
-  - Capture visual proof of functionality
-  - Regression testing after changes
-  - Accessibility testing
-- **Examples**:
-  - Test form submissions and validation
-  - Verify responsive design across viewports
-  - Test authentication flows
-  - Capture screenshots of new UI components
-  - Test candidate management workflows
 
 ## Development Workflow
 
@@ -102,14 +87,13 @@ You have access to multiple MCP servers to enhance development efficiency:
 1. **Setup**: Pull main branch and create new branch with issue number
 2. **Development**: Implement features following code standards
 3. **Testing**: Run tests and ensure all pass
-4. **Browser Testing**: Use Playwright MCP server to test changes in browser
-5. **Quality Checks**: Run linting and type checking
-6. **Commit Locally**: Use descriptive commit messages (local commits only)
-7. **Request Approval**: Show completed work and ask "Does this look good?"
-8. **Wait for User Confirmation**: Do not proceed without explicit approval
-9. **Push & PR**: Only after approval, push commits and create PR
-10. **Review**: Address feedback and update as needed
-11. **Merge**: Use "Squash and Merge" option
+4. **Quality Checks**: Run linting and type checking
+5. **Commit Locally**: Use descriptive commit messages (local commits only)
+6. **Request Approval**: Show completed work and ask "Does this look good?"
+7. **Wait for User Confirmation**: Do not proceed without explicit approval
+8. **Push & PR**: Only after approval, push commits and create PR
+9. **Review**: Address feedback and update as needed
+10. **Merge**: Use "Squash and Merge" option
 
 #### For Existing Branches
 1. **Update Branch**: Always rebase against main before starting work
@@ -339,8 +323,8 @@ gh pr create --title "Title" --body "Description"
 ### Testing Tools
 - **Jest**: Unit testing framework
 - **React Testing Library**: Component testing
-- **Playwright**: E2E testing
 - **MSW**: API mocking
+- **Note**: Playwright is not used in this project due to removal issues
 
 ### Test Patterns
 ```typescript

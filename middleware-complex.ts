@@ -196,6 +196,9 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const startTime = Date.now();
   
+  // Add a simple console log to verify middleware is running
+  console.log(`🔒 Middleware executing for: ${pathname}`);
+  
   // Skip middleware for static files, _next, and favicon
   if (
     pathname.startsWith('/_next') ||
