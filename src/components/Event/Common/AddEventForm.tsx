@@ -11,6 +11,8 @@ import { Entity, Organization } from "../AddEvent/Types";
 import { insertEvent } from "../Services/eventService";
 import EventFields from "./EventFields";
 import { EventSchema, useEventForm } from "./schema";
+import { errorHandlers } from "@/lib/error-handling";
+import { queryKeyUtils } from "@/lib/query-keys";
 
 interface AddEventFormProps {
   candidates: Entity[];
@@ -36,13 +38,22 @@ export const AddEventForm = memo(function AddEventForm({
         description: "Event added successfully.",
       });
       form.reset();
+      
+      // Use granular cache invalidation
       queryClient.invalidateQueries({ queryKey: ["events"] });
+      
+      // Also invalidate dashboard if user is available
+      if (auth.user?.id) {
+        queryKeyUtils.invalidateDashboardAfterMutation(queryClient, auth.user.id);
+      }
+      
       router.push("/event");
     },
     onError: (error) => {
+      const errorMessage = errorHandlers.event.create(error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
+        description: errorMessage,
         variant: "destructive",
       });
     },

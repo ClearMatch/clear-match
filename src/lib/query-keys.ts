@@ -221,6 +221,59 @@ export const queryKeyUtils = {
     
     return Promise.all(prefetchPromises);
   },
+
+  /**
+   * Granular cache invalidation helpers
+   */
+  invalidateContactsAfterMutation: (queryClient: QueryClient, contactId?: string) => {
+    // Always invalidate lists to show updated data
+    queryClient.invalidateQueries({ queryKey: contactKeys.lists() });
+    
+    // If we have a specific contact, invalidate its details and related data
+    if (contactId) {
+      queryClient.invalidateQueries({ queryKey: contactKeys.detail(contactId) });
+      queryClient.invalidateQueries({ queryKey: contactKeys.tasks(contactId) });
+      queryClient.invalidateQueries({ queryKey: contactKeys.events(contactId) });
+    }
+  },
+
+  invalidateTasksAfterMutation: (queryClient: QueryClient, taskId?: string, contactId?: string) => {
+    // Always invalidate task lists
+    queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+    
+    // If we have a specific task, invalidate its details
+    if (taskId) {
+      queryClient.invalidateQueries({ queryKey: taskKeys.detail(taskId) });
+    }
+    
+    // If task is related to a contact, invalidate contact's tasks
+    if (contactId) {
+      queryClient.invalidateQueries({ queryKey: contactKeys.tasks(contactId) });
+    }
+  },
+
+  invalidateDashboardAfterMutation: (queryClient: QueryClient, userId?: string) => {
+    // Invalidate dashboard data that might be affected by mutations
+    if (userId) {
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.stats(userId) });
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.activity(userId) });
+    }
+  },
+
+  /**
+   * Validation helper for query keys
+   */
+  validateQueryKey: (key: readonly unknown[]): readonly unknown[] => {
+    if (key.length > 4) {
+      console.warn('Query key depth exceeds recommended limit (4 levels):', key);
+    }
+    
+    if (key.some(segment => segment === undefined || segment === null)) {
+      console.warn('Query key contains undefined/null segments:', key);
+    }
+    
+    return key;
+  },
 } as const;
 
 /**

@@ -12,7 +12,22 @@ describe('QueryClient Configuration', () => {
     it('should have correct retry configuration', () => {
       const defaultOptions = queryClient.getDefaultOptions();
       
-      expect(defaultOptions.queries?.retry).toBe(3);
+      expect(typeof defaultOptions.queries?.retry).toBe('function');
+      
+      // Test smart retry logic
+      const retryFn = defaultOptions.queries?.retry;
+      if (typeof retryFn === 'function') {
+        // Network errors should be retried
+        const networkError = new Error('Network request failed');
+        expect(retryFn(0, networkError)).toBe(true);
+        expect(retryFn(1, networkError)).toBe(true);
+        expect(retryFn(2, networkError)).toBe(true);
+        expect(retryFn(3, networkError)).toBe(false);
+        
+        // Validation errors should not be retried
+        const validationError = { status: 400, message: 'Invalid input' };
+        expect(retryFn(1, validationError)).toBe(false);
+      }
     });
 
     it('should have exponential backoff retry delay', () => {
@@ -111,7 +126,7 @@ describe('QueryClient Configuration', () => {
       const failingQueryFn = () => {
         attemptCount++;
         if (attemptCount < 3) {
-          return Promise.reject(new Error(`Attempt ${attemptCount} failed`));
+          return Promise.reject(new Error(`Network request failed - attempt ${attemptCount}`));
         }
         return Promise.resolve('success');
       };
@@ -129,7 +144,7 @@ describe('QueryClient Configuration', () => {
       let attemptCount = 0;
       const alwaysFailingQueryFn = () => {
         attemptCount++;
-        return Promise.reject(new Error(`Attempt ${attemptCount} failed`));
+        return Promise.reject(new Error(`Network request failed - attempt ${attemptCount}`));
       };
 
       try {
@@ -139,7 +154,7 @@ describe('QueryClient Configuration', () => {
         });
         fail('Query should have failed');
       } catch (error) {
-        expect(attemptCount).toBe(4); // Initial attempt + 3 retries
+        expect(attemptCount).toBe(4); // Initial attempt + 3 retries for network errors
         expect(error).toBeInstanceOf(Error);
       }
     });
@@ -265,7 +280,7 @@ describe('QueryClient Configuration', () => {
       expect(defaultOptions.queries?.staleTime).toBeGreaterThan(0);
       
       // Should have retry logic for resilience
-      expect(defaultOptions.queries?.retry).toBeGreaterThan(0);
+      expect(typeof defaultOptions.queries?.retry).toBe('function');
     });
 
     it('should handle large numbers of queries without memory leaks', async () => {
