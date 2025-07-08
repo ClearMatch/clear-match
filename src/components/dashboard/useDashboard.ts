@@ -1,6 +1,7 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import useSWR from "swr";
+import useSWRMutation from "swr/mutation";
 import { dashboardService } from "./DashboardService";
 import { DashboardStats, RecentActivity, RecommendedAction } from "./Types";
 
@@ -18,54 +19,51 @@ interface UseDashboardReturn {
   mutate: (data?: DashboardData) => Promise<DashboardData | undefined>;
 }
 
-const fetchDashboardData = async (userId: string) => {
+const fetchDashboardData = async (key: string, userId: string) => {
   return await dashboardService.fetchDashboardData(userId);
 };
 
+const mutateDashboardData = async (
+  url: string,
+  { arg }: { arg: { userId: string } }
+) => {
+  return await dashboardService.fetchDashboardData(arg.userId);
+};
+
 export function useDashboard(userId: string | undefined): UseDashboardReturn {
-  const queryClient = useQueryClient();
-  
-  const { data, error, isLoading, refetch: queryRefetch } = useQuery({
-    queryKey: ["dashboard", userId],
-    queryFn: () => fetchDashboardData(userId!),
-    enabled: !!userId,
-    staleTime: 60000, // 1 minute
-    retry: 3,
-  });
+  const { data, error, isLoading, mutate } = useSWR(
+    userId ? [`dashboard-${userId}`, userId] : null,
+    ([key, userId]) => fetchDashboardData(key, userId),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 60000, // 1 minute deduping
+      errorRetryCount: 3,
+      errorRetryInterval: 1000,
+    }
+  );
+
+  const { trigger: triggerRefetch, isMutating } = useSWRMutation(
+    userId ? `dashboard-${userId}` : null,
+    mutateDashboardData
+  );
 
   const refetch = async () => {
     if (!userId) return undefined;
 
     try {
-      const result = await queryRefetch();
-      return result.data;
+      const result = await triggerRefetch({ userId });
+      mutate(result, false);
+      return result;
     } catch (error) {
       console.error("Error refetching dashboard data:", error);
       throw error;
     }
   };
 
-  const mutate = async (data?: DashboardData) => {
-    if (!userId) return undefined;
-    
-    if (data) {
-      // Update cache with new data
-      queryClient.setQueryData(["dashboard", userId], data);
-      return data;
-    } else {
-      // Invalidate and refetch
-      await queryClient.invalidateQueries({ queryKey: ["dashboard", userId] });
-      const result = await queryClient.fetchQuery({
-        queryKey: ["dashboard", userId],
-        queryFn: () => fetchDashboardData(userId),
-      });
-      return result;
-    }
-  };
-
   return {
     data,
-    loading: isLoading,
+    loading: isLoading || isMutating,
     error,
     refetch,
     mutate,

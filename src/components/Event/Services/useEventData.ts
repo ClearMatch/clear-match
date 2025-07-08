@@ -1,7 +1,16 @@
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+import useSWR from "swr";
 import { fetchCandidates, fetchOrganizations } from "../Services/dataFetchers";
+
+const SWR_CONFIG = {
+  revalidateOnFocus: false,
+  revalidateOnReconnect: false,
+  refreshInterval: 0,
+  dedupingInterval: 60000,
+  errorRetryCount: 3,
+  errorRetryInterval: 1000,
+};
 
 export function useEventData() {
   const { toast } = useToast();
@@ -10,9 +19,9 @@ export function useEventData() {
     data: allData,
     error,
     isLoading,
-  } = useQuery({
-    queryKey: ["event-form-data"],
-    queryFn: async () => {
+  } = useSWR(
+    "event-form-data",
+    async () => {
       try {
         const [candidates, organizations] = await Promise.all([
           fetchCandidates(),
@@ -23,9 +32,8 @@ export function useEventData() {
         throw error;
       }
     },
-    staleTime: 60000, // 1 minute
-    retry: 3,
-  });
+    SWR_CONFIG
+  );
 
   useEffect(() => {
     if (error) {

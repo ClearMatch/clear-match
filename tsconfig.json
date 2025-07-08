@@ -32,8 +32,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "next.config.js",
-    "tailwind.config.js",
-    "src/types/jest-dom.d.ts"
+    "tailwind.config.js"
   ],
   "exclude": ["node_modules"]
 }

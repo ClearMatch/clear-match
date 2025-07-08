@@ -6,13 +6,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { memo, useCallback } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import useSWRMutation from "swr/mutation";
 import { Entity, Organization } from "../AddEvent/Types";
 import { insertEvent } from "../Services/eventService";
 import EventFields from "./EventFields";
 import { EventSchema, useEventForm } from "./schema";
-import { errorHandlers } from "@/lib/error-handling";
-import { queryKeyUtils } from "@/lib/query-keys";
 
 interface AddEventFormProps {
   candidates: Entity[];
@@ -29,35 +27,7 @@ export const AddEventForm = memo(function AddEventForm({
   const { toast } = useToast();
   const router = useRouter();
   const auth = useAuth();
-  const queryClient = useQueryClient();
-  const { mutate: trigger, isPending: isMutating } = useMutation({
-    mutationFn: (data: EventSchema & { userId: string }) => insertEvent("", { arg: data }),
-    onSuccess: (data) => {
-      toast({
-        title: "Success",
-        description: "Event added successfully.",
-      });
-      form.reset();
-      
-      // Use enhanced cache invalidation with operation type and related data
-      queryKeyUtils.invalidateRelatedData(queryClient, {
-        eventId: data?.[0]?.id,
-        contactId: form.getValues('contact_id'),
-        userId: auth.user?.id,
-        operationType: 'create',
-      });
-      
-      router.push("/event");
-    },
-    onError: (error) => {
-      const errorMessage = errorHandlers.event.create(error);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    },
-  });
+  const { trigger, isMutating } = useSWRMutation("events", insertEvent);
 
   const onSubmit = useCallback(
     async (data: EventSchema) => {
@@ -79,12 +49,31 @@ export const AddEventForm = memo(function AddEventForm({
         return;
       }
 
-      trigger({
-        ...data,
-        userId: auth.user.id,
-      });
+      try {
+        await trigger({
+          ...data,
+          userId: auth.user.id,
+        });
+
+        toast({
+          title: "Success",
+          description: "Event added successfully.",
+        });
+
+        form.reset();
+        router.push("/event");
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Something went wrong";
+
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     },
-    [trigger, auth.user?.id, toast]
+    [trigger, auth.user?.id, form, router, toast]
   );
 
   return (

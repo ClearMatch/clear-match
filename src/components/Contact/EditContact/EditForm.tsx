@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import useSWRMutation from "swr/mutation";
 import ContactFields from "../Common/ContactFields";
 import { Schema, useUserForm } from "../Common/schema";
 import { Contact } from "./Types";
@@ -22,35 +22,22 @@ function EditForm({ data, id }: Props) {
   const auth = useAuth();
   const router = useRouter();
 
-  const queryClient = useQueryClient();
-
-  async function updateContact({ id, formData }: { id: string; formData: Schema }) {
+  async function updateContact(
+    _: string,
+    { arg }: { arg: { id: string; formData: Schema } }
+  ) {
     const { error } = await supabase
       .from("contacts")
-      .update({ ...formData, updated_by: auth.user?.id })
-      .eq("id", id);
+      .update({ ...arg.formData, updated_by: auth.user?.id })
+      .eq("id", arg.id);
 
     if (error) throw new Error(error.message);
   }
 
-  const { mutate: trigger, isPending: isMutating } = useMutation({
-    mutationFn: updateContact,
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Contact updated successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["contacts"] });
-      router.push("/contacts");
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
-        variant: "destructive",
-      });
-    },
-  });
+  const { trigger, isMutating } = useSWRMutation(
+    "update-contact",
+    updateContact
+  );
   useEffect(() => {
     if (data) {
       form.reset({
@@ -80,7 +67,19 @@ function EditForm({ data, id }: Props) {
   }, [data, form]);
 
   const onSubmit = async (formData: Schema) => {
-    trigger({ id, formData });
+    try {
+      await trigger({ id, formData });
+      toast({
+        title: "Contact updated successfully",
+      });
+      form.reset();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Update failed",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

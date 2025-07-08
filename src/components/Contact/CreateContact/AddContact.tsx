@@ -5,8 +5,8 @@ import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import useSWRMutation from "swr/mutation";
 import ContactFields from "../Common/ContactFields";
 import { Schema, useUserForm } from "../Common/schema";
 
@@ -15,40 +15,34 @@ function AddContact() {
   const { toast } = useToast();
   const router = useRouter();
   const auth = useAuth();
-  const queryClient = useQueryClient();
 
-  async function insertContact(data: Schema) {
-    const { error } = await supabase.from("contacts").insert({
-      ...data,
-      past_company_sizes: [data.past_company_sizes],
+  async function insertContact(url: string, { arg }: { arg: Schema }) {
+    const { error } = await supabase.from(url).insert({
+      ...arg,
+      past_company_sizes: [arg.past_company_sizes],
       created_by: auth.user?.id,
     });
     if (error) throw new Error(error.message);
   }
 
-  const { mutate: trigger, isPending: isMutating } = useMutation({
-    mutationFn: insertContact,
-    onSuccess: () => {
+  const { trigger, isMutating } = useSWRMutation("contacts", insertContact);
+
+  const onSubmit = async (data: Schema) => {
+    try {
+      await trigger(data);
       toast({
         title: "Success",
         description: "Contact added successfully.",
       });
       form.reset();
-      // Invalidate contacts queries to refetch updated data
-      queryClient.invalidateQueries({ queryKey: ["contacts"] });
       router.push("/contacts");
-    },
-    onError: (error) => {
+    } catch (error) {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Something went wrong",
         variant: "destructive",
       });
-    },
-  });
-
-  const onSubmit = async (data: Schema) => {
-    trigger(data);
+    }
   };
 
   return (

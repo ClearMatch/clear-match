@@ -6,7 +6,7 @@ import TextInputField from "@/components/Contact/Common/TextInputField";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useMemo } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import useSWRMutation from "swr/mutation";
 import {
   activityTypeOptions,
   priorityOptions,
@@ -34,26 +34,7 @@ function AddTaskForm({
   const form = useTaskForm();
   const { toast } = useToast();
   const auth = useAuth();
-  const queryClient = useQueryClient();
-  const { mutate: trigger, isPending: isMutating } = useMutation({
-    mutationFn: (data: TaskSchema & { userId: string }) => insertTask("", { arg: data }),
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Task added successfully.",
-      });
-      form.reset();
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      onSuccess?.();
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
-        variant: "destructive",
-      });
-    },
-  });
+  const { trigger, isMutating } = useSWRMutation("activities", insertTask);
 
   // Set the contact_id in the form when component mounts
   useMemo(() => {

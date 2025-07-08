@@ -6,12 +6,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { mutate } from "swr";
+import useSWRMutation from "swr/mutation";
 import { updateActivityStatus } from "../Services";
 import { statusOptions } from "../Services/Types";
+import { CACHE_KEYS } from "../Common/cacheKeys";
 
 // Status color mapping - moved outside component to prevent recreation
 const STATUS_COLORS = {
@@ -36,22 +38,25 @@ interface Props {
 const TaskStatus = ({ status, id }: Props) => {
   const [taskStatus, setTaskStatus] = useState<string>(status);
   const [previousStatus, setPreviousStatus] = useState<string>(status);
-  const queryClient = useQueryClient();
 
-  const { mutate: updateStatus, isPending: isMutating } = useMutation({
-    mutationFn: (newStatus: string) => updateActivityStatus(id, newStatus),
-    onSuccess: () => {
-      toast.success("Task status updated successfully");
-      // Invalidate tasks queries to refetch updated data
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  const { trigger: updateStatus, isMutating } = useSWRMutation(
+    CACHE_KEYS.UPDATE_ACTIVITY(id),
+    async (_, { arg }: { arg: string }) => {
+      return updateActivityStatus(id, arg);
     },
-    onError: (error) => {
-      console.error("Status update error:", error);
-      toast.error("Failed to update task status");
-      // Rollback to previous status, not initial prop
-      setTaskStatus(previousStatus);
-    },
-  });
+    {
+      onSuccess: () => {
+        toast.success("Task status updated successfully");
+        mutate(CACHE_KEYS.ACTIVITIES_WITH_RELATIONS);
+      },
+      onError: (error) => {
+        console.error("Status update error:", error);
+        toast.error("Failed to update task status");
+        // Rollback to previous status, not initial prop
+        setTaskStatus(previousStatus);
+      },
+    }
+  );
 
   const handleStatusChange = (newStatus: string) => {
     if (newStatus === taskStatus) return;

@@ -2,7 +2,7 @@
 
 import { Loader } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import useSWR from "swr";
 import { ActivityData } from "../Services/Types";
 import { fetchTaskById } from "../Services";
 
@@ -12,11 +12,10 @@ const EditTask = () => {
   const params = useParams();
   const selectId = params?.id as string;
 
-  const { data, error, isLoading } = useQuery<ActivityData>({
-    queryKey: ["activity", selectId],
-    queryFn: () => fetchTaskById(selectId),
-    enabled: !!selectId,
-  });
+  const { data, error, isLoading } = useSWR<ActivityData>(
+    selectId ? ["activity", selectId] : null,
+    () => fetchTaskById(selectId)
+  );
 
   return (
     <div className="p-4 bg-white">

@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader } from "lucide-react";
+import useSWRMutation from "swr/mutation";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,10 @@ interface Props {
   selectId: string | null;
 }
 
-const deleteContactFn = async (id: string): Promise<void> => {
+const deleteContactFn = async (
+  url: string,
+  { arg: id }: { arg: string }
+): Promise<void> => {
   const { error } = await supabase.from("contacts").delete().eq("id", id);
   if (error) throw error;
 };
@@ -31,28 +34,21 @@ const DeleteContact = ({
   onRefetchContacts,
   selectId,
 }: Props) => {
-  const queryClient = useQueryClient();
-  
   const {
-    mutate: deleteContact,
-    isPending: deleting,
+    trigger: deleteContact,
+    isMutating: deleting,
     error,
-  } = useMutation({
-    mutationFn: deleteContactFn,
-    onSuccess: () => {
-      // Invalidate contacts queries to refetch updated data
-      queryClient.invalidateQueries({ queryKey: ["contacts"] });
-      onRefetchContacts();
-      onClose();
-    },
-    onError: (err) => {
-      console.error("Delete error:", err);
-    },
-  });
+  } = useSWRMutation("delete-contact", deleteContactFn);
 
   const handleDelete = async () => {
     if (!selectId) return;
-    deleteContact(selectId);
+    try {
+      await deleteContact(selectId);
+      onRefetchContacts();
+      onClose();
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
   };
 
   return (

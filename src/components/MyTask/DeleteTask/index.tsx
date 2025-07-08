@@ -11,7 +11,7 @@ import {
 } from "../../ui/dialog";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { mutate } from "swr";
 import { CACHE_KEYS } from "../Common/cacheKeys";
 
 interface Props {
@@ -22,7 +22,6 @@ interface Props {
 
 const DeleteTask = ({ isOpen, onClose, taskId }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
-  const queryClient = useQueryClient();
 
   const handleDelete = async () => {
     if (!taskId) return;
@@ -43,7 +42,7 @@ const DeleteTask = ({ isOpen, onClose, taskId }: Props) => {
       toast.success("Task deleted successfully");
       
       // Only invalidate cache after successful server confirmation
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      await mutate(CACHE_KEYS.ACTIVITIES_WITH_RELATIONS);
       onClose();
     } catch (error) {
       console.error("Delete task error:", error);
