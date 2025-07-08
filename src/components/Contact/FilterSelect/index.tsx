@@ -20,6 +20,7 @@ type FilterSelectProps = {
   options: Option[];
   placeholder: string;
   label: string;
+  containerClassName?: string;
 };
 
 function FilterSelect({
@@ -28,14 +29,15 @@ function FilterSelect({
   options,
   placeholder,
   label,
+  containerClassName,
 }: FilterSelectProps) {
   const selectedLabel = selected
     ? options.find((opt) => opt.value === selected)?.label
     : "";
 
   return (
-    <div>
-      <div className="text-lg font-medium text-gray-700 mb-4">{label}</div>
+    <div className={cn(containerClassName)}>
+      <div className="text-sm font-medium text-gray-700 mb-2">{label}</div>
       <Select value={selected} onValueChange={onChange}>
         <SelectTrigger className="w-full bg-gray-100 border border-gray-300 pl-3 pr-7">
           <SelectValue placeholder={placeholder}>
