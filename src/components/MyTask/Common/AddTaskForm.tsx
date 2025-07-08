@@ -5,7 +5,7 @@ import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import useSWRMutation from "swr/mutation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Entity, Event, Organization } from "../AddTask/Types";
 import TaskFields from "../Common/TaskFields";
 import { TaskSchema, useTaskForm } from "../Common/schema";
@@ -30,7 +30,19 @@ export function AddTaskForm({
   const { toast } = useToast();
   const router = useRouter();
   const auth = useAuth();
-  const { trigger, isMutating } = useSWRMutation("activities", insertTask);
+  const queryClient = useQueryClient();
+  const { mutate: trigger, isPending: isMutating } = useMutation({
+    mutationFn: (data: TaskSchema & { userId: string }) => insertTask("", { arg: data }),
+    onSuccess: () => {
+      toast({ title: "Success", description: "Task added successfully." });
+      form.reset();
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      router.push("/task");
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error instanceof Error ? error.message : "Something went wrong", variant: "destructive" });
+    },
+  });
 
   const onSubmit = async (data: TaskSchema) => {
     if (!data.contact_id) {

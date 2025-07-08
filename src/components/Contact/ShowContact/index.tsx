@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo } from "react";
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { fetchContactById } from "./contactService";
 import TasksTab from "./TasksTab";
 import EventsTab from "./EventsTab";
@@ -28,11 +28,12 @@ function ShowContact() {
     data: contact,
     error,
     isLoading,
-  } = useSWR(
-    contactId ? ["contacts", contactId] : null,
-    () => fetchContactById(contactId),
-    { errorRetryCount: 3 }
-  );
+  } = useQuery({
+    queryKey: ["contact", contactId],
+    queryFn: () => fetchContactById(contactId),
+    enabled: !!contactId,
+    retry: 3,
+  });
 
   // Optimize contact name computation
   const contactFullName = useMemo(

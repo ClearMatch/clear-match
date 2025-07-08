@@ -5,12 +5,14 @@ import { Form } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import useSWRMutation from "swr/mutation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { TaskSchema, useTaskForm } from "../Common/schema";
 import TaskFields from "../Common/TaskFields";
 import { ActivityData } from "../Services/Types";
 import { useTaskData } from "../Services/useTaskData";
 import { supabase } from "@/lib/supabase";
+import { errorHandlers } from "@/lib/error-handling";
+import { queryKeyUtils } from "@/lib/query-keys";
 
 interface Props {
   data: ActivityData;
@@ -127,23 +129,34 @@ function EditForm({ data, selectId }: Props) {
     }
   }
 
-  const { trigger, isMutating } = useSWRMutation("activities", updateActivity);
+  const queryClient = useQueryClient();
+  const { mutate: trigger, isPending: isMutating } = useMutation({
+    mutationFn: ({ selectId, formData }: { selectId: string; formData: TaskSchema }) => updateActivity("", { arg: { selectId, formData } }),
+    onSuccess: (updatedTask) => {
+      toast({ title: "Task updated successfully" });
+      
+      // Use enhanced cache invalidation with operation type and related data
+      queryKeyUtils.invalidateRelatedData(queryClient, {
+        taskId: selectId,
+        contactId: updatedTask?.contact_id,
+        userId: updatedTask?.assigned_to,
+        operationType: 'update',
+      });
+      
+      route.push("/task");
+    },
+    onError: (error) => {
+      const errorMessage = errorHandlers.task.update(error);
+      toast({ 
+        title: "Error", 
+        description: errorMessage, 
+        variant: "destructive" 
+      });
+    },
+  });
 
   const onSubmit = async (formData: TaskSchema) => {
-    try {
-      await trigger({ selectId, formData });
-      route.push("/task");
-      toast({
-        title: "Task updated successfully",
-      });
-      form.reset();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Update failed",
-        variant: "destructive",
-      });
-    }
+    trigger({ selectId, formData });
   };
 
   return (

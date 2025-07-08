@@ -1,6 +1,6 @@
 import { useDebounce } from "@/hooks/useDebounce";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
-import useSWR from "swr";
 import {
   fetchActivitiesWithRelations,
   fetchAssigneeOptions,
@@ -44,22 +44,15 @@ export function useTasks() {
     filters?.created_by,
   ]);
 
-  const swrKey = useMemo(() => {
-    const filterKey =
-      Object.keys(memoizedFilters).length > 0
-        ? JSON.stringify(memoizedFilters)
-        : "no-filters";
-    return `activities-${debouncedSearchQuery || "no-search"}-${filterKey}`;
-  }, [debouncedSearchQuery, memoizedFilters]);
+  const queryClient = useQueryClient();
 
   const {
     data: tasks,
     error,
     isLoading,
-    mutate,
-  } = useSWR<ActivityWithRelations[]>(
-    swrKey,
-    async () => {
+  } = useQuery<ActivityWithRelations[]>({
+    queryKey: ["tasks", { search: debouncedSearchQuery, filters: memoizedFilters }],
+    queryFn: async () => {
       try {
         return await fetchActivitiesWithRelations(
           debouncedSearchQuery || undefined,
@@ -68,42 +61,28 @@ export function useTasks() {
             : undefined
         );
       } catch (error) {
-        console.error("Error in SWR fetcher:", error);
+        // Only log in development, not in tests
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error in query fetcher:", error);
+        }
         throw error;
       }
     },
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 2000,
-      onError: (error) => {
-        console.error("SWR Error:", error);
-      },
-    }
-  );
+    staleTime: 2000,
+    placeholderData: (previousData) => previousData, // Keep previous data while loading
+  });
 
-  const { data: assigneeOptions } = useSWR(
-    "assignee-options",
-    fetchAssigneeOptions,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 60000,
-      onError: (error) => {
-        console.error("Error fetching assignee options:", error);
-      },
-    }
-  );
+  const { data: assigneeOptions } = useQuery({
+    queryKey: ["assignee-options"],
+    queryFn: fetchAssigneeOptions,
+    staleTime: 60000, // 1 minute
+  });
 
-  const { data: creatorOptions } = useSWR(
-    "creator-options",
-    fetchCreatorOptions,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 60000,
-      onError: (error) => {
-        console.error("Error fetching creator options:", error);
-      },
-    }
-  );
+  const { data: creatorOptions } = useQuery({
+    queryKey: ["creator-options"],
+    queryFn: fetchCreatorOptions,
+    staleTime: 60000, // 1 minute
+  });
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchInputValue(value);
@@ -154,8 +133,8 @@ export function useTasks() {
   }, []);
 
   const refetchTasks = useCallback(() => {
-    mutate();
-  }, [mutate]);
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  }, [queryClient]);
 
   return {
     tasks: tasks || [],

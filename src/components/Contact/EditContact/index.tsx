@@ -3,7 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import { Loader } from "lucide-react";
 import { useParams } from "next/navigation";
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import EditForm from "./EditForm";
 import { Contact } from "./Types";
 
@@ -22,10 +22,11 @@ const EditContact = () => {
     return data;
   };
 
-  const { data, error, isLoading } = useSWR<Contact>(
-    selectId ? ["contact", selectId] : null,
-    () => fetchContactById(selectId)
-  );
+  const { data, error, isLoading } = useQuery<Contact>({
+    queryKey: ["contact", selectId],
+    queryFn: () => fetchContactById(selectId),
+    enabled: !!selectId,
+  });
 
   return (
     <div className="p-4 bg-white">
