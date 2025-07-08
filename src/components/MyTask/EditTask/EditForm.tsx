@@ -5,7 +5,7 @@ import { Form } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import useSWRMutation from "swr/mutation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { TaskSchema, useTaskForm } from "../Common/schema";
 import TaskFields from "../Common/TaskFields";
 import { ActivityData } from "../Services/Types";
@@ -127,23 +127,21 @@ function EditForm({ data, selectId }: Props) {
     }
   }
 
-  const { trigger, isMutating } = useSWRMutation("activities", updateActivity);
+  const queryClient = useQueryClient();
+  const { mutate: trigger, isPending: isMutating } = useMutation({
+    mutationFn: ({ selectId, formData }: { selectId: string; formData: TaskSchema }) => updateActivity("", { arg: { selectId, formData } }),
+    onSuccess: () => {
+      toast({ title: "Task updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      route.push("/task");
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error instanceof Error ? error.message : "Something went wrong", variant: "destructive" });
+    },
+  });
 
   const onSubmit = async (formData: TaskSchema) => {
-    try {
-      await trigger({ selectId, formData });
-      route.push("/task");
-      toast({
-        title: "Task updated successfully",
-      });
-      form.reset();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Update failed",
-        variant: "destructive",
-      });
-    }
+    trigger({ selectId, formData });
   };
 
   return (

@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { memo, useCallback } from "react";
-import useSWRMutation from "swr/mutation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Entity, Organization } from "../AddEvent/Types";
 import { insertEvent } from "../Services/eventService";
 import EventFields from "./EventFields";
@@ -27,7 +27,26 @@ export const AddEventForm = memo(function AddEventForm({
   const { toast } = useToast();
   const router = useRouter();
   const auth = useAuth();
-  const { trigger, isMutating } = useSWRMutation("events", insertEvent);
+  const queryClient = useQueryClient();
+  const { mutate: trigger, isPending: isMutating } = useMutation({
+    mutationFn: (data: EventSchema & { userId: string }) => insertEvent("", { arg: data }),
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Event added successfully.",
+      });
+      form.reset();
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      router.push("/event");
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Something went wrong",
+        variant: "destructive",
+      });
+    },
+  });
 
   const onSubmit = useCallback(
     async (data: EventSchema) => {
@@ -49,31 +68,12 @@ export const AddEventForm = memo(function AddEventForm({
         return;
       }
 
-      try {
-        await trigger({
-          ...data,
-          userId: auth.user.id,
-        });
-
-        toast({
-          title: "Success",
-          description: "Event added successfully.",
-        });
-
-        form.reset();
-        router.push("/event");
-      } catch (error: unknown) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Something went wrong";
-
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      }
+      trigger({
+        ...data,
+        userId: auth.user.id,
+      });
     },
-    [trigger, auth.user?.id, form, router, toast]
+    [trigger, auth.user?.id, toast]
   );
 
   return (

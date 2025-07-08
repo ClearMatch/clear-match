@@ -1,21 +1,12 @@
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import React from "react";
-import useSWR from "swr";
 import {
   fetchContacts,
   fetchEvents,
   fetchOrganizations,
   fetchUsers,
 } from "../Services/dataFetchers";
-
-const SWR_CONFIG = {
-  revalidateOnFocus: false,
-  revalidateOnReconnect: false,
-  refreshInterval: 0,
-  dedupingInterval: 60000,
-  errorRetryCount: 3,
-  errorRetryInterval: 1000,
-};
 
 export function useTaskData() {
   const { toast } = useToast();
@@ -24,9 +15,9 @@ export function useTaskData() {
     data: allData,
     error,
     isLoading,
-  } = useSWR(
-    "task-form-data",
-    async () => {
+  } = useQuery({
+    queryKey: ["task-form-data"],
+    queryFn: async () => {
       const [contacts, organizations, users, events] = await Promise.all([
         fetchContacts(),
         fetchOrganizations(),
@@ -35,8 +26,9 @@ export function useTaskData() {
       ]);
       return { contacts, organizations, users, events };
     },
-    SWR_CONFIG
-  );
+    staleTime: 60000, // 1 minute
+    retry: 3,
+  });
 
   React.useEffect(() => {
     if (error) {

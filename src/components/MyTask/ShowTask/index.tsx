@@ -11,7 +11,7 @@ import {
   User,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { fetchTaskById } from "../Services";
 import {
   ActivityWithRelations,
@@ -29,10 +29,11 @@ function ShowTask() {
     data: taskData,
     error,
     isLoading,
-  } = useSWR<ActivityWithRelations>(
-    selectId ? ["activities", selectId] : null,
-    () => fetchTaskById(selectId)
-  );
+  } = useQuery<ActivityWithRelations>({
+    queryKey: ["activities", selectId],
+    queryFn: () => fetchTaskById(selectId),
+    enabled: !!selectId,
+  });
 
   if (isLoading) {
     return (
