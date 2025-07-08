@@ -225,7 +225,7 @@ export const queryKeyUtils = {
   /**
    * Granular cache invalidation helpers
    */
-  invalidateContactsAfterMutation: (queryClient: QueryClient, contactId?: string) => {
+  invalidateContactsAfterMutation: (queryClient: QueryClient, contactId?: string, operationType?: 'create' | 'update' | 'delete') => {
     // Always invalidate lists to show updated data
     queryClient.invalidateQueries({ queryKey: contactKeys.lists() });
     
@@ -235,9 +235,15 @@ export const queryKeyUtils = {
       queryClient.invalidateQueries({ queryKey: contactKeys.tasks(contactId) });
       queryClient.invalidateQueries({ queryKey: contactKeys.events(contactId) });
     }
+    
+    // For create/delete operations, also invalidate organizations and tags
+    if (operationType === 'create' || operationType === 'delete') {
+      queryClient.invalidateQueries({ queryKey: contactKeys.organizations() });
+      queryClient.invalidateQueries({ queryKey: contactKeys.tags() });
+    }
   },
 
-  invalidateTasksAfterMutation: (queryClient: QueryClient, taskId?: string, contactId?: string) => {
+  invalidateTasksAfterMutation: (queryClient: QueryClient, taskId?: string, contactId?: string, operationType?: 'create' | 'update' | 'delete') => {
     // Always invalidate task lists
     queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     
@@ -250,14 +256,87 @@ export const queryKeyUtils = {
     if (contactId) {
       queryClient.invalidateQueries({ queryKey: contactKeys.tasks(contactId) });
     }
+    
+    // For create/delete operations, also invalidate task form options
+    if (operationType === 'create' || operationType === 'delete') {
+      queryClient.invalidateQueries({ queryKey: taskKeys.assigneeOptions() });
+      queryClient.invalidateQueries({ queryKey: taskKeys.creatorOptions() });
+    }
   },
 
-  invalidateDashboardAfterMutation: (queryClient: QueryClient, userId?: string) => {
+  invalidateEventsAfterMutation: (queryClient: QueryClient, eventId?: string, contactId?: string, operationType?: 'create' | 'update' | 'delete') => {
+    // Always invalidate event lists
+    queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+    
+    // If we have a specific event, invalidate its details
+    if (eventId) {
+      queryClient.invalidateQueries({ queryKey: eventKeys.detail(eventId) });
+    }
+    
+    // If event is related to a contact, invalidate contact's events
+    if (contactId) {
+      queryClient.invalidateQueries({ queryKey: contactKeys.events(contactId) });
+    }
+    
+    // For create/delete operations, also invalidate event form data
+    if (operationType === 'create' || operationType === 'delete') {
+      queryClient.invalidateQueries({ queryKey: eventKeys.formData() });
+    }
+  },
+
+  invalidateDashboardAfterMutation: (queryClient: QueryClient, userId?: string, operationType?: 'create' | 'update' | 'delete') => {
     // Invalidate dashboard data that might be affected by mutations
     if (userId) {
       queryClient.invalidateQueries({ queryKey: dashboardKeys.stats(userId) });
       queryClient.invalidateQueries({ queryKey: dashboardKeys.activity(userId) });
+      
+      // For create/delete operations, also invalidate analytics
+      if (operationType === 'create' || operationType === 'delete') {
+        queryClient.invalidateQueries({ queryKey: dashboardKeys.analytics(userId) });
+      }
     }
+  },
+
+  /**
+   * Batch invalidation for multiple related entities
+   */
+  invalidateRelatedData: (queryClient: QueryClient, params: {
+    contactId?: string;
+    taskId?: string;
+    eventId?: string;
+    userId?: string;
+    operationType?: 'create' | 'update' | 'delete';
+  }) => {
+    const { contactId, taskId, eventId, userId, operationType } = params;
+    
+    // Batch invalidations to reduce redundant calls
+    const promises = [];
+    
+    if (contactId) {
+      promises.push(
+        queryKeyUtils.invalidateContactsAfterMutation(queryClient, contactId, operationType)
+      );
+    }
+    
+    if (taskId) {
+      promises.push(
+        queryKeyUtils.invalidateTasksAfterMutation(queryClient, taskId, contactId, operationType)
+      );
+    }
+    
+    if (eventId) {
+      promises.push(
+        queryKeyUtils.invalidateEventsAfterMutation(queryClient, eventId, contactId, operationType)
+      );
+    }
+    
+    if (userId) {
+      promises.push(
+        queryKeyUtils.invalidateDashboardAfterMutation(queryClient, userId, operationType)
+      );
+    }
+    
+    return Promise.all(promises);
   },
 
   /**

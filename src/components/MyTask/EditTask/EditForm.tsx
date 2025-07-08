@@ -11,6 +11,8 @@ import TaskFields from "../Common/TaskFields";
 import { ActivityData } from "../Services/Types";
 import { useTaskData } from "../Services/useTaskData";
 import { supabase } from "@/lib/supabase";
+import { errorHandlers } from "@/lib/error-handling";
+import { queryKeyUtils } from "@/lib/query-keys";
 
 interface Props {
   data: ActivityData;
@@ -130,13 +132,26 @@ function EditForm({ data, selectId }: Props) {
   const queryClient = useQueryClient();
   const { mutate: trigger, isPending: isMutating } = useMutation({
     mutationFn: ({ selectId, formData }: { selectId: string; formData: TaskSchema }) => updateActivity("", { arg: { selectId, formData } }),
-    onSuccess: () => {
+    onSuccess: (updatedTask) => {
       toast({ title: "Task updated successfully" });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      
+      // Use enhanced cache invalidation with operation type and related data
+      queryKeyUtils.invalidateRelatedData(queryClient, {
+        taskId: selectId,
+        contactId: updatedTask?.contact_id,
+        userId: updatedTask?.assigned_to,
+        operationType: 'update',
+      });
+      
       route.push("/task");
     },
     onError: (error) => {
-      toast({ title: "Error", description: error instanceof Error ? error.message : "Something went wrong", variant: "destructive" });
+      const errorMessage = errorHandlers.task.update(error);
+      toast({ 
+        title: "Error", 
+        description: errorMessage, 
+        variant: "destructive" 
+      });
     },
   });
 

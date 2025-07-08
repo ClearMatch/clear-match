@@ -32,20 +32,20 @@ export const AddEventForm = memo(function AddEventForm({
   const queryClient = useQueryClient();
   const { mutate: trigger, isPending: isMutating } = useMutation({
     mutationFn: (data: EventSchema & { userId: string }) => insertEvent("", { arg: data }),
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Success",
         description: "Event added successfully.",
       });
       form.reset();
       
-      // Use granular cache invalidation
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      
-      // Also invalidate dashboard if user is available
-      if (auth.user?.id) {
-        queryKeyUtils.invalidateDashboardAfterMutation(queryClient, auth.user.id);
-      }
+      // Use enhanced cache invalidation with operation type and related data
+      queryKeyUtils.invalidateRelatedData(queryClient, {
+        eventId: data?.[0]?.id,
+        contactId: form.getValues('contact_id'),
+        userId: auth.user?.id,
+        operationType: 'create',
+      });
       
       router.push("/event");
     },
