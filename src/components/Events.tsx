@@ -1,70 +1,67 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import useSWRInfinite from "swr/infinite";
+import { useCallback, useMemo, useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import EventsList from "./Event/EventsList";
 import Filters from "./Event/Filters";
 import { FilterState, INITIAL_FILTERS } from "./Event/Filters/Types";
 import Header from "./Event/Header";
 import { EventData } from "./Event/Services/Types";
 import { fetchEventsPaginated } from "./Event/Services/eventService";
+import { eventKeys } from "@/lib/query-keys";
 
 const PAGE_SIZE = 25;
-const CACHE_KEY = "events";
 
 function Events() {
   const [appliedFilters, setAppliedFilters] =
     useState<FilterState>(INITIAL_FILTERS);
-  const [hasMoreData, setHasMoreData] = useState(true);
 
-  const filterKey = useMemo(() => {
-    return JSON.stringify(appliedFilters);
-  }, [appliedFilters]);
-
-  const { data, error, size, setSize, isLoading, isValidating } =
-    useSWRInfinite<EventData[]>(
-      (pageIndex) => `${CACHE_KEY}-${pageIndex}-${filterKey}`,
-      async (key) => {
-        const pageIndex = parseInt(key.split("-")[1]);
-        return fetchEventsPaginated(pageIndex, PAGE_SIZE, appliedFilters);
-      },
-      {
-        revalidateOnFocus: false,
-        revalidateOnMount: true,
-        dedupingInterval: 5000,
-        focusThrottleInterval: 10000,
+  const { 
+    data, 
+    error, 
+    fetchNextPage, 
+    hasNextPage, 
+    isLoading, 
+    isFetching,
+    isFetchingNextPage 
+  } = useInfiniteQuery({
+    queryKey: eventKeys.list({ 
+      search: '', 
+      filters: appliedFilters as unknown as Record<string, unknown>, 
+      sort: {} 
+    }),
+    queryFn: ({ pageParam = 0 }) => 
+      fetchEventsPaginated(pageParam, PAGE_SIZE, appliedFilters),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      // If the last page has fewer than PAGE_SIZE items, we've reached the end
+      if (lastPage.length < PAGE_SIZE) {
+        return undefined;
       }
-    );
+      return allPages.length; // Return the next page index
+    },
+    staleTime: 60 * 1000, // 60 seconds
+    placeholderData: (previousData) => previousData, // Keep previous data while loading
+  });
 
-  const allEvents = useMemo(() => data?.flat() || [], [data]);
+  const allEvents = useMemo(() => data?.pages.flat() || [], [data]);
 
   const fetchMoreData = useCallback(() => {
-    if (!isValidating && hasMoreData) {
-      setSize(size + 1);
+    if (!isFetchingNextPage && hasNextPage) {
+      fetchNextPage();
     }
-  }, [isValidating, hasMoreData, size, setSize]);
+  }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
 
   const handleFiltersApply = useCallback(
     (filters: FilterState) => {
       setAppliedFilters(filters);
-      setSize(1);
-      setHasMoreData(true);
     },
-    [setSize]
+    []
   );
 
   const handleFiltersClear = useCallback(() => {
     setAppliedFilters(INITIAL_FILTERS);
-    setSize(1);
-    setHasMoreData(true);
-  }, [setSize]);
-
-  useEffect(() => {
-    if (data && data.length > 0) {
-      const lastPage = data[data.length - 1];
-      setHasMoreData(lastPage?.length === PAGE_SIZE || false);
-    }
-  }, [data]);
+  }, []);
 
   return (
     <>
@@ -76,9 +73,9 @@ function Events() {
       <EventsList
         allEvents={allEvents}
         isLoading={isLoading}
-        isValidating={isValidating}
+        isValidating={isFetching}
         error={error}
-        hasMoreData={hasMoreData}
+        hasMoreData={hasNextPage}
         fetchMoreData={fetchMoreData}
       />
     </>
