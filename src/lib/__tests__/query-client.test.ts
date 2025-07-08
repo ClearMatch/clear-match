@@ -25,7 +25,8 @@ describe('QueryClient Configuration', () => {
         expect(retryFn(3, networkError)).toBe(false);
         
         // Validation errors should not be retried
-        const validationError = { status: 400, message: 'Invalid input' };
+        const validationError = new Error('Invalid input') as Error & { status: number };
+        validationError.status = 400;
         expect(retryFn(1, validationError)).toBe(false);
       }
     });
