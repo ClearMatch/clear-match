@@ -62,5 +62,16 @@ global.console = {
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
-  error: originalConsole.error, // Keep errors visible for debugging
+  error: (message, ...args) => {
+    // Suppress React act() warnings in tests
+    if (typeof message === 'string' && message.includes('act(')) {
+      return;
+    }
+    // Suppress TanStack Query DevTools warnings
+    if (typeof message === 'string' && message.includes('suspended resource')) {
+      return;
+    }
+    // Keep other errors visible
+    originalConsole.error(message, ...args);
+  },
 }

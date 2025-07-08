@@ -61,7 +61,10 @@ export function useTasks() {
             : undefined
         );
       } catch (error) {
-        console.error("Error in query fetcher:", error);
+        // Only log in development, not in tests
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error in query fetcher:", error);
+        }
         throw error;
       }
     },
