@@ -87,3 +87,21 @@ organizations:organization_id(id, name)`
   if (error) throw error;
   return data ?? [];
 };
+
+export const fetchEventById = async (id: string): Promise<EventData> => {
+  const { data, error } = await supabase
+    .from("events")
+    .select(
+      ` *, 
+candidates:contact_id(id, first_name, last_name), 
+profiles:created_by (id, first_name, last_name), 
+organizations:organization_id(id, name)`
+    )
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to insert event: ${error.message}`);
+  }
+  return data;
+};

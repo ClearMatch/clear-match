@@ -64,14 +64,19 @@ function EventsList({
               )
             }
           >
-            <DataTable
-              columns={Columns()}
-              data={allEvents}
-              rowKey="id"
-              hideHeaderCheckBox
-              hideRowCheckBox
-              renderAction={(row) => <Actions id={row.id} />}
-            />
+            <div
+              id="scrollableDiv"
+              className="max-h-[calc(100vh-150px)] w-full overflow-auto"
+            >
+              <DataTable
+                columns={Columns()}
+                data={allEvents}
+                rowKey="id"
+                hideHeaderCheckBox
+                hideRowCheckBox
+                renderAction={(row) => <Actions id={row.id} />}
+              />
+            </div>
           </InfiniteScroll>
         </div>
       )}
