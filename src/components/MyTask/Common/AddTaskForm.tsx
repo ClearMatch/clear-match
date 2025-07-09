@@ -5,11 +5,13 @@ import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import useSWRMutation from "swr/mutation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Entity, Event, Organization } from "../AddTask/Types";
 import TaskFields from "../Common/TaskFields";
 import { TaskSchema, useTaskForm } from "../Common/schema";
 import { insertTask } from "../Services/taskService";
+import { errorHandlers } from "@/lib/error-handling";
+import { queryKeyUtils } from "@/lib/query-keys";
 
 interface AddTaskFormProps {
   contacts: Entity[];
@@ -30,7 +32,27 @@ export function AddTaskForm({
   const { toast } = useToast();
   const router = useRouter();
   const auth = useAuth();
-  const { trigger, isMutating } = useSWRMutation("activities", insertTask);
+  const queryClient = useQueryClient();
+  const { mutate: trigger, isPending: isMutating } = useMutation({
+    mutationFn: (data: TaskSchema & { userId: string }) => insertTask("", { arg: data }),
+    onSuccess: () => {
+      toast({ title: "Success", description: "Task added successfully." });
+      form.reset();
+      
+      // Use enhanced cache invalidation with operation type and related data
+      queryKeyUtils.invalidateRelatedData(queryClient, {
+        contactId: form.getValues('contact_id'),
+        userId: auth.user?.id,
+        operationType: 'create',
+      });
+      
+      router.push("/task");
+    },
+    onError: (error) => {
+      const errorMessage = errorHandlers.task.create(error);
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
+    },
+  });
 
   const onSubmit = async (data: TaskSchema) => {
     if (!data.contact_id) {
@@ -74,9 +96,10 @@ export function AddTaskForm({
       router.push("/task");
     } catch (error) {
       console.error("Submit error:", error);
+      const errorMessage = errorHandlers.task.create(error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
+        description: errorMessage,
         variant: "destructive",
       });
     }

@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useMemo } from "react";
-import useSWRMutation from "swr/mutation";
+import { useEffect } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { errorHandlers } from "@/lib/error-handling";
+import { queryKeyUtils } from "@/lib/query-keys";
 import { insertEvent } from "@/components/Event/Services/eventService";
 import { EventSchema, useEventForm } from "@/components/Event/Common/schema";
 import SelectField from "@/components/Event/Common/SelectField";
@@ -27,12 +29,39 @@ function AddEventForm({
   const form = useEventForm();
   const { toast } = useToast();
   const auth = useAuth();
-  const { trigger, isMutating } = useSWRMutation("events", insertEvent);
+  const queryClient = useQueryClient();
+  const { mutate: trigger, isPending: isMutating } = useMutation({
+    mutationFn: (data: EventSchema & { userId: string }) => insertEvent("", { arg: data }),
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Event added successfully.",
+      });
+      form.reset();
+      
+      // Use enhanced cache invalidation with operation type and related data
+      queryKeyUtils.invalidateRelatedData(queryClient, {
+        contactId: contactId,
+        userId: auth.user?.id,
+        operationType: 'create',
+      });
+      
+      onSuccess?.();
+    },
+    onError: (error) => {
+      const errorMessage = errorHandlers.event.create(error);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Set the contact_id in the form when component mounts
-  useMemo(() => {
+  useEffect(() => {
     form.setValue("contact_id", contactId);
-  }, [contactId, form]);
+  }, [contactId, form.setValue]);
 
   const onSubmit = async (data: EventSchema) => {
     if (!data.type) {

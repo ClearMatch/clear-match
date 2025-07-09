@@ -5,8 +5,11 @@ import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import useSWRMutation from "swr/mutation";
+import { errorHandlers } from "@/lib/error-handling";
+import { queryKeyUtils } from "@/lib/query-keys";
+import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 import ContactFields from "../Common/ContactFields";
 import { Schema, useUserForm } from "../Common/schema";
 
@@ -15,34 +18,57 @@ function AddContact() {
   const { toast } = useToast();
   const router = useRouter();
   const auth = useAuth();
+  const queryClient = useQueryClient();
 
-  async function insertContact(url: string, { arg }: { arg: Schema }) {
-    const { error } = await supabase.from(url).insert({
-      ...arg,
-      past_company_sizes: [arg.past_company_sizes],
+  async function insertContact(data: Schema) {
+    const { error } = await supabase.from("contacts").insert({
+      ...data,
+      past_company_sizes: [data.past_company_sizes],
       created_by: auth.user?.id,
     });
     if (error) throw new Error(error.message);
   }
 
-  const { trigger, isMutating } = useSWRMutation("contacts", insertContact);
-
-  const onSubmit = async (data: Schema) => {
-    try {
-      await trigger(data);
+  const { mutate: trigger, isPending: isMutating, isSuccess, isError, error } = useMutation({
+    mutationFn: insertContact,
+    onSuccess: () => {
       toast({
         title: "Success",
         description: "Contact added successfully.",
       });
       form.reset();
+      
+      // Use enhanced cache invalidation with operation type and related data
+      queryKeyUtils.invalidateRelatedData(queryClient, {
+        userId: auth.user?.id,
+        operationType: 'create',
+      });
+      
       router.push("/contacts");
-    } catch (error) {
+    },
+    onError: (error) => {
+      const errorMessage = errorHandlers.contact.create(error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
+        description: errorMessage,
         variant: "destructive",
       });
-    }
+    },
+  });
+
+  // Performance monitoring for contact creation
+  usePerformanceMonitor({
+    queryKey: 'contact_create',
+    operation: 'mutation',
+    isLoading: isMutating,
+    isSuccess,
+    isError,
+    error,
+    threshold: 1500, // 1.5 seconds threshold for contact creation
+  });
+
+  const onSubmit = async (data: Schema) => {
+    trigger(data);
   };
 
   return (

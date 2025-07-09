@@ -10,7 +10,7 @@ import { Column } from "@/components/ui/DataTable/Types";
 import { formatDate } from "@/lib/utils";
 import { Plus, Loader } from "lucide-react";
 import { useState } from "react";
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AddEventForm from "./AddEventForm";
 import { fetchEventsByContact, Event } from "./eventsService";
 
@@ -22,15 +22,21 @@ interface EventsTabProps {
 function EventsTab({ contactId, contactName = "Contact" }: EventsTabProps) {
   const [showAddEvent, setShowAddEvent] = useState(false);
 
+  const queryClient = useQueryClient();
+  
   const {
     data: events = [],
     isLoading,
     error,
-    mutate,
-  } = useSWR<Event[]>(
-    contactId ? ["contact-events", contactId] : null,
-    () => fetchEventsByContact(contactId)
-  );
+  } = useQuery<Event[]>({
+    queryKey: ["contact-events", contactId],
+    queryFn: () => fetchEventsByContact(contactId),
+    enabled: !!contactId,
+  });
+
+  const mutate = () => {
+    queryClient.invalidateQueries({ queryKey: ["contact-events", contactId] });
+  };
 
   const handleAddEvent = () => {
     setShowAddEvent(true);

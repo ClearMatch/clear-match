@@ -1,6 +1,6 @@
 import { useDebounce } from "@/hooks/useDebounce";
-import { useCallback, useEffect, useRef, useState } from "react";
-import useSWR from "swr";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
 import { contactService } from "./contactService";
 import { Contact, FilterState, SortConfig, SortField } from "./Types";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,11 +9,7 @@ const PAGE_SIZE = 25;
 
 export function useContacts() {
   const auth = useAuth();
-  const [contacts, setContacts] = useState<Contact[]>([]);
   const [searchInputValue, setSearchInputValue] = useState("");
-  const [cursor, setCursor] = useState<string | undefined>();
-  const [hasMore, setHasMore] = useState(true);
-  const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [sort, setSort] = useState<SortConfig>({ 
     field: 'updated_at', 
     direction: 'desc' 
@@ -29,72 +25,64 @@ export function useContacts() {
     employment_status: [],
   });
 
-  const isLoadingMoreRef = useRef(false);
   const debouncedSearchQuery = useDebounce(searchInputValue, 500);
   const isSearching = searchInputValue !== debouncedSearchQuery;
+  const queryClient = useQueryClient();
 
-  const fetchContacts = useCallback(() => {
-    if (!auth.user?.id) return Promise.resolve({ contacts: [], hasMore: false, totalCount: 0 });
-    
-    return contactService.fetchContactsCursor(
-      auth.user.id,
-      debouncedSearchQuery,
-      filters,
-      sort,
-      undefined, // no cursor for initial load
-      PAGE_SIZE
-    );
-  }, [auth.user?.id, debouncedSearchQuery, filters, sort]);
-
-  const { data, error, isLoading, mutate } = useSWR(
-    auth.user?.id ? ["contacts", debouncedSearchQuery, filters, sort] : null,
-    fetchContacts
-  );
-
-  useEffect(() => {
-    if (data) {
-      setContacts(data.contacts);
-      setHasMore(data.hasMore);
-      setCursor(undefined); // Reset cursor on new search/filter/sort
-    }
-  }, [data]);
-
-  const handleLoadMore = useCallback(async () => {
-    if (!hasMore || isFetchingMore || isLoadingMoreRef.current || !auth.user?.id) {
-      return;
-    }
-
-    setIsFetchingMore(true);
-    isLoadingMoreRef.current = true;
-
-    try {
-      // Get cursor from the last contact based on sort field
-      const lastContact = contacts[contacts.length - 1];
-      const newCursor = lastContact ? lastContact[sort.field] as string : undefined;
-
-      const response = await contactService.fetchContactsCursor(
+  const {
+    data,
+    error,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["contacts", { search: debouncedSearchQuery, filters, sort, userId: auth.user?.id }],
+    queryFn: ({ pageParam }: { pageParam: string | undefined }) => {
+      if (!auth.user?.id) return Promise.resolve({ contacts: [], hasMore: false, totalCount: 0 });
+      
+      return contactService.fetchContactsCursor(
         auth.user.id,
         debouncedSearchQuery,
         filters,
         sort,
-        newCursor,
+        pageParam,
         PAGE_SIZE
       );
+    },
+    enabled: !!auth.user?.id,
+    initialPageParam: undefined as string | undefined, // Initial cursor is undefined
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.hasMore) return undefined;
       
-      setContacts((prev) => [...prev, ...response.contacts]);
-      setHasMore(response.hasMore);
-      setCursor(newCursor);
+      // Get cursor from the last contact based on sort field
+      const lastContact = lastPage.contacts[lastPage.contacts.length - 1];
+      return lastContact ? lastContact[sort.field] as string : undefined;
+    },
+    placeholderData: (previousData) => previousData, // Keep previous data while loading
+    staleTime: 60000, // 1 minute
+  });
+
+  // Flatten all pages of contacts into a single array
+  const contacts = useMemo(() => {
+    return data?.pages.flatMap(page => page.contacts) || [];
+  }, [data]);
+
+  const handleLoadMore = useCallback(async () => {
+    if (!hasNextPage || isFetchingNextPage) {
+      return;
+    }
+
+    try {
+      await fetchNextPage();
     } catch (err) {
       console.error("Error loading more contacts:", err);
-    } finally {
-      setIsFetchingMore(false);
-      isLoadingMoreRef.current = false;
     }
-  }, [hasMore, isFetchingMore, contacts, sort, debouncedSearchQuery, filters, auth.user?.id]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const refetchContacts = useCallback(() => {
-    mutate();
-  }, [mutate]);
+    queryClient.invalidateQueries({ queryKey: ["contacts"] });
+  }, [queryClient]);
 
   const handleSortChange = useCallback((field: SortField) => {
     setSort(prevSort => ({
@@ -123,11 +111,11 @@ export function useContacts() {
     // Loading states
     loading: isLoading,
     isSearching,
-    isFetchingMore,
+    isFetchingMore: isFetchingNextPage,
     error,
 
     // Pagination
-    hasMore,
+    hasMore: hasNextPage,
     onLoadMore: handleLoadMore,
 
     // Actions
