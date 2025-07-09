@@ -15,6 +15,8 @@ const customJestConfig = {
   moduleNameMapper: {
     // Handle module aliases
     '^@/(.*)$': '<rootDir>/src/$1',
+    // Mock problematic ES modules  
+    '^isows$': '<rootDir>/src/__mocks__/isows.js',
   },
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
@@ -49,7 +51,7 @@ const customJestConfig = {
     '/lib/__tests__/setup.ts',
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!(@upstash/.*|uncrypto)/)'
+    'node_modules/(?!(.pnpm/(@upstash|@supabase|isows|ws|uncrypto)|(@upstash|@supabase|isows|ws|uncrypto)))'
   ],
   testTimeout: 10000,
   maxWorkers: '50%',
