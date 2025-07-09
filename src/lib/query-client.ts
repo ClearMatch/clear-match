@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { shouldRetryError } from './error-handling';
+import { performanceMonitor, startPerformanceMonitoring } from './performance-monitoring';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,3 +22,8 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Initialize performance monitoring in development
+if (process.env.NODE_ENV === 'development') {
+  startPerformanceMonitoring();
+}

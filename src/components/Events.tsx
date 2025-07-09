@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQueryPerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 import EventsList from "./Event/EventsList";
 import Filters from "./Event/Filters";
 import { FilterState, INITIAL_FILTERS } from "./Event/Filters/Types";
@@ -29,6 +30,8 @@ function Events() {
     isFetching,
     isFetchingNextPage,
     isLoading,
+    isSuccess,
+    isError,
   } = useInfiniteQuery({
     queryKey: [CACHE_KEY, filterKey],
     queryFn: ({ pageParam = 0 }) => 
@@ -39,6 +42,17 @@ function Events() {
     },
     initialPageParam: 0,
     staleTime: 5000,
+  });
+
+  // Performance monitoring for infinite query
+  useInfiniteQueryPerformanceMonitor({
+    queryKey: `${CACHE_KEY}_${filterKey}`,
+    isLoading,
+    isFetchingNextPage,
+    isSuccess,
+    isError,
+    error,
+    threshold: 2000, // 2 seconds threshold for events
   });
 
   const allEvents = useMemo(() => 
@@ -82,6 +96,7 @@ function Events() {
         allEvents={allEvents}
         isLoading={isLoading}
         isValidating={isFetching}
+        isFetchingNextPage={isFetchingNextPage}
         error={error}
         hasMoreData={hasMoreData}
         fetchMoreData={fetchMoreData}

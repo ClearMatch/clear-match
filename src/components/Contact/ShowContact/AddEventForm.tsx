@@ -6,6 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { errorHandlers } from "@/lib/error-handling";
+import { queryKeyUtils } from "@/lib/query-keys";
 import { insertEvent } from "@/components/Event/Services/eventService";
 import { EventSchema, useEventForm } from "@/components/Event/Common/schema";
 import SelectField from "@/components/Event/Common/SelectField";
@@ -36,13 +38,21 @@ function AddEventForm({
         description: "Event added successfully.",
       });
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      
+      // Use enhanced cache invalidation with operation type and related data
+      queryKeyUtils.invalidateRelatedData(queryClient, {
+        contactId: contactId,
+        userId: auth.user?.id,
+        operationType: 'create',
+      });
+      
       onSuccess?.();
     },
     onError: (error) => {
+      const errorMessage = errorHandlers.event.create(error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
+        description: errorMessage,
         variant: "destructive",
       });
     },

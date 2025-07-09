@@ -8,6 +8,8 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { errorHandlers } from "@/lib/error-handling";
+import { queryKeyUtils } from "@/lib/query-keys";
 import ContactFields from "../Common/ContactFields";
 import { Schema, useUserForm } from "../Common/schema";
 import { Contact } from "./Types";
@@ -40,13 +42,21 @@ function EditForm({ data, id }: Props) {
         title: "Success",
         description: "Contact updated successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      
+      // Use enhanced cache invalidation with operation type and related data
+      queryKeyUtils.invalidateRelatedData(queryClient, {
+        contactId: id,
+        userId: auth.user?.id,
+        operationType: 'update',
+      });
+      
       router.push("/contacts");
     },
     onError: (error) => {
+      const errorMessage = errorHandlers.contact.update(error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
+        description: errorMessage,
         variant: "destructive",
       });
     },

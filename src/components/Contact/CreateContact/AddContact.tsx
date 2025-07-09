@@ -7,6 +7,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { errorHandlers } from "@/lib/error-handling";
+import { queryKeyUtils } from "@/lib/query-keys";
+import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 import ContactFields from "../Common/ContactFields";
 import { Schema, useUserForm } from "../Common/schema";
 
@@ -26,7 +29,7 @@ function AddContact() {
     if (error) throw new Error(error.message);
   }
 
-  const { mutate: trigger, isPending: isMutating } = useMutation({
+  const { mutate: trigger, isPending: isMutating, isSuccess, isError, error } = useMutation({
     mutationFn: insertContact,
     onSuccess: () => {
       toast({
@@ -34,17 +37,34 @@ function AddContact() {
         description: "Contact added successfully.",
       });
       form.reset();
-      // Invalidate contacts queries to refetch updated data
-      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      
+      // Use enhanced cache invalidation with operation type and related data
+      queryKeyUtils.invalidateRelatedData(queryClient, {
+        userId: auth.user?.id,
+        operationType: 'create',
+      });
+      
       router.push("/contacts");
     },
     onError: (error) => {
+      const errorMessage = errorHandlers.contact.create(error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
+        description: errorMessage,
         variant: "destructive",
       });
     },
+  });
+
+  // Performance monitoring for contact creation
+  usePerformanceMonitor({
+    queryKey: 'contact_create',
+    operation: 'mutation',
+    isLoading: isMutating,
+    isSuccess,
+    isError,
+    error,
+    threshold: 1500, // 1.5 seconds threshold for contact creation
   });
 
   const onSubmit = async (data: Schema) => {

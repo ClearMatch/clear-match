@@ -10,6 +10,8 @@ import { Entity, Event, Organization } from "../AddTask/Types";
 import TaskFields from "../Common/TaskFields";
 import { TaskSchema, useTaskForm } from "../Common/schema";
 import { insertTask } from "../Services/taskService";
+import { errorHandlers } from "@/lib/error-handling";
+import { queryKeyUtils } from "@/lib/query-keys";
 
 interface AddTaskFormProps {
   contacts: Entity[];
@@ -36,11 +38,19 @@ export function AddTaskForm({
     onSuccess: () => {
       toast({ title: "Success", description: "Task added successfully." });
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      
+      // Use enhanced cache invalidation with operation type and related data
+      queryKeyUtils.invalidateRelatedData(queryClient, {
+        contactId: form.getValues('contact_id'),
+        userId: auth.user?.id,
+        operationType: 'create',
+      });
+      
       router.push("/task");
     },
     onError: (error) => {
-      toast({ title: "Error", description: error instanceof Error ? error.message : "Something went wrong", variant: "destructive" });
+      const errorMessage = errorHandlers.task.create(error);
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
     },
   });
 
@@ -86,9 +96,10 @@ export function AddTaskForm({
       router.push("/task");
     } catch (error) {
       console.error("Submit error:", error);
+      const errorMessage = errorHandlers.task.create(error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
+        description: errorMessage,
         variant: "destructive",
       });
     }
