@@ -11,7 +11,7 @@ import TaskList from "@/components/MyTask/TaskList";
 import { ActivityWithRelations } from "@/components/MyTask/Services/Types";
 import { Plus } from "lucide-react";
 import { useState } from "react";
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AddTaskForm from "./AddTaskForm";
 import { fetchTasksByContact } from "./tasksService";
 
@@ -23,15 +23,21 @@ interface TasksTabProps {
 function TasksTab({ contactId, contactName = "Contact" }: TasksTabProps) {
   const [showAddTask, setShowAddTask] = useState(false);
 
+  const queryClient = useQueryClient();
+  
   const {
     data: tasks = [],
     isLoading,
     error,
-    mutate,
-  } = useSWR<ActivityWithRelations[]>(
-    contactId ? ["contact-tasks", contactId] : null,
-    () => fetchTasksByContact(contactId)
-  );
+  } = useQuery<ActivityWithRelations[]>({
+    queryKey: ["contact-tasks", contactId],
+    queryFn: () => fetchTasksByContact(contactId),
+    enabled: !!contactId,
+  });
+
+  const mutate = () => {
+    queryClient.invalidateQueries({ queryKey: ["contact-tasks", contactId] });
+  };
 
   const handleAddTask = () => {
     setShowAddTask(true);
