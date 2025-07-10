@@ -1,8 +1,7 @@
 "use client";
 
 import { supabase } from "@/lib/supabase";
-import { Contact, FilterState } from "../Contact/ContactList/Types";
-import { contactService } from "../Contact/ContactList/contactService";
+import { FilterState } from "../Contact/ContactList/Types";
 import { DashboardStats, RecentActivity, RecommendedAction } from "./Types";
 
 // Minimal contact interface for dashboard stats
@@ -44,8 +43,9 @@ const fetchCandidatesData = async (userId: string) => {
   // Single optimized query to get all contact data at once
   const { data: allContacts, error: contactsError } = await supabase
     .from("contacts")
-    .select("id, first_name, last_name, contact_type, is_active_looking, updated_at")
-    .eq("organization_id", organizationId)
+    .select(
+      "id, first_name, last_name, contact_type, is_active_looking, updated_at"
+    )
     .order("updated_at", { ascending: false })
     .limit(200); // Much smaller limit for dashboard stats
 
@@ -56,15 +56,16 @@ const fetchCandidatesData = async (userId: string) => {
   const contacts: DashboardContact[] = allContacts || [];
 
   // Filter the results locally instead of making multiple queries
-  const contactsOnly = contacts.filter(c => c.contact_type === "contact");
-  const clientsOnly = contacts.filter(c => c.contact_type === "client");
-  const bothOnly = contacts.filter(c => c.contact_type === "both");
-  const contactsAndBoth = contacts.filter(c => 
-    c.contact_type === "contact" || c.contact_type === "both"
+  const contactsOnly = contacts.filter((c) => c.contact_type === "candidate");
+  const clientsOnly = contacts.filter((c) => c.contact_type === "client");
+  const bothOnly = contacts.filter((c) => c.contact_type === "both");
+  const contactsAndBoth = contacts.filter(
+    (c) => c.contact_type === "candidate" || c.contact_type === "both"
   );
-  const activeSearching = contacts.filter(c => 
-    (c.contact_type === "contact" || c.contact_type === "both") && 
-    c.is_active_looking === true
+  const activeSearching = contacts.filter(
+    (c) =>
+      (c.contact_type === "candidate" || c.contact_type === "both") &&
+      c.is_active_looking === true
   );
 
   return {
@@ -82,7 +83,6 @@ const fetchRecentActivities = async (
   const { data: activitiesResult } = await supabase
     .from("activities")
     .select("*")
-    .eq("organization_id", organizationId)
     .order("created_at", { ascending: false })
     .limit(5);
 
@@ -195,7 +195,9 @@ export const fetchDashboardData = async (userId: string) => {
   }
 
   if (!profiles || profiles.length === 0) {
-    throw new Error(`No profile found for user ${userId}. Please complete your profile setup.`);
+    throw new Error(
+      `No profile found for user ${userId}. Please complete your profile setup.`
+    );
   }
 
   const profile = profiles[0];
@@ -211,7 +213,9 @@ export const fetchDashboardData = async (userId: string) => {
   ]);
 
   // Generate actions from a smaller, more relevant subset
-  const contactActions = generateContactActions(contactsData.contacts.slice(0, 10));
+  const contactActions = generateContactActions(
+    contactsData.contacts.slice(0, 10)
+  );
   const clientActions = generateClientActions(
     contactsData.clients.slice(0, 5),
     contactActions.length
