@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { errorHandlers } from "@/lib/error-handling";
@@ -81,22 +82,28 @@ function EditEventForm({ data, selectId }: Props) {
   });
 
   useEffect(() => {
-    if (data && contact.length > 0) {
+    if (data) {
       const formData = {
         contact_id: data.contact_id || "",
         organization_id: data.organization_id || "",
         type: data.type || "",
       };
-
       form.reset(formData);
     }
-  }, [data, form, contact]);
+  }, [data, form]);
 
   const onSubmit = async (formData: EventSchema) => {
-    if (!formData.contact_id) {
+    const requiredFields = [
+      { field: formData.contact_id, name: "contact" },
+      { field: formData.organization_id, name: "organization" },
+      { field: formData.type, name: "event type" },
+    ];
+
+    const missingField = requiredFields.find(({ field }) => !field);
+    if (missingField) {
       toast({
         title: "Error",
-        description: "Please select a contact",
+        description: `Please select a ${missingField.name}`,
         variant: "destructive",
       });
       return;
@@ -107,35 +114,41 @@ function EditEventForm({ data, selectId }: Props) {
 
   return (
     <div>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <EventFields
-            form={form}
-            contact={contact}
-            organizations={organizations}
-            isLoading={isLoading}
-          />
-          <hr className="color-black" />
-          <div className="flex justify-center space-x-8 pt-6">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-40"
-              onClick={() => router.push("/event")}
-              disabled={isMutating}
-            >
-              Cancel
-            </Button>
-            <Button
-              className="bg-black text-white w-40"
-              type="submit"
-              disabled={isMutating}
-            >
-              {isMutating ? "Updating..." : "Submit"}
-            </Button>
-          </div>
-        </form>
-      </Form>
+      {isLoading ? (
+        <div className="flex justify-center p-8">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <EventFields
+              form={form}
+              contact={contact}
+              organizations={organizations}
+              isLoading={isLoading}
+            />
+            <hr className="color-black" />
+            <div className="flex justify-center space-x-8 pt-6">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-40"
+                onClick={() => router.push("/event")}
+                disabled={isMutating}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-black text-white w-40"
+                type="submit"
+                disabled={isMutating}
+              >
+                {isMutating ? "Updating..." : "Submit"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      )}
     </div>
   );
 }

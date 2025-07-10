@@ -2,6 +2,6 @@
 
 import EditEvent from "@/components/Event/EditEvent";
 
-export default function ContactsPage() {
+export default function EditEventPage() {
   return <EditEvent />;
 }
