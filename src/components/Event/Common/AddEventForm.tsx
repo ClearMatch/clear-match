@@ -4,24 +4,24 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { errorHandlers } from "@/lib/error-handling";
+import { queryKeyUtils } from "@/lib/query-keys";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { memo, useCallback } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Entity, Organization } from "../AddEvent/Types";
 import { insertEvent } from "../Services/eventService";
 import EventFields from "./EventFields";
 import { EventSchema, useEventForm } from "./schema";
-import { errorHandlers } from "@/lib/error-handling";
-import { queryKeyUtils } from "@/lib/query-keys";
 
 interface AddEventFormProps {
-  candidates: Entity[];
+  contact: Entity[];
   organizations: Organization[];
   isLoading?: boolean;
 }
 
 export const AddEventForm = memo(function AddEventForm({
-  candidates,
+  contact,
   organizations,
   isLoading = false,
 }: AddEventFormProps) {
@@ -31,22 +31,23 @@ export const AddEventForm = memo(function AddEventForm({
   const auth = useAuth();
   const queryClient = useQueryClient();
   const { mutate: trigger, isPending: isMutating } = useMutation({
-    mutationFn: (data: EventSchema & { userId: string }) => insertEvent("", { arg: data }),
+    mutationFn: (data: EventSchema & { userId: string }) =>
+      insertEvent("", { arg: data }),
     onSuccess: (data) => {
       toast({
         title: "Success",
         description: "Event added successfully.",
       });
       form.reset();
-      
+
       // Use enhanced cache invalidation with operation type and related data
       queryKeyUtils.invalidateRelatedData(queryClient, {
         eventId: data?.[0]?.id,
-        contactId: form.getValues('contact_id'),
+        contactId: form.getValues("contact_id"),
         userId: auth.user?.id,
-        operationType: 'create',
+        operationType: "create",
       });
-      
+
       router.push("/event");
     },
     onError: (error) => {
@@ -89,7 +90,9 @@ export const AddEventForm = memo(function AddEventForm({
 
   return (
     <div className="p-4 bg-white shadow-lg rounded-lg">
-      <h1 className="font-bold text-md mb-4" id="add-event-title">Add Event</h1>
+      <h1 className="font-bold text-md mb-4" id="add-event-title">
+        Add Event
+      </h1>
       <div
         role="status"
         aria-live="polite"
@@ -100,15 +103,15 @@ export const AddEventForm = memo(function AddEventForm({
         {isMutating ? "Submitting event..." : ""}
       </div>
       <Form {...form}>
-        <form 
-          onSubmit={form.handleSubmit(onSubmit)} 
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-6"
           aria-labelledby="add-event-title"
           noValidate
         >
           <EventFields
             form={form}
-            candidates={candidates}
+            contact={contact}
             organizations={organizations}
             isLoading={isLoading}
           />

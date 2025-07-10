@@ -14,16 +14,16 @@ export function useEventData() {
     queryKey: ["event-form-data"],
     queryFn: async () => {
       try {
-        const [candidates, organizations] = await Promise.all([
+        const [contact, organizations] = await Promise.all([
           fetchCandidates(),
           fetchOrganizations(),
         ]);
-        return { candidates, organizations };
+        return { contact, organizations };
       } catch (error) {
         throw error;
       }
     },
-    staleTime: 60000, // 1 minute
+    staleTime: 60000,
     retry: 3,
   });
 
@@ -39,12 +39,12 @@ export function useEventData() {
 
       return () => clearTimeout(timeoutId);
     }
-    
+
     return undefined;
   }, [error, toast]);
 
   return {
-    candidates: allData?.candidates || [],
+    contact: allData?.contact || [],
     organizations: allData?.organizations || [],
     isLoading,
     hasError: !!error,

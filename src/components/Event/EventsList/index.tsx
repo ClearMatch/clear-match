@@ -4,6 +4,7 @@ import DataTable from "@/components/ui/DataTable";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { EventData } from "../Services/Types";
+import Actions from "./Actions";
 import Columns from "./Columns";
 
 interface EventsListProps {
@@ -56,23 +57,21 @@ function EventsList({
               isFetchingNextPage && (
                 <div className="flex justify-center p-4">
                   <LoadingSpinner />
-                  <span className="ml-2 text-sm text-gray-500">Loading more events...</span>
+                  <span className="ml-2 text-sm text-gray-500">
+                    Loading more events...
+                  </span>
                 </div>
               )
             }
           >
-            <div
-              id="scrollableDiv"
-              className="max-h-[calc(100vh-150px)] w-full overflow-auto"
-            >
-              <DataTable
-                columns={Columns()}
-                data={allEvents}
-                rowKey="id"
-                hideHeaderCheckBox
-                hideRowCheckBox
-              />
-            </div>
+            <DataTable
+              columns={Columns()}
+              data={allEvents}
+              rowKey="id"
+              hideHeaderCheckBox
+              hideRowCheckBox
+              renderAction={(row) => <Actions id={row.id} />}
+            />
           </InfiniteScroll>
         </div>
       )}

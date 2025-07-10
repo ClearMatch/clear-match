@@ -7,24 +7,24 @@ import { useEventForm } from "./schema";
 
 interface EventFieldsProps {
   form: ReturnType<typeof useEventForm>;
-  candidates: Array<{ id: string; first_name: string; last_name: string }>;
+  contact: Array<{ id: string; first_name: string; last_name: string }>;
   organizations: Array<{ id: string; name: string }>;
   isLoading?: boolean;
 }
 
 const EventFields = memo(function EventFields({
   form,
-  candidates,
+  contact,
   organizations,
   isLoading,
 }: EventFieldsProps) {
   const candidateOptions = useMemo(
     () =>
-      candidates.map((candidate) => ({
-        value: candidate.id,
-        label: `${candidate.first_name} ${candidate.last_name}`,
+      contact.map((contact) => ({
+        value: contact.id,
+        label: `${contact.first_name} ${contact.last_name}`,
       })),
-    [candidates]
+    [contact]
   );
 
   const organizationOptions = useMemo(

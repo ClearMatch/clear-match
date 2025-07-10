@@ -5,7 +5,7 @@ import { AddEventForm } from "../Common/AddEventForm";
 import { useEventData } from "../Services/useEventData";
 
 function AddEvent() {
-  const { candidates, organizations, isLoading } = useEventData();
+  const { contact, organizations, isLoading } = useEventData();
 
   if (isLoading) {
     return (
@@ -18,7 +18,7 @@ function AddEvent() {
   return (
     <div className="p-4 bg-white">
       <AddEventForm
-        candidates={candidates}
+        contact={contact}
         organizations={organizations}
         isLoading={isLoading}
       />
