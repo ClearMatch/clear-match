@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -11,7 +11,6 @@ export function Auth() {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [orgName, setOrgName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -21,6 +20,26 @@ export function Auth() {
   const messageFromUrl = searchParams.get('message');
   const errorFromUrl = searchParams.get('error');
 
+  // Clear any corrupted session on component mount
+  useEffect(() => {
+    const clearCorruptedSession = async () => {
+      try {
+        // Check if there's a session and if it's valid
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error && error.message.includes('refresh_token_not_found')) {
+          console.log('Clearing corrupted session...');
+          await supabase.auth.signOut();
+        }
+      } catch (err) {
+        console.log('Error checking session, clearing:', err);
+        await supabase.auth.signOut();
+      }
+    };
+
+    clearCorruptedSession();
+  }, []);
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -29,6 +48,9 @@ export function Auth() {
     try {
       if (isSignUp) {
         console.log("Starting signup process...");
+        
+        // Clear any existing session before signup
+        await supabase.auth.signOut();
         
         // Sign up user first
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -44,25 +66,25 @@ export function Auth() {
         }
 
         if (authData.user) {
-          console.log("User created, creating organization...");
+          console.log("User created, finding Clear Match Talent organization...");
           
-          // Create organization (now that user is authenticated)
+          // Find the Clear Match Talent organization
           const { data: orgData, error: orgError } = await supabase
             .from('organizations')
-            .insert([{ name: orgName }])
-            .select()
+            .select('id')
+            .eq('name', 'Clear Match Talent')
             .single();
 
-          console.log("Organization creation result:", { orgData, orgError });
+          console.log("Organization lookup result:", { orgData, orgError });
 
           if (orgError) {
-            console.error("Organization creation error:", orgError);
-            throw orgError;
+            console.error("Organization lookup error:", orgError);
+            throw new Error("Unable to find Clear Match Talent organization. Please contact support.");
           }
 
-          console.log("Organization created, creating profile...");
+          console.log("Organization found, creating profile...");
 
-          // Create profile
+          // Create profile with Clear Match Talent organization
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .insert([{
@@ -100,7 +122,16 @@ export function Auth() {
       const redirectTo = searchParams.get('redirectTo') || '/dashboard';
       router.push(redirectTo);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Auth error:', err);
+      
+      // Handle specific refresh token errors
+      if (err instanceof Error && err.message.includes('refresh_token_not_found')) {
+        setError('Session expired. Please try again.');
+        // Clear the corrupted session
+        await supabase.auth.signOut();
+      } else {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      }
     } finally {
       setLoading(false);
     }
@@ -115,6 +146,11 @@ export function Auth() {
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           {isSignUp ? 'Create your account' : 'Sign in to your account'}
         </h2>
+        {isSignUp && (
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Join Clear Match Talent to get started
+          </p>
+        )}
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -122,22 +158,6 @@ export function Auth() {
           <form className="space-y-6" onSubmit={handleAuth}>
             {isSignUp && (
               <>
-                <div>
-                  <label htmlFor="orgName" className="block text-sm font-medium text-gray-700">
-                    Organization Name
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      id="orgName"
-                      name="orgName"
-                      type="text"
-                      required
-                      value={orgName}
-                      onChange={(e) => setOrgName(e.target.value)}
-                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">

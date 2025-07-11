@@ -41,7 +41,7 @@ const EditContact = () => {
             Failed to load contact data.
           </div>
         ) : data ? (
-          <EditForm data={data} id={selectId} />
+          <EditForm key={selectId} data={data} id={selectId} />
         ) : (
           <div className="text-center py-4 text-gray-600">
             No contact found.

@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { errorHandlers } from "@/lib/error-handling";
 import { queryKeyUtils } from "@/lib/query-keys";
+import { ContactDataTransformer, DetailedError } from "@/lib/data-transformers";
 import ContactFields from "../Common/ContactFields";
 import { Schema, useUserForm } from "../Common/schema";
 import { Contact } from "./Types";
@@ -27,12 +28,32 @@ function EditForm({ data, id }: Props) {
   const queryClient = useQueryClient();
 
   async function updateContact({ id, formData }: { id: string; formData: Schema }) {
-    const { error } = await supabase
-      .from("contacts")
-      .update({ ...formData, updated_by: auth.user?.id })
-      .eq("id", id);
+    try {
+      // Use centralized data transformer
+      const updateData = ContactDataTransformer.forUpdate(formData, auth.user?.id);
 
-    if (error) throw new Error(error.message);
+      const { error } = await supabase
+        .from("contacts")
+        .update(updateData)
+        .eq("id", id);
+
+      if (error) {
+        throw new DetailedError(error.message, {
+          contactId: id,
+          operation: "update",
+          formData: Object.keys(formData),
+        });
+      }
+    } catch (error) {
+      // Re-throw with additional context if it's not already a DetailedError
+      if (error instanceof DetailedError) {
+        throw error;
+      }
+      throw new DetailedError(
+        error instanceof Error ? error.message : "Unknown error occurred",
+        { contactId: id, operation: "update" }
+      );
+    }
   }
 
   const { mutate: trigger, isPending: isMutating } = useMutation({
@@ -63,29 +84,9 @@ function EditForm({ data, id }: Props) {
   });
   useEffect(() => {
     if (data) {
-      form.reset({
-        first_name: data.first_name || "",
-        last_name: data.last_name || "",
-        personal_email: data.personal_email || "",
-        work_email: data.work_email || "",
-        phone: data.phone || "",
-        linkedin_url: data.linkedin_url || "",
-        github_url: data.github_url || "",
-        other_social_urls: data.other_social_urls || "",
-        resume_url: data.resume_url || "",
-        functional_role: data.functional_role || "",
-        current_location: data.current_location || "",
-        current_job_title: data.current_job_title || "",
-        current_company: data.current_company || "",
-        current_company_size: data.current_company_size || "",
-        contact_type: data.contact_type || "",
-        workplace_preferences: data.workplace_preferences || "",
-        compensation_expectations: data.compensation_expectations || "",
-        visa_requirements: data.visa_requirements || false,
-        past_company_sizes: data.past_company_sizes || "",
-        urgency_level: data.urgency_level || "",
-        employment_status: data.employment_status || "",
-      });
+      // Use centralized data transformer for consistent form loading
+      const formData = ContactDataTransformer.forForm(data);
+      form.reset(formData);
     }
   }, [data, form]);
 
