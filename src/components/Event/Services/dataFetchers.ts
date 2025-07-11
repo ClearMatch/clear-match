@@ -15,9 +15,9 @@ export async function fetchCandidates(): Promise<Entity[]> {
       throw new Error(`Failed to fetch contacts: ${error.message}`);
     }
 
-    const uniqueCandidates = data
+    const uniqueCandidates: Entity[] = data
       ? Array.from(
-          new Map(data.map((candidate) => [candidate.id, candidate])).values()
+          new Map((data as Entity[]).map((candidate) => [candidate.id, candidate])).values()
         )
       : [];
 
@@ -39,8 +39,8 @@ export async function fetchOrganizations(): Promise<Organization[]> {
       throw new Error(`Failed to fetch organizations: ${error.message}`);
     }
 
-    const uniqueOrganizations = data
-      ? Array.from(new Map(data.map((org) => [org.id, org])).values())
+    const uniqueOrganizations: Organization[] = data
+      ? Array.from(new Map((data as Organization[]).map((org) => [org.id, org])).values())
       : [];
 
     return uniqueOrganizations;

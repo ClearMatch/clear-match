@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { getSupabaseConfig, shouldEnableDebugLogging, getEnvironment } from './lib/environment'
 
 /**
  * Enhanced Security Middleware for Clear Match
@@ -46,10 +47,17 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Check for required environment variables
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.error('❌ Missing Supabase environment variables')
+  // Get Supabase configuration for current environment
+  let config: ReturnType<typeof getSupabaseConfig>
+  try {
+    config = getSupabaseConfig()
+  } catch (error) {
+    console.error('❌ Missing Supabase environment variables:', error)
     return handleMissingConfig(request, pathname)
+  }
+
+  if (shouldEnableDebugLogging()) {
+    console.log(`[Middleware] Using ${getEnvironment()} environment`)
   }
 
   try {
@@ -57,8 +65,8 @@ export async function middleware(request: NextRequest) {
     
     // Create Supabase client with cookie handling
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      config.url,
+      config.anonKey,
       {
         cookies: {
           get(name: string) {

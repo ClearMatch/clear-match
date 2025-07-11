@@ -5,6 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { validateCSRFForAPI } from './csrf';
 import { sanitize, validateFileUpload } from './security';
 import { z } from 'zod';
+import { getSupabaseConfig, shouldEnableDebugLogging, getEnvironment } from './environment';
 
 /**
  * Standardized API error responses
@@ -175,13 +176,27 @@ export interface AuthResult {
 
 /**
  * Creates a Supabase server client with proper cookie handling
+ * Supports multiple environments (development, staging, production)
+ * @param useServiceRole - Use service role key instead of anon key (for admin operations)
  */
-export async function createSupabaseServerClient(): Promise<SupabaseClient> {
+export async function createSupabaseServerClient(useServiceRole: boolean = false): Promise<SupabaseClient> {
   const cookieStore = await cookies();
+  const config = getSupabaseConfig();
+  
+  // Use service role key if requested and available
+  const key = useServiceRole && config.serviceRoleKey ? config.serviceRoleKey : config.anonKey;
+  
+  if (useServiceRole && !config.serviceRoleKey) {
+    throw new ApiError('Service role key is required for this operation', 500);
+  }
+  
+  if (shouldEnableDebugLogging()) {
+    console.log(`[Supabase] Using ${getEnvironment()} environment`);
+  }
   
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    config.url,
+    key,
     {
       cookies: {
         get(name: string) {
