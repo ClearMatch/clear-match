@@ -265,10 +265,10 @@ function ShowEvent() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-slate-800">
-                      {data.candidates.first_name} {data.candidates.last_name}
+                      {data.contacts.first_name} {data.contacts.last_name}
                     </h3>
                     <p className="text-sm text-slate-600">
-                      ID: {data.candidates.id.slice(0, 8)}...
+                      ID: {data.contacts.id.slice(0, 8)}...
                     </p>
                   </div>
                 </div>
