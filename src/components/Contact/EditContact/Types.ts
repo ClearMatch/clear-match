@@ -8,7 +8,7 @@ export interface Contact {
   github_url: string;
   resume_url: string;
   functional_role: string;
-  current_location: string;
+  current_location: string | { location: string };
   current_job_title: string;
   current_company: string;
   current_company_size: string;

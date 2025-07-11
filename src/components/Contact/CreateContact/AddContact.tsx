@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { errorHandlers } from "@/lib/error-handling";
 import { queryKeyUtils } from "@/lib/query-keys";
 import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
+import { ContactDataTransformer, DetailedError } from "@/lib/data-transformers";
 import ContactFields from "../Common/ContactFields";
 import { Schema, useUserForm } from "../Common/schema";
 
@@ -21,12 +22,31 @@ function AddContact() {
   const queryClient = useQueryClient();
 
   async function insertContact(data: Schema) {
-    const { error } = await supabase.from("contacts").insert({
-      ...data,
-      past_company_sizes: [data.past_company_sizes],
-      created_by: auth.user?.id,
-    });
-    if (error) throw new Error(error.message);
+    try {
+      // Use centralized data transformer
+      const insertData = {
+        ...ContactDataTransformer.forCreate(data),
+        created_by: auth.user?.id,
+      };
+
+      const { error } = await supabase.from("contacts").insert(insertData);
+      
+      if (error) {
+        throw new DetailedError(error.message, {
+          operation: "create",
+          formData: Object.keys(data),
+        });
+      }
+    } catch (error) {
+      // Re-throw with additional context if it's not already a DetailedError
+      if (error instanceof DetailedError) {
+        throw error;
+      }
+      throw new DetailedError(
+        error instanceof Error ? error.message : "Unknown error occurred",
+        { operation: "create" }
+      );
+    }
   }
 
   const { mutate: trigger, isPending: isMutating, isSuccess, isError, error } = useMutation({
