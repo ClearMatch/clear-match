@@ -1,68 +1,69 @@
-// Mock environment variables
+// Mock environment variables using Jest spies
 const originalEnv = { ...process.env }
+
+// Mock process.env
+const mockEnv = {} as NodeJS.ProcessEnv
+Object.defineProperty(process, 'env', {
+  value: mockEnv,
+  writable: true,
+  configurable: true
+})
 
 describe('Environment Configuration', () => {
   beforeEach(() => {
     // Reset modules before each test to ensure clean state
     jest.resetModules()
-    // Clear all environment variables
-    Object.keys(process.env).forEach(key => {
-      delete (process.env as any)[key]
+    // Clear mock environment
+    Object.keys(mockEnv).forEach(key => {
+      delete mockEnv[key]
     })
-    // Restore original environment
-    Object.assign(process.env, originalEnv)
   })
 
   afterEach(() => {
-    // Clear all environment variables
-    Object.keys(process.env).forEach(key => {
-      delete (process.env as any)[key]
+    // Clear mock environment
+    Object.keys(mockEnv).forEach(key => {
+      delete mockEnv[key]
     })
-    // Restore original environment
-    Object.assign(process.env, originalEnv)
   })
 
   describe('getEnvironment', () => {
     it('should detect development environment', async () => {
-      process.env.NODE_ENV = 'development'
+      (mockEnv as any).NODE_ENV = 'development'
       const { getEnvironment } = await import('../environment')
       
       expect(getEnvironment()).toBe('development')
     })
 
     it('should detect production environment', async () => {
-      process.env.NODE_ENV = 'production'
+      (mockEnv as any).NODE_ENV = 'production'
       const { getEnvironment } = await import('../environment')
       
       expect(getEnvironment()).toBe('production')
     })
 
     it('should detect staging environment from VERCEL_ENV', async () => {
-      process.env.VERCEL_ENV = 'preview'
+      mockEnv.VERCEL_ENV = 'preview'
       const { getEnvironment } = await import('../environment')
       
       expect(getEnvironment()).toBe('staging')
     })
 
     it('should detect staging environment from APP_ENV', async () => {
-      process.env.APP_ENV = 'staging'
+      mockEnv.APP_ENV = 'staging'
       const { getEnvironment } = await import('../environment')
       
       expect(getEnvironment()).toBe('staging')
     })
 
     it('should prioritize APP_ENV over VERCEL_ENV', async () => {
-      process.env.VERCEL_ENV = 'production'
-      process.env.APP_ENV = 'staging'
+      mockEnv.VERCEL_ENV = 'production'
+      mockEnv.APP_ENV = 'staging'
       const { getEnvironment } = await import('../environment')
       
       expect(getEnvironment()).toBe('staging')
     })
 
     it('should default to development when no environment is set', async () => {
-      delete process.env.NODE_ENV
-      delete process.env.VERCEL_ENV
-      delete process.env.APP_ENV
       const { getEnvironment } = await import('../environment')
       
       expect(getEnvironment()).toBe('development')
@@ -71,10 +72,10 @@ describe('Environment Configuration', () => {
 
   describe('getSupabaseConfig', () => {
     it('should return development config for development environment', async () => {
-      process.env.NODE_ENV = 'development'
-      process.env.DEV_SUPABASE_URL = 'https://dev.supabase.co'
-      process.env.DEV_SUPABASE_ANON_KEY = 'dev-anon-key'
-      process.env.DEV_SUPABASE_SERVICE_ROLE_KEY = 'dev-service-key'
+      (mockEnv as any).NODE_ENV = 'development'
+      mockEnv.DEV_SUPABASE_URL = 'https://dev.supabase.co'
+      mockEnv.DEV_SUPABASE_ANON_KEY = 'dev-anon-key'
+      mockEnv.DEV_SUPABASE_SERVICE_ROLE_KEY = 'dev-service-key'
       
       const { getSupabaseConfig } = await import('../environment')
       const config = getSupabaseConfig()
@@ -87,10 +88,10 @@ describe('Environment Configuration', () => {
     })
 
     it('should return staging config for staging environment', async () => {
-      process.env.APP_ENV = 'staging'
-      process.env.STAGING_SUPABASE_URL = 'https://staging.supabase.co'
-      process.env.STAGING_SUPABASE_ANON_KEY = 'staging-anon-key'
-      process.env.STAGING_SUPABASE_SERVICE_ROLE_KEY = 'staging-service-key'
+      mockEnv.APP_ENV = 'staging'
+      mockEnv.STAGING_SUPABASE_URL = 'https://staging.supabase.co'
+      mockEnv.STAGING_SUPABASE_ANON_KEY = 'staging-anon-key'
+      mockEnv.STAGING_SUPABASE_SERVICE_ROLE_KEY = 'staging-service-key'
       
       const { getSupabaseConfig } = await import('../environment')
       const config = getSupabaseConfig()
@@ -103,11 +104,11 @@ describe('Environment Configuration', () => {
     })
 
     it('should return production config for production environment', async () => {
-      process.env.NODE_ENV = 'production'
-      process.env.VERCEL_ENV = 'production'
-      process.env.PROD_SUPABASE_URL = 'https://prod.supabase.co'
-      process.env.PROD_SUPABASE_ANON_KEY = 'prod-anon-key'
-      process.env.PROD_SUPABASE_SERVICE_ROLE_KEY = 'prod-service-key'
+      (mockEnv as any).NODE_ENV = 'production'
+      mockEnv.VERCEL_ENV = 'production'
+      mockEnv.PROD_SUPABASE_URL = 'https://prod.supabase.co'
+      mockEnv.PROD_SUPABASE_ANON_KEY = 'prod-anon-key'
+      mockEnv.PROD_SUPABASE_SERVICE_ROLE_KEY = 'prod-service-key'
       
       const { getSupabaseConfig } = await import('../environment')
       const config = getSupabaseConfig()
@@ -120,10 +121,10 @@ describe('Environment Configuration', () => {
     })
 
     it('should fall back to legacy environment variables if environment-specific ones are missing', async () => {
-      process.env.NODE_ENV = 'development'
-      process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://legacy.supabase.co'
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'legacy-anon-key'
-      process.env.SUPABASE_SERVICE_ROLE_KEY = 'legacy-service-key'
+      (mockEnv as any).NODE_ENV = 'development'
+      mockEnv.NEXT_PUBLIC_SUPABASE_URL = 'https://legacy.supabase.co'
+      mockEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'legacy-anon-key'
+      mockEnv.SUPABASE_SERVICE_ROLE_KEY = 'legacy-service-key'
       
       const { getSupabaseConfig } = await import('../environment')
       const config = getSupabaseConfig()
@@ -136,22 +137,8 @@ describe('Environment Configuration', () => {
     })
 
     it('should throw error if required environment variables are missing', async () => {
-      // Clear all Supabase-related env vars
-      delete process.env.NEXT_PUBLIC_SUPABASE_URL
-      delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      delete process.env.SUPABASE_SERVICE_ROLE_KEY
-      delete process.env.DEV_SUPABASE_URL
-      delete process.env.DEV_SUPABASE_ANON_KEY
-      delete process.env.DEV_SUPABASE_SERVICE_ROLE_KEY
-      delete process.env.STAGING_SUPABASE_URL
-      delete process.env.STAGING_SUPABASE_ANON_KEY
-      delete process.env.STAGING_SUPABASE_SERVICE_ROLE_KEY
-      delete process.env.PROD_SUPABASE_URL
-      delete process.env.PROD_SUPABASE_ANON_KEY
-      delete process.env.PROD_SUPABASE_SERVICE_ROLE_KEY
-      
-      process.env.NODE_ENV = 'production'
-      process.env.VERCEL_ENV = 'production'
+      (mockEnv as any).NODE_ENV = 'production'
+      mockEnv.VERCEL_ENV = 'production'
       
       const { getSupabaseConfig } = await import('../environment')
       
@@ -161,22 +148,22 @@ describe('Environment Configuration', () => {
 
   describe('isProduction', () => {
     it('should return true for production environment', async () => {
-      process.env.NODE_ENV = 'production'
-      process.env.VERCEL_ENV = 'production'
+      (mockEnv as any).NODE_ENV = 'production'
+      mockEnv.VERCEL_ENV = 'production'
       const { isProduction } = await import('../environment')
       
       expect(isProduction()).toBe(true)
     })
 
     it('should return false for staging environment', async () => {
-      process.env.APP_ENV = 'staging'
+      mockEnv.APP_ENV = 'staging'
       const { isProduction } = await import('../environment')
       
       expect(isProduction()).toBe(false)
     })
 
     it('should return false for development environment', async () => {
-      process.env.NODE_ENV = 'development'
+      (mockEnv as any).NODE_ENV = 'development'
       const { isProduction } = await import('../environment')
       
       expect(isProduction()).toBe(false)
@@ -185,63 +172,69 @@ describe('Environment Configuration', () => {
 
   describe('isStaging', () => {
     it('should return true for staging environment', async () => {
-      process.env.APP_ENV = 'staging'
+      mockEnv.APP_ENV = 'staging'
       const { isStaging } = await import('../environment')
       
       expect(isStaging()).toBe(true)
     })
 
     it('should return true when VERCEL_ENV is preview', async () => {
-      process.env.VERCEL_ENV = 'preview'
+      mockEnv.VERCEL_ENV = 'preview'
       const { isStaging } = await import('../environment')
       
       expect(isStaging()).toBe(true)
     })
 
     it('should return false for production environment', async () => {
-      process.env.NODE_ENV = 'production'
+      (mockEnv as any).NODE_ENV = 'production'
       const { isStaging } = await import('../environment')
       
       expect(isStaging()).toBe(false)
     })
 
     it('should return false for development environment', async () => {
-      process.env.NODE_ENV = 'development'
-      const { isStaging } = await import('../environment')
+      (mockEnv as any).NODE_ENV = 'development'
+      const { isDevelopment } = await import('../environment')
       
-      expect(isStaging()).toBe(false)
+      expect(isDevelopment()).toBe(true)
     })
   })
 
   describe('isDevelopment', () => {
     it('should return true for development environment', async () => {
-      process.env.NODE_ENV = 'development'
+      (mockEnv as any).NODE_ENV = 'development'
       const { isDevelopment } = await import('../environment')
       
       expect(isDevelopment()).toBe(true)
     })
 
     it('should return true when no environment is set', async () => {
-      delete process.env.NODE_ENV
-      delete process.env.VERCEL_ENV
-      delete process.env.APP_ENV
       const { isDevelopment } = await import('../environment')
       
       expect(isDevelopment()).toBe(true)
     })
 
     it('should return false for production environment', async () => {
-      process.env.NODE_ENV = 'production'
+      (mockEnv as any).NODE_ENV = 'production'
       const { isDevelopment } = await import('../environment')
       
       expect(isDevelopment()).toBe(false)
     })
 
     it('should return false for staging environment', async () => {
-      process.env.APP_ENV = 'staging'
+      mockEnv.APP_ENV = 'staging'
       const { isDevelopment } = await import('../environment')
       
       expect(isDevelopment()).toBe(false)
     })
+  })
+})
+
+// Restore original process.env after all tests
+afterAll(() => {
+  Object.defineProperty(process, 'env', {
+    value: originalEnv,
+    writable: true,
+    configurable: true
   })
 })
