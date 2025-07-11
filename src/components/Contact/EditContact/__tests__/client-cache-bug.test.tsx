@@ -58,10 +58,24 @@ const originalContact: Contact = {
   first_name: 'Cache',
   last_name: 'Test',
   personal_email: 'cache@test.com',
+  work_email: '',
   phone: '555-CACHE',
+  linkedin_url: '',
+  github_url: '',
+  resume_url: '',
+  functional_role: '',
   current_location: 'Test City',
+  current_job_title: '',
   current_company: 'Test Corp',
-  contact_type: 'candidate'  // Initial value
+  current_company_size: '',
+  contact_type: 'candidate',  // Initial value
+  workplace_preferences: '',
+  compensation_expectations: '',
+  visa_requirements: false,
+  past_company_sizes: '',
+  urgency_level: '',
+  employment_status: '',
+  other_social_urls: ''
 };
 
 function renderEditFormWithFreshClient(contact: Contact) {
@@ -71,7 +85,7 @@ function renderEditFormWithFreshClient(contact: Contact) {
       queries: { 
         retry: false,
         staleTime: 5 * 60 * 1000, // 5 minutes - realistic cache time
-        cacheTime: 10 * 60 * 1000, // 10 minutes
+        gcTime: 10 * 60 * 1000, // 10 minutes
       },
       mutations: { retry: false }
     }
@@ -105,7 +119,7 @@ describe('Client-Side Cache Invalidation Tests', () => {
         queries: { 
           retry: false,
           staleTime: 5 * 60 * 1000,
-          cacheTime: 10 * 60 * 1000,
+          gcTime: 10 * 60 * 1000,
         },
         mutations: { retry: false }
       }

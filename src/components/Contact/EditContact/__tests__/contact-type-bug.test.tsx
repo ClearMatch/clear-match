@@ -49,10 +49,24 @@ const clientContact: Contact = {
   first_name: 'Jane',
   last_name: 'Smith', 
   personal_email: 'jane@client.com',
+  work_email: '',
   phone: '555-0123',
+  linkedin_url: '',
+  github_url: '',
+  resume_url: '',
+  functional_role: '',
   current_location: 'San Francisco',
+  current_job_title: '',
   current_company: 'Client Corp',
-  contact_type: 'client'
+  current_company_size: '',
+  contact_type: 'client',
+  workplace_preferences: '',
+  compensation_expectations: '',
+  visa_requirements: false,
+  past_company_sizes: '',
+  urgency_level: '',
+  employment_status: '',
+  other_social_urls: ''
 };
 
 const bothContact: Contact = {
@@ -60,10 +74,24 @@ const bothContact: Contact = {
   first_name: 'Bob',
   last_name: 'Johnson',
   personal_email: 'bob@both.com', 
+  work_email: '',
   phone: '555-0456',
+  linkedin_url: '',
+  github_url: '',
+  resume_url: '',
+  functional_role: '',
   current_location: 'Chicago',
+  current_job_title: '',
   current_company: 'Both Inc',
-  contact_type: 'both'
+  current_company_size: '',
+  contact_type: 'both',
+  workplace_preferences: '',
+  compensation_expectations: '',
+  visa_requirements: false,
+  past_company_sizes: '',
+  urgency_level: '',
+  employment_status: '',
+  other_social_urls: ''
 };
 
 const candidateContact: Contact = {
@@ -71,10 +99,24 @@ const candidateContact: Contact = {
   first_name: 'John',
   last_name: 'Doe',
   personal_email: 'john@candidate.com',
+  work_email: '',
   phone: '555-0789',
-  current_location: 'New York', 
+  linkedin_url: '',
+  github_url: '',
+  resume_url: '',
+  functional_role: '',
+  current_location: 'New York',
+  current_job_title: '',
   current_company: 'Candidate LLC',
-  contact_type: 'candidate'
+  current_company_size: '',
+  contact_type: 'candidate',
+  workplace_preferences: '',
+  compensation_expectations: '',
+  visa_requirements: false,
+  past_company_sizes: '',
+  urgency_level: '',
+  employment_status: '',
+  other_social_urls: ''
 };
 
 function renderEditForm(contact: Contact) {
