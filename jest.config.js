@@ -43,6 +43,7 @@ const customJestConfig = {
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
     '<rootDir>/src/**/*.{test,spec}.{js,jsx,ts,tsx}',
+    '<rootDir>/tests/**/*.{test,spec}.{js,jsx,ts,tsx}',
   ],
   testPathIgnorePatterns: [
     '/node_modules/',
