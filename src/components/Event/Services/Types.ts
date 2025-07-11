@@ -6,7 +6,7 @@ export interface EventData {
   created_at: string;
   updated_at: string;
   created_by: string;
-  candidates: {
+  contacts: {
     id: string;
     first_name: string;
     last_name: string;
