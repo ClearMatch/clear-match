@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { Loader } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { contactKeys } from "@/lib/query-keys";
 import EditForm from "./EditForm";
 import { Contact } from "./Types";
 
@@ -23,7 +24,7 @@ const EditContact = () => {
   };
 
   const { data, error, isLoading } = useQuery<Contact>({
-    queryKey: ["contact", selectId],
+    queryKey: contactKeys.detail(selectId),
     queryFn: () => fetchContactById(selectId),
     enabled: !!selectId,
   });

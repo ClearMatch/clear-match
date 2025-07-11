@@ -88,7 +88,7 @@ function EditForm({ data, id }: Props) {
       const formData = ContactDataTransformer.forForm(data);
       form.reset(formData);
     }
-  }, [data, form]);
+  }, [data]);
 
   const onSubmit = async (formData: Schema) => {
     trigger({ id, formData });
@@ -97,7 +97,7 @@ function EditForm({ data, id }: Props) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <ContactFields form={form} />
+        <ContactFields form={form} contactId={id} />
         <hr className="color-black" />
         <div className="flex justify-center space-x-8 pt-6">
           <Button
