@@ -15,8 +15,8 @@ export async function fetchContacts(): Promise<Entity[]> {
       throw new Error(`Failed to fetch contacts: ${error.message}`);
     }
 
-    const uniqueContacts =
-      data?.filter(
+    const uniqueContacts: Entity[] =
+      (data as Entity[])?.filter(
         (contact, index, self) =>
           index === self.findIndex((c) => c.id === contact.id)
       ) || [];
@@ -41,8 +41,8 @@ export async function fetchOrganizations(): Promise<Organization[]> {
       throw new Error(`Failed to fetch organizations: ${error.message}`);
     }
 
-    const uniqueOrganizations =
-      data?.filter(
+    const uniqueOrganizations: Organization[] =
+      (data as Organization[])?.filter(
         (org, index, self) => index === self.findIndex((o) => o.id === org.id)
       ) || [];
 
@@ -90,8 +90,8 @@ export async function fetchEvents(): Promise<Event[]> {
     }
 
     // Map the data to include 'name' field from 'type' for compatibility
-    const mappedData =
-      data?.map((event) => ({
+    const mappedData: Event[] =
+      (data as Event[])?.map((event) => ({
         ...event,
         name: event.type, // Map type to name for display purposes
       })) || [];
