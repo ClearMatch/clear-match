@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { fetchEventById } from "../Services/eventService";
+import { fetchEventById } from "../Services/dataFetchers";
 
 function ShowEvent() {
   const params = useParams();

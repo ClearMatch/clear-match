@@ -21,7 +21,7 @@ function Columns(): Column<EventData>[] {
       header: "Created By",
       render: (row) => (
         <span className="text-sm">
-          {row.profiles.first_name} {row.profiles.last_name}
+          {row.profiles?.first_name} {row.profiles?.last_name}
         </span>
       ),
     },
@@ -30,7 +30,7 @@ function Columns(): Column<EventData>[] {
       header: "Contact Name",
       render: (row) => (
         <span className="text-sm">
-          {row.candidates.first_name} {row.candidates.last_name}
+          {row.candidates?.first_name} {row.candidates?.last_name}
         </span>
       ),
     },
@@ -38,7 +38,7 @@ function Columns(): Column<EventData>[] {
       key: "organization_id",
       header: "Organization",
       render: (row) => (
-        <span className="text-sm">{row.organizations.name}</span>
+        <span className="text-sm">{row.organizations?.name}</span>
       ),
     },
   ];
