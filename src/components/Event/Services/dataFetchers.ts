@@ -89,6 +89,10 @@ export async function fetchEventById(id: string): Promise<EventData> {
           id,
           first_name,
           last_name
+        ),
+        organizations:organization_id (
+          id,
+          name
         )
       `
       )

@@ -87,3 +87,4 @@ organizations:organization_id(id, name)`
   if (error) throw error;
   return data ?? [];
 };
+

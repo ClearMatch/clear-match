@@ -3,9 +3,11 @@
 import { formatDate } from "@/lib/utils";
 import {
   AlertCircle,
+  ArrowLeft,
   Calendar,
   CheckCircle2,
   Edit,
+  Edit3,
   FileVideo,
   Loader,
   User,
@@ -54,6 +56,22 @@ function ShowTask() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between mb-6">
+          <button
+            onClick={() => router.push("/task")}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-800 transition-colors mb-4"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm font-medium">Back to Tasks</span>
+          </button>
+          <button
+            onClick={() => router.push(`/task/edit/${taskData?.id}`)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md"
+          >
+            <Edit3 className="w-4 h-4" />
+            Edit Task
+          </button>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-8">
@@ -155,9 +173,7 @@ function ShowTask() {
               <div className="space-y-4">
                 {/* Contact */}
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
-                  <h3 className="font-semibold text-blue-800 mb-2">
-                    Contact
-                  </h3>
+                  <h3 className="font-semibold text-blue-800 mb-2">Contact</h3>
                   <p className="text-blue-700 font-medium">
                     {getFullName(
                       taskData?.contacts?.first_name,
