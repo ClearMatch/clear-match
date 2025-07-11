@@ -1,19 +1,25 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
-
 // Mock environment variables
-const originalEnv = process.env
+const originalEnv = { ...process.env }
 
 describe('Environment Configuration', () => {
   beforeEach(() => {
     // Reset modules before each test to ensure clean state
     jest.resetModules()
-    // Create a copy of the original environment
-    process.env = { ...originalEnv }
+    // Clear all environment variables
+    Object.keys(process.env).forEach(key => {
+      delete (process.env as any)[key]
+    })
+    // Restore original environment
+    Object.assign(process.env, originalEnv)
   })
 
   afterEach(() => {
+    // Clear all environment variables
+    Object.keys(process.env).forEach(key => {
+      delete (process.env as any)[key]
+    })
     // Restore original environment
-    process.env = originalEnv
+    Object.assign(process.env, originalEnv)
   })
 
   describe('getEnvironment', () => {
