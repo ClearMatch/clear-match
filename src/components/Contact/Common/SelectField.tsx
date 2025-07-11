@@ -57,7 +57,7 @@ function SelectField<
           <FormLabel required={required}>{label}</FormLabel>
           <Select
             onValueChange={field.onChange}
-            value={field.value}
+            value={field.value || undefined}
             disabled={disabled}
           >
             <FormControl>

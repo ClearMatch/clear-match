@@ -9,9 +9,10 @@ import {
 
 interface ProfessionalInfoFieldsProps {
   form: ReturnType<typeof useUserForm>;
+  contactId?: string;
 }
 
-export default function ProfessionalInfoFields({ form }: ProfessionalInfoFieldsProps) {
+export default function ProfessionalInfoFields({ form, contactId }: ProfessionalInfoFieldsProps) {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -50,6 +51,9 @@ export default function ProfessionalInfoFields({ form }: ProfessionalInfoFieldsP
           placeholder="Select a Relationship"
           options={relationshipOptions}
           required
+          // Note: Using form.watch in key to force re-render when contact type changes
+          // This ensures proper form reset behavior when switching between contacts
+          key={`contact_type_${contactId}_${form.watch('contact_type')}`}
         />
         <SelectField
           control={form.control}
