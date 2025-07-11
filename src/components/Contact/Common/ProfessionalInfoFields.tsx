@@ -51,6 +51,8 @@ export default function ProfessionalInfoFields({ form, contactId }: Professional
           placeholder="Select a Relationship"
           options={relationshipOptions}
           required
+          // Note: Using form.watch in key to force re-render when contact type changes
+          // This ensures proper form reset behavior when switching between contacts
           key={`contact_type_${contactId}_${form.watch('contact_type')}`}
         />
         <SelectField
