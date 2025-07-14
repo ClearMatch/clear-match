@@ -58,7 +58,9 @@ function SelectField<
         <FormItem className="space-y-2">
           <FormLabel required={required}>{label}</FormLabel>
           <Select
-            onValueChange={field.onChange}
+            onValueChange={(e) => {
+              if (e) field.onChange(e);
+            }}
             disabled={disabled}
             value={field.value}
           >

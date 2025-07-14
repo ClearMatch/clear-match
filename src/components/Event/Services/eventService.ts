@@ -58,7 +58,7 @@ export const fetchEventsPaginated = async (
     .from("events")
     .select(
       ` *, 
-candidates:contact_id(id, first_name, last_name), 
+contact:contact_id(id, first_name, last_name), 
 profiles:created_by (id, first_name, last_name), 
 organizations:organization_id(id, name)`
     )
@@ -87,4 +87,3 @@ organizations:organization_id(id, name)`
   if (error) throw error;
   return data ?? [];
 };
-

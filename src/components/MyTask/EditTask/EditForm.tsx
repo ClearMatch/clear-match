@@ -13,6 +13,7 @@ import { useTaskData } from "../Services/useTaskData";
 import { supabase } from "@/lib/supabase";
 import { errorHandlers } from "@/lib/error-handling";
 import { queryKeyUtils } from "@/lib/query-keys";
+import { useOrganizationAuth } from "@/hooks";
 
 interface Props {
   data: ActivityData;
@@ -21,8 +22,9 @@ interface Props {
 
 function EditForm({ data, selectId }: Props) {
   const form = useTaskForm();
-  const { contacts, organizations, users } = useTaskData();
+  const { contacts, organizations, users, events } = useTaskData();
   const route = useRouter();
+  const { getOrganizationAuth } = useOrganizationAuth();
 
   useEffect(() => {
     if (
@@ -46,7 +48,7 @@ function EditForm({ data, selectId }: Props) {
         priority: String(data.priority),
       });
     }
-  }, [data, contacts, organizations, form, users]);
+  }, [data, contacts, organizations, form, users, events]);
 
   async function updateActivity(
     url: string,
@@ -55,27 +57,10 @@ function EditForm({ data, selectId }: Props) {
     try {
       console.log("Updating task with ID:", arg.selectId);
       console.log("Form data:", arg.formData);
-      
-      // Check if user is authenticated
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        throw new Error("You must be logged in to update tasks");
-      }
-      
-      console.log("Authenticated as user:", session.user.id);
-      
-      // Get the user's organization_id
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", session.user.id)
-        .single();
-        
-      if (profileError || !profileData) {
-        throw new Error("Failed to get user profile");
-      }
-      
+
+      // Get authenticated user and organization context
+      const { userId, organizationId } = await getOrganizationAuth();
+
       // Build update data
       const updateData: {
         description: string;
@@ -102,25 +87,23 @@ function EditForm({ data, selectId }: Props) {
         assigned_to: arg.formData.assigned_to || null,
         event_id: arg.formData.event_id || null,
         job_posting_id: arg.formData.job_posting_id || null,
-        organization_id: profileData.organization_id
+        organization_id: organizationId,
       };
-      
-      console.log("Update data:", updateData);
-      
+
       // Update the task directly using Supabase
       const { data, error } = await supabase
         .from("activities")
         .update(updateData)
         .eq("id", arg.selectId)
-        .eq("organization_id", profileData.organization_id) // Ensure user can only update tasks in their org
+        .eq("organization_id", organizationId) // Ensure user can only update tasks in their org
         .select()
         .single();
-      
+
       if (error) {
         console.error("Supabase update error:", error);
         throw new Error(error.message || "Failed to update task");
       }
-      
+
       console.log("Task updated successfully:", data);
       return data;
     } catch (error) {
@@ -131,26 +114,32 @@ function EditForm({ data, selectId }: Props) {
 
   const queryClient = useQueryClient();
   const { mutate: trigger, isPending: isMutating } = useMutation({
-    mutationFn: ({ selectId, formData }: { selectId: string; formData: TaskSchema }) => updateActivity("", { arg: { selectId, formData } }),
+    mutationFn: ({
+      selectId,
+      formData,
+    }: {
+      selectId: string;
+      formData: TaskSchema;
+    }) => updateActivity("", { arg: { selectId, formData } }),
     onSuccess: (updatedTask) => {
       toast({ title: "Task updated successfully" });
-      
+
       // Use enhanced cache invalidation with operation type and related data
       queryKeyUtils.invalidateRelatedData(queryClient, {
         taskId: selectId,
         contactId: updatedTask?.contact_id,
         userId: updatedTask?.assigned_to,
-        operationType: 'update',
+        operationType: "update",
       });
-      
+
       route.push("/task");
     },
     onError: (error) => {
       const errorMessage = errorHandlers.task.update(error);
-      toast({ 
-        title: "Error", 
-        description: errorMessage, 
-        variant: "destructive" 
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
       });
     },
   });
@@ -168,12 +157,14 @@ function EditForm({ data, selectId }: Props) {
             contacts={contacts}
             organizations={organizations}
             users={users}
+            events={events}
           />
           <hr className="color-black" />
           <div className="flex justify-center space-x-8 pt-6">
             <Button
               variant="outline"
               className="w-40"
+              type="button"
               onClick={() => route.push("/task")}
             >
               Cancel

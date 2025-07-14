@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDate } from "@/lib/utils";
 import {
+  ArrowLeftIcon,
   Building,
   Edit,
   Loader,
@@ -37,7 +38,7 @@ function ShowContact() {
 
   // Optimize contact name computation
   const contactFullName = useMemo(
-    () => contact ? `${contact.first_name} ${contact.last_name}` : '',
+    () => (contact ? `${contact.first_name} ${contact.last_name}` : ""),
     [contact?.first_name, contact?.last_name]
   );
 
@@ -67,6 +68,13 @@ function ShowContact() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-8">
+      <div className="flex gap-2 items-center mb-4">
+        <ArrowLeftIcon
+          className="cursor-pointer"
+          onClick={() => router.push("/contacts")}
+        />
+        <h1 className="font-bold text-md ">Contact Details</h1>
+      </div>
       <div className="max-w-6xl mx-auto">
         {/* Contact Information Header */}
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-8">
@@ -189,16 +197,10 @@ function ShowContact() {
               <TabsTrigger value="events">Events</TabsTrigger>
             </TabsList>
             <TabsContent value="tasks">
-              <TasksTab 
-                contactId={contactId} 
-                contactName={contactFullName}
-              />
+              <TasksTab contactId={contactId} contactName={contactFullName} />
             </TabsContent>
             <TabsContent value="events">
-              <EventsTab 
-                contactId={contactId} 
-                contactName={contactFullName}
-              />
+              <EventsTab contactId={contactId} contactName={contactFullName} />
             </TabsContent>
           </Tabs>
         </div>

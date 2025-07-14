@@ -28,6 +28,11 @@ export interface ActivityWithRelations extends ActivityData {
     first_name: string;
     last_name: string;
   };
+  assigned_to_profile?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+  };
 }
 
 export const getFullName = (firstName?: string, lastName?: string): string => {
@@ -46,9 +51,7 @@ const priorityMap: Record<number, string> = {
   1: "High",
   2: "High-Medium",
   3: "Medium",
-  4: "Low-Medium",
-  5: "Low",
-  6: "Very Low",
+  4: "Low",
 };
 
 export const getPriorityLabel = (priority: number): string =>

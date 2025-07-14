@@ -103,8 +103,8 @@ function TaskFields({
         <SelectField
           control={form.control}
           name="type"
-          label="Activity Type"
-          placeholder="Select activity type"
+          label="Task Type"
+          placeholder="Select Task type"
           options={activityTypeOptions}
         />
       </div>
@@ -141,27 +141,17 @@ function TaskFields({
         />
         <SelectField
           control={form.control}
-          name="assigned_to"
-          label="Assigned To"
-          placeholder="Select assignee"
-          options={userOptions}
-        />
-        <SelectField
-          control={form.control}
           name="event_id"
           label="Event"
           placeholder="Select event"
           options={eventOptions}
         />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <SelectField
           control={form.control}
-          name="job_posting_id"
-          label="Job Posting"
-          placeholder="Select job posting"
-          options={[]}
+          name="assigned_to"
+          label="Assigned To"
+          placeholder="Assigned To"
+          options={userOptions}
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

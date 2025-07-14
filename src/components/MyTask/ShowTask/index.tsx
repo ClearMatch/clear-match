@@ -4,6 +4,7 @@ import { formatDate } from "@/lib/utils";
 import {
   AlertCircle,
   ArrowLeft,
+  ArrowLeftIcon,
   Calendar,
   CheckCircle2,
   Edit,
@@ -55,6 +56,13 @@ function ShowTask() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-8">
+      <div className="flex gap-2 items-center mb-4">
+        <ArrowLeftIcon
+          className="cursor-pointer"
+          onClick={() => router.push("/task")}
+        />
+        <h1 className="font-bold text-md ">Task Details</h1>
+      </div>
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between mb-6">
           <button

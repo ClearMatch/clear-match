@@ -18,6 +18,8 @@ export enum ErrorCategory {
   VALIDATION = 'validation',
   DUPLICATE = 'duplicate',
   NOT_FOUND = 'not_found',
+  ORGANIZATION = 'organization',
+  DATABASE_CONSTRAINT = 'database_constraint',
   SERVER = 'server',
   UNKNOWN = 'unknown',
 }
@@ -31,6 +33,8 @@ const ERROR_MESSAGES: Record<ErrorCategory, string> = {
   [ErrorCategory.VALIDATION]: 'Please check your input and try again.',
   [ErrorCategory.DUPLICATE]: 'This item already exists. Please use a different value.',
   [ErrorCategory.NOT_FOUND]: 'The requested item could not be found.',
+  [ErrorCategory.ORGANIZATION]: 'This action is not allowed for your organization. Please contact support if you believe this is an error.',
+  [ErrorCategory.DATABASE_CONSTRAINT]: 'This action cannot be completed due to data dependencies. Please check related items and try again.',
   [ErrorCategory.SERVER]: 'Something went wrong on our end. Please try again later.',
   [ErrorCategory.UNKNOWN]: 'Something went wrong. Please try again.',
 };
@@ -92,6 +96,25 @@ export function categorizeError(error: unknown): ErrorCategory {
     apiError.message?.toLowerCase().includes('does not exist')
   ) {
     return ErrorCategory.NOT_FOUND;
+  }
+
+  // Organization-related errors
+  if (
+    apiError.message?.toLowerCase().includes('organization') ||
+    apiError.message?.toLowerCase().includes('failed to get user organization') ||
+    apiError.message?.toLowerCase().includes('authentication required')
+  ) {
+    return ErrorCategory.ORGANIZATION;
+  }
+
+  // Database constraint errors
+  if (
+    apiError.message?.toLowerCase().includes('foreign key') ||
+    apiError.message?.toLowerCase().includes('constraint') ||
+    apiError.message?.toLowerCase().includes('references') ||
+    apiError.message?.toLowerCase().includes('violates')
+  ) {
+    return ErrorCategory.DATABASE_CONSTRAINT;
   }
 
   // Server errors
@@ -184,12 +207,14 @@ export const errorHandlers = {
 export function shouldRetryError(error: unknown, attemptIndex: number): boolean {
   const category = categorizeError(error);
   
-  // Don't retry permission, validation, duplicate, or not found errors
+  // Don't retry permission, validation, duplicate, not found, organization, or constraint errors
   if ([
     ErrorCategory.PERMISSION,
     ErrorCategory.VALIDATION,
     ErrorCategory.DUPLICATE,
     ErrorCategory.NOT_FOUND,
+    ErrorCategory.ORGANIZATION,
+    ErrorCategory.DATABASE_CONSTRAINT,
   ].includes(category)) {
     return false;
   }
