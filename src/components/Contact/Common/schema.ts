@@ -39,10 +39,10 @@ export type Schema = z.infer<typeof schema>;
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-export function useUserForm() {
+export function useUserForm(defaultValues?: Partial<Schema>) {
   const form = useForm<Schema>({
     resolver: zodResolver(schema),
-    defaultValues: {
+    defaultValues: defaultValues || {
       first_name: "",
       last_name: "",
       personal_email: "",

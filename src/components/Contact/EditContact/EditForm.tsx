@@ -6,7 +6,6 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { errorHandlers } from "@/lib/error-handling";
 import { queryKeyUtils } from "@/lib/query-keys";
@@ -21,16 +20,28 @@ interface Props {
 }
 
 function EditForm({ data, id }: Props) {
-  const form = useUserForm();
+  // Process the data for form initialization using the centralized transformer
+  const formData = ContactDataTransformer.forForm(data);
+
+  const form = useUserForm(formData);
   const auth = useAuth();
   const router = useRouter();
 
   const queryClient = useQueryClient();
 
-  async function updateContact({ id, formData }: { id: string; formData: Schema }) {
+  async function updateContact({
+    id,
+    formData,
+  }: {
+    id: string;
+    formData: Schema;
+  }) {
     try {
-      // Use centralized data transformer
-      const updateData = ContactDataTransformer.forUpdate(formData, auth.user?.id);
+      // Use centralized data transformer with our timestamp improvement
+      const updateData = ContactDataTransformer.forUpdate(
+        formData,
+        auth.user?.id
+      );
 
       const { error } = await supabase
         .from("contacts")
@@ -63,14 +74,17 @@ function EditForm({ data, id }: Props) {
         title: "Success",
         description: "Contact updated successfully.",
       });
-      
+
+      // Force a complete refetch of contacts list to ensure updated contact appears on top
+      queryClient.removeQueries({ queryKey: ["contacts"] });
+
       // Use enhanced cache invalidation with operation type and related data
       queryKeyUtils.invalidateRelatedData(queryClient, {
         contactId: id,
         userId: auth.user?.id,
-        operationType: 'update',
+        operationType: "update",
       });
-      
+
       router.push("/contacts");
     },
     onError: (error) => {
@@ -82,13 +96,6 @@ function EditForm({ data, id }: Props) {
       });
     },
   });
-  useEffect(() => {
-    if (data) {
-      // Use centralized data transformer for consistent form loading
-      const formData = ContactDataTransformer.forForm(data);
-      form.reset(formData);
-    }
-  }, [data]);
 
   const onSubmit = async (formData: Schema) => {
     trigger({ id, formData });
