@@ -51,7 +51,10 @@ export function useTasks() {
     error,
     isLoading,
   } = useQuery<ActivityWithRelations[]>({
-    queryKey: ["tasks", { search: debouncedSearchQuery, filters: memoizedFilters }],
+    queryKey: [
+      "tasks",
+      { search: debouncedSearchQuery, filters: memoizedFilters },
+    ],
     queryFn: async () => {
       try {
         return await fetchActivitiesWithRelations(
@@ -62,7 +65,7 @@ export function useTasks() {
         );
       } catch (error) {
         // Only log in development, not in tests
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === "development") {
           console.error("Error in query fetcher:", error);
         }
         throw error;

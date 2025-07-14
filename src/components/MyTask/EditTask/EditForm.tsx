@@ -13,6 +13,7 @@ import { useTaskData } from "../Services/useTaskData";
 import { supabase } from "@/lib/supabase";
 import { errorHandlers } from "@/lib/error-handling";
 import { queryKeyUtils } from "@/lib/query-keys";
+import { useOrganizationAuth } from "@/hooks";
 
 interface Props {
   data: ActivityData;
@@ -23,6 +24,7 @@ function EditForm({ data, selectId }: Props) {
   const form = useTaskForm();
   const { contacts, organizations, users, events } = useTaskData();
   const route = useRouter();
+  const { getOrganizationAuth } = useOrganizationAuth();
 
   useEffect(() => {
     if (
@@ -56,28 +58,8 @@ function EditForm({ data, selectId }: Props) {
       console.log("Updating task with ID:", arg.selectId);
       console.log("Form data:", arg.formData);
 
-      // Check if user is authenticated
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-
-      if (sessionError || !session) {
-        throw new Error("You must be logged in to update tasks");
-      }
-
-      console.log("Authenticated as user:", session.user.id);
-
-      // Get the user's organization_id
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", session.user.id)
-        .single();
-
-      if (profileError || !profileData) {
-        throw new Error("Failed to get user profile");
-      }
+      // Get authenticated user and organization context
+      const { userId, organizationId } = await getOrganizationAuth();
 
       // Build update data
       const updateData: {
@@ -105,7 +87,7 @@ function EditForm({ data, selectId }: Props) {
         assigned_to: arg.formData.assigned_to || null,
         event_id: arg.formData.event_id || null,
         job_posting_id: arg.formData.job_posting_id || null,
-        organization_id: profileData.organization_id,
+        organization_id: organizationId,
       };
 
       // Update the task directly using Supabase
@@ -113,6 +95,7 @@ function EditForm({ data, selectId }: Props) {
         .from("activities")
         .update(updateData)
         .eq("id", arg.selectId)
+        .eq("organization_id", organizationId) // Ensure user can only update tasks in their org
         .select()
         .single();
 

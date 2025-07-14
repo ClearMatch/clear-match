@@ -4,7 +4,8 @@ import { ActivityWithRelations } from "./Types";
 
 export const fetchActivitiesWithRelations = async (
   searchTerm?: string,
-  filters?: TaskFilterState
+  filters?: TaskFilterState,
+  includeAssignedProfiles = true
 ): Promise<ActivityWithRelations[]> => {
   // Get current user's organization_id first
   const {
@@ -26,28 +27,32 @@ export const fetchActivitiesWithRelations = async (
     throw new Error("Failed to get user organization");
   }
 
-  let query = supabase
-    .from("activities")
-    .select(
-      `
-      *,
-      contacts:contact_id (
-        id,
-        first_name,
-        last_name
-      ),
-      profiles:created_by (
-        id,
-        first_name,
-        last_name
-      ),
-      assigned_to_profile:assigned_to (
+  // Build select query conditionally
+  const baseSelect = `
+    *,
+    contacts:contact_id (
       id,
       first_name,
-        last_name
-      )
-    `
-    )
+      last_name
+    ),
+    profiles:created_by (
+      id,
+      first_name,
+      last_name
+    )`;
+
+  const assignedProfileSelect = includeAssignedProfiles 
+    ? `,
+    assigned_to_profile:assigned_to (
+      id,
+      first_name,
+      last_name
+    )` 
+    : '';
+
+  let query = supabase
+    .from("activities")
+    .select(baseSelect + assignedProfileSelect)
     .eq("organization_id", profileData.organization_id) // Filter by organization
     .order("created_at", { ascending: false });
 
@@ -84,7 +89,7 @@ export const fetchActivitiesWithRelations = async (
     throw error;
   }
 
-  return data || [];
+  return (data as unknown as ActivityWithRelations[]) || [];
 };
 
 export const updateActivityStatus = async (
