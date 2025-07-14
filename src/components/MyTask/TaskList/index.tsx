@@ -4,7 +4,7 @@ import { Column } from "@/components/ui/DataTable/Types";
 import { useOpenable } from "@/hooks";
 import { formatDate } from "@/lib/utils";
 import { Loader } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DeleteTask from "../DeleteTask";
 import {
   ActivityWithRelations,
@@ -13,6 +13,7 @@ import {
 } from "../Services/Types";
 import Actions from "./Actions";
 import TaskStatus from "./TaskStatus";
+import { supabase } from "@/lib/supabase";
 
 interface TaskListProps {
   tasks: ActivityWithRelations[];
@@ -55,9 +56,19 @@ function TaskList({
     },
     {
       key: "contact_id",
-      header: "Assigned To",
+      header: "Contact",
       render: (row) => {
         const { first_name, last_name } = row.contacts || {};
+        return (
+          <span className="text-sm">{getFullName(first_name, last_name)}</span>
+        );
+      },
+    },
+    {
+      key: "assigned_to",
+      header: "Assigned To",
+      render: (row) => {
+        const { first_name, last_name } = row.assigned_to_profile || {};
         return (
           <span className="text-sm">{getFullName(first_name, last_name)}</span>
         );
@@ -122,7 +133,11 @@ function TaskList({
 
   return (
     <div>
-      <DeleteTask isOpen={isOpen} onClose={handleDeleteClose} taskId={taskToDelete} />
+      <DeleteTask
+        isOpen={isOpen}
+        onClose={handleDeleteClose}
+        taskId={taskToDelete}
+      />
       {tasks?.length && (
         <DataTable
           columns={taskColumns}
@@ -130,7 +145,9 @@ function TaskList({
           rowKey="id"
           hideHeaderCheckBox
           hideRowCheckBox
-          renderAction={(row) => <Actions id={row.id} onDelete={handleDeleteClick} />}
+          renderAction={(row) => (
+            <Actions id={row.id} onDelete={handleDeleteClick} />
+          )}
         />
       )}
     </div>

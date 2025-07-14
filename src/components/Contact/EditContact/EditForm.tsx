@@ -37,7 +37,7 @@ function EditForm({ data, id }: Props) {
     formData: Schema;
   }) {
     try {
-      // Use centralized data transformer with our timestamp improvement
+      // Use centralized data transformer
       const updateData = ContactDataTransformer.forUpdate(
         formData,
         auth.user?.id
@@ -110,6 +110,7 @@ function EditForm({ data, id }: Props) {
           <Button
             variant="outline"
             className="w-40"
+            type="button"
             onClick={() => router.push("/contacts")}
           >
             Cancel

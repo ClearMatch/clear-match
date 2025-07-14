@@ -7,10 +7,13 @@ export const fetchActivitiesWithRelations = async (
   filters?: TaskFilterState
 ): Promise<ActivityWithRelations[]> => {
   // Get current user's organization_id first
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
   if (userError || !user) {
-    throw new Error('Authentication required');
+    throw new Error("Authentication required");
   }
 
   const { data: profileData, error: profileError } = await supabase
@@ -20,7 +23,7 @@ export const fetchActivitiesWithRelations = async (
     .single();
 
   if (profileError) {
-    throw new Error('Failed to get user organization');
+    throw new Error("Failed to get user organization");
   }
 
   let query = supabase
@@ -36,6 +39,11 @@ export const fetchActivitiesWithRelations = async (
       profiles:created_by (
         id,
         first_name,
+        last_name
+      ),
+      assigned_to_profile:assigned_to (
+      id,
+      first_name,
         last_name
       )
     `
@@ -84,10 +92,13 @@ export const updateActivityStatus = async (
   newStatus: string
 ): Promise<void> => {
   // Get current user's organization_id first
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
   if (userError || !user) {
-    throw new Error('Authentication required');
+    throw new Error("Authentication required");
   }
 
   const { data: profileData, error: profileError } = await supabase
@@ -97,7 +108,7 @@ export const updateActivityStatus = async (
     .single();
 
   if (profileError) {
-    throw new Error('Failed to get user organization');
+    throw new Error("Failed to get user organization");
   }
 
   // Only update if the task belongs to the user's organization
@@ -114,10 +125,13 @@ export const fetchAssigneeOptions = async (): Promise<
   { value: string; label: string }[]
 > => {
   // Get current user's organization_id first
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
   if (userError || !user) {
-    throw new Error('Authentication required');
+    throw new Error("Authentication required");
   }
 
   const { data: profileData, error: profileError } = await supabase
@@ -127,7 +141,7 @@ export const fetchAssigneeOptions = async (): Promise<
     .single();
 
   if (profileError) {
-    throw new Error('Failed to get user organization');
+    throw new Error("Failed to get user organization");
   }
 
   // Only fetch contacts from the same organization
@@ -154,10 +168,13 @@ export const fetchCreatorOptions = async (): Promise<
   { value: string; label: string }[]
 > => {
   // Get current user's organization_id first
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
   if (userError || !user) {
-    throw new Error('Authentication required');
+    throw new Error("Authentication required");
   }
 
   const { data: profileData, error: profileError } = await supabase
@@ -167,7 +184,7 @@ export const fetchCreatorOptions = async (): Promise<
     .single();
 
   if (profileError) {
-    throw new Error('Failed to get user organization');
+    throw new Error("Failed to get user organization");
   }
 
   // Only fetch profiles from the same organization
@@ -194,10 +211,13 @@ export const fetchTaskById = async (
   id: string
 ): Promise<ActivityWithRelations> => {
   // Get current user's organization_id first
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
   if (userError || !user) {
-    throw new Error('Authentication required');
+    throw new Error("Authentication required");
   }
 
   const { data: profileData, error: profileError } = await supabase
@@ -207,7 +227,7 @@ export const fetchTaskById = async (
     .single();
 
   if (profileError) {
-    throw new Error('Failed to get user organization');
+    throw new Error("Failed to get user organization");
   }
 
   // Only fetch task if it belongs to the user's organization

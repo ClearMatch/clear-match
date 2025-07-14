@@ -34,23 +34,28 @@ export function AddTaskForm({
   const auth = useAuth();
   const queryClient = useQueryClient();
   const { mutate: trigger, isPending: isMutating } = useMutation({
-    mutationFn: (data: TaskSchema & { userId: string }) => insertTask("", { arg: data }),
+    mutationFn: (data: TaskSchema & { userId: string }) =>
+      insertTask("", { arg: data }),
     onSuccess: () => {
       toast({ title: "Success", description: "Task added successfully." });
       form.reset();
-      
+
       // Use enhanced cache invalidation with operation type and related data
       queryKeyUtils.invalidateRelatedData(queryClient, {
-        contactId: form.getValues('contact_id'),
+        contactId: form.getValues("contact_id"),
         userId: auth.user?.id,
-        operationType: 'create',
+        operationType: "create",
       });
-      
+
       router.push("/task");
     },
     onError: (error) => {
       const errorMessage = errorHandlers.task.create(error);
-      toast({ title: "Error", description: errorMessage, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
     },
   });
 
