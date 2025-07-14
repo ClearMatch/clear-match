@@ -34,7 +34,7 @@ function Events() {
     isError,
   } = useInfiniteQuery({
     queryKey: [CACHE_KEY, filterKey],
-    queryFn: ({ pageParam = 0 }) => 
+    queryFn: ({ pageParam = 0 }) =>
       fetchEventsPaginated(pageParam, PAGE_SIZE, appliedFilters),
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length < PAGE_SIZE) return undefined;
@@ -55,9 +55,7 @@ function Events() {
     threshold: 2000, // 2 seconds threshold for events
   });
 
-  const allEvents = useMemo(() => 
-    data?.pages?.flat() || [], [data?.pages]
-  );
+  const allEvents = useMemo(() => data?.pages?.flat() || [], [data?.pages]);
 
   const fetchMoreData = useCallback(() => {
     if (!isFetchingNextPage && hasNextPage) {
@@ -65,13 +63,10 @@ function Events() {
     }
   }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
 
-  const handleFiltersApply = useCallback(
-    (filters: FilterState) => {
-      setAppliedFilters(filters);
-      setHasMoreData(true);
-    },
-    []
-  );
+  const handleFiltersApply = useCallback((filters: FilterState) => {
+    setAppliedFilters(filters);
+    setHasMoreData(true);
+  }, []);
 
   const handleFiltersClear = useCallback(() => {
     setAppliedFilters(INITIAL_FILTERS);

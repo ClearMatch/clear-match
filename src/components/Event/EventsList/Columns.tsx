@@ -30,7 +30,7 @@ function Columns(): Column<EventData>[] {
       header: "Contact Name",
       render: (row) => (
         <span className="text-sm">
-          {row.contacts?.first_name} {row.contacts?.last_name}
+          {row.contact?.first_name} {row.contact?.last_name}
         </span>
       ),
     },
