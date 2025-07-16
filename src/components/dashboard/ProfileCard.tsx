@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Bot, Flame, Heart, User } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
-import { ProfileGroup } from "./types";
+import { ProfileGroup } from "./Types";
 import ProfileModal from "./ProfileModal";
 import ProfileCardItem from "./ProfileCardItem";
 import LoadingSkeleton from "./LoadingSkeleton";

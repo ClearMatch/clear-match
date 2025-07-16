@@ -1,6 +1,6 @@
 "use client";
 
-import { ProfileGroup, Contact } from "./types";
+import { ProfileGroup, Contact } from "./Types";
 import ProfileAvatar from "./ProfileAvatar";
 
 interface ProfileModalProps {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Contact } from "./types";
+import { Contact } from "./Types";
 
 interface ProfileAvatarProps {
   contact: Contact;
