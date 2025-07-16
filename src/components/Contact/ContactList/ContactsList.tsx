@@ -3,7 +3,7 @@
 import { emptyFragment } from "@/components/ui/emptyFragment";
 import InfiniteScroll from "@/components/ui/infiniteScroll";
 import { Loader2 } from "lucide-react";
-import { ContactsTable } from "./ContactsTable";
+import ContactsTable from "./ContactsTableNew";
 import { Contact, SortConfig, SortField } from "./Types";
 
 interface ContactsListProps {
@@ -45,10 +45,7 @@ export function ContactsList({
       <div className="text-sm text-gray-600">
         Showing {contacts.length} contacts
       </div>
-      <div
-        id={scrollableContainerId}
-        className="max-h-[70vh] overflow-y-auto"
-      >
+      <div id={scrollableContainerId} className="max-h-[70vh] overflow-y-auto">
         <InfiniteScroll
           dataLength={contacts.length}
           next={onLoadMore}
@@ -64,10 +61,9 @@ export function ContactsList({
         >
           <ContactsTable
             contacts={contacts}
+            onDelete={onDeleteContact}
             sort={sort}
             onSortChange={onSortChange}
-            onEdit={() => {}} // Not used anymore, navigation handled in table
-            onDelete={(contact) => onDeleteContact(contact.id)}
           />
         </InfiniteScroll>
       </div>
