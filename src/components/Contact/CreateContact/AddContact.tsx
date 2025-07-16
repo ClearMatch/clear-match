@@ -58,11 +58,13 @@ function AddContact() {
       });
       form.reset();
       
-      // Use enhanced cache invalidation with operation type and related data
-      queryKeyUtils.invalidateRelatedData(queryClient, {
-        userId: auth.user?.id,
-        operationType: 'create',
-      });
+      // Invalidate contacts list to show new contact immediately
+      queryClient.invalidateQueries({ queryKey: ["contacts", "list"] });
+      
+      // Also invalidate dashboard stats
+      if (auth.user?.id) {
+        queryClient.invalidateQueries({ queryKey: ["dashboard", "stats", auth.user.id] });
+      }
       
       router.push("/contacts");
     },

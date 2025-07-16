@@ -32,6 +32,8 @@ export const schema = z.object({
   past_company_sizes: z.string().optional(),
   urgency_level: z.string().optional(),
   employment_status: z.string().optional(),
+  years_of_experience: z.string().optional(),
+  engagement_score: z.number().min(1, "Engagement score must be between 1 and 10").max(10, "Engagement score must be between 1 and 10").optional(),
 });
 
 export type Schema = z.infer<typeof schema>;
@@ -64,6 +66,8 @@ export function useUserForm(defaultValues?: Partial<Schema>) {
       past_company_sizes: "",
       urgency_level: "",
       employment_status: "",
+      years_of_experience: "",
+      engagement_score: undefined,
     },
   });
 

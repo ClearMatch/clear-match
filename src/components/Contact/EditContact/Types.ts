@@ -21,5 +21,7 @@ export interface Contact {
   urgency_level: string;
   employment_status: string;
   other_social_urls: string | { value: string };
+  years_of_experience?: string;
+  engagement_score?: number;
   // hybrid_work_days?: string;
 }

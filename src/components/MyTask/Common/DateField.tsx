@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { useState } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
 type DateFieldProps<
@@ -42,6 +43,8 @@ function DateField<
   required,
   disabled,
 }: DateFieldProps<TFieldValues, TName>) {
+  const [open, setOpen] = useState(false);
+
   return (
     <FormField
       control={control}
@@ -49,7 +52,7 @@ function DateField<
       render={({ field }) => (
         <FormItem className="space-y-2">
           <FormLabel required={required}>{label}</FormLabel>
-          <Popover>
+          <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <FormControl>
                 <Button
@@ -80,6 +83,7 @@ function DateField<
                   } else {
                     field.onChange("");
                   }
+                  setOpen(false); // Close the popover when a date is selected
                 }}
                 disabled={(date) =>
                   // Disable past dates for due date (task end date)

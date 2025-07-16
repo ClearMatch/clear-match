@@ -132,6 +132,12 @@ function EditForm({ data, selectId }: Props) {
         operationType: "update",
       });
 
+      // Force refetch TaskPriority counts for dashboard
+      queryClient.refetchQueries({ 
+        queryKey: ["taskPriorityCounts"],
+        type: "all" // Refetch all matching queries regardless of state
+      });
+
       route.push("/task");
     },
     onError: (error) => {
@@ -145,6 +151,14 @@ function EditForm({ data, selectId }: Props) {
   });
 
   const onSubmit = async (formData: TaskSchema) => {
+    if (!formData.due_date) {
+      toast({
+        title: "Error",
+        description: "Please select a due date",
+        variant: "destructive",
+      });
+      return;
+    }
     trigger({ selectId, formData });
   };
 

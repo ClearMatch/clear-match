@@ -12,9 +12,9 @@ export const taskSchema = z.object({
   status: z.string().default("todo"),
   due_date: z
     .string()
-    .optional()
+    .min(1, "Due date is required")
     .refine((date) => {
-      if (!date) return true;
+      if (!date) return false;
       return new Date(date) >= new Date(new Date().setHours(0, 0, 0, 0));
     }, "Due date cannot be in the past"),
   event_id: z.string().optional(),

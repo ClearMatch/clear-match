@@ -1,6 +1,7 @@
 import { useDebounce } from "@/hooks/useDebounce";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   fetchActivitiesWithRelations,
   fetchAssigneeOptions,
@@ -10,6 +11,7 @@ import { TaskFilterState } from "../Filters";
 import { ActivityWithRelations } from "./Types";
 
 export function useTasks() {
+  const searchParams = useSearchParams();
   const [searchInputValue, setSearchInputValue] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<TaskFilterState>({
@@ -19,6 +21,21 @@ export function useTasks() {
     assigned_to: [],
     created_by: [],
   });
+
+  // Initialize filters from URL parameters
+  useEffect(() => {
+    const priorityParam = searchParams.get('priority');
+    if (priorityParam) {
+      const priorityValue = parseInt(priorityParam, 10);
+      if ([1, 2, 3, 4].includes(priorityValue)) {
+        setFilters(prev => ({
+          ...prev,
+          priority: [priorityValue.toString()],
+        }));
+        setShowFilters(true); // Show filters when priority is set from URL
+      }
+    }
+  }, [searchParams]);
 
   const debouncedSearchQuery = useDebounce(searchInputValue, 500);
   const isSearching = searchInputValue !== debouncedSearchQuery;

@@ -61,10 +61,15 @@ export function ContactsTable({
   const formatEngagementScore = (score?: number) => {
     if (!score) return '';
     const labels = {
-      5: 'High',
-      4: 'Strong', 
-      3: 'Standard',
-      2: 'Sub Par',
+      10: 'Exceptional',
+      9: 'High',
+      8: 'Strong+',
+      7: 'Strong',
+      6: 'Good',
+      5: 'Standard',
+      4: 'Below Average',
+      3: 'Sub Par',
+      2: 'Poor',
       1: 'Avoid'
     };
     return labels[score as keyof typeof labels] || score.toString();

@@ -1,39 +1,19 @@
-export interface DashboardStats {
-  totalContacts: number;
-  totalClients: number;
-  activeSearching: number;
-  recentActivities: number;
-  pendingActions: number;
+import React from "react";
+
+export interface Contact {
+  id: string;
+  first_name: string;
+  last_name: string;
+  engagement_score?: number;
 }
 
-export interface RecommendedAction {
-  id: string;
-  contactId: string;
-  contactName: string;
-  actionType: string;
-  reason: string;
-  priority: "high" | "medium" | "low";
-  dueDate?: string;
-  type: "contact" | "client" | "both";
-}
-
-export interface RecentActivity {
-  id: string;
-  contactId: string;
-  contactName: string;
-  type: string;
-  description: string;
-  createdAt: string;
-}
-
-export interface ActivityWithContact {
-  id: string;
-  type: string;
-  description: string;
-  created_at: string;
-  contacts: {
-    id: string;
-    first_name: string;
-    last_name: string;
-  } | null;
+export interface ProfileGroup {
+  name: string;
+  scoreRange: string;
+  minScore: number;
+  maxScore: number;
+  icon: React.ComponentType<{ className?: string }>;
+  iconColor: string;
+  contacts: Contact[];
+  count: number;
 }
