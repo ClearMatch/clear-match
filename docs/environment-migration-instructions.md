@@ -11,6 +11,20 @@ This guide provides step-by-step instructions to migrate from your current setup
 - **main branch** → Golden source (no deployments)
 - **production branch** → Deploys to new production environment
 
+## Migration Overview
+
+### How Vercel's GitHub App Integration Works
+
+With the GitHub app integration, Vercel has fixed branch → deployment mappings:
+- **main branch** → Always creates "Production" deployments
+- **All other branches** → Always create "Preview" deployments
+
+Since we can't change this behavior, we'll use **two Vercel projects**:
+1. **Current project** → Becomes staging (uses staging Supabase)
+2. **New project** → Becomes production (uses new production Supabase)
+
+Both projects will deploy from `main`, but serve different domains and use different databases.
+
 ## Migration Steps
 
 ### Phase 1: GitHub Configuration
@@ -67,44 +81,64 @@ Go to **Settings → Branches** in your GitHub repository:
 
 ### Phase 2: Vercel Configuration
 
-#### 2.1 Update Current Vercel Project (Becomes Staging)
+**Important**: With Vercel's GitHub app integration, we'll work with their default behavior where `main` is always the production branch. We'll use a domain-based approach instead.
 
-1. Go to your Vercel project dashboard
-2. Navigate to **Settings → Git**
-3. Change **Production Branch** from `main` to `staging`
-4. Under **Ignored Build Step**, ensure it's set to "Automatic"
+#### 2.1 Understanding Vercel's Default Behavior
 
-#### 2.2 Update Environment Variables for Staging
+- **main branch** → Production deployment (can't change this)
+- **All other branches** → Preview deployments
+- We'll use domains to control which deployment serves which environment
 
-1. Go to **Settings → Environment Variables**
-2. For each existing variable, change scope:
-   - Remove from "Production"
-   - Add to "Preview" and "Development"
-3. Rename variables to staging-specific:
+#### 2.2 Keep Current Vercel Project for Staging
+
+Your current Vercel project will become staging:
+
+1. **First, backup your environment variables**:
+   - Go to **Settings → Environment Variables**
+   - Copy all variables to a text file
+   - Note which environment each is set for
+
+2. **Update Environment Variables** (keep them in place):
+   - Go to **Settings → Environment Variables**
+   - Add these new variables for **all environments**:
    ```
-   NEXT_PUBLIC_SUPABASE_URL → STAGING_SUPABASE_URL
-   NEXT_PUBLIC_SUPABASE_ANON_KEY → STAGING_SUPABASE_ANON_KEY
-   SUPABASE_SERVICE_ROLE_KEY → STAGING_SUPABASE_SERVICE_ROLE_KEY
+   STAGING_SUPABASE_URL=<your-current-supabase-url>
+   STAGING_SUPABASE_ANON_KEY=<your-current-anon-key>
+   STAGING_SUPABASE_SERVICE_ROLE_KEY=<your-current-service-key>
    ```
+   - Keep existing variables for backward compatibility
+
+3. **Configure Domains**:
+   - Go to **Settings → Domains**
+   - Add a staging subdomain: `staging.yourdomain.com`
+   - Once staging branch exists, you'll assign this domain to staging branch deployments
 
 #### 2.3 Create New Vercel Project for Production
 
-1. Go to Vercel Dashboard → Add New Project
-2. Import the same GitHub repository
-3. Configure:
-   - **Project Name**: `clear-match-production`
-   - **Framework Preset**: Next.js
-   - **Root Directory**: `./`
-   - **Build Command**: `pnpm build`
-   - **Production Branch**: `production`
+1. **Go to Vercel Dashboard** → **Add New Project**
+2. **Import the same GitHub repository**
+3. **During setup**:
+   - **Project Name**: `clear-match-production` (or similar)
+   - **Framework Preset**: Next.js (auto-detected)
+   - **Root Directory**: `./` (leave as default)
+   - **Build Command**: `pnpm build` (or auto-detected)
+   - **Output Directory**: `.next` (auto-detected)
+   - **Install Command**: `pnpm install --frozen-lockfile`
 
-4. Add Production Environment Variables:
+4. **Important**: The new project will also use `main` as production branch (can't change)
+
+5. **Configure Environment Variables** for the new production project:
    ```
    PROD_SUPABASE_URL=<will-get-from-new-supabase>
    PROD_SUPABASE_ANON_KEY=<will-get-from-new-supabase>
    PROD_SUPABASE_SERVICE_ROLE_KEY=<will-get-from-new-supabase>
    HUBSPOT_API_KEY=<your-existing-hubspot-key>
    ```
+
+6. **Add Production Domain**:
+   - Go to **Settings → Domains** in the new project
+   - Add your production domain: `yourdomain.com` or `www.yourdomain.com`
+   - This will be configured after you remove it from the current project
 
 ### Phase 3: Supabase Configuration
 
@@ -225,32 +259,38 @@ git push origin staging
 
 Verify:
 - GitHub Actions run successfully
-- Vercel deploys to staging URL
-- Application connects to staging Supabase
+- Vercel creates a **preview deployment** (not production)
+- Check the preview URL works
+- Application connects to staging Supabase (check environment detection)
 
-#### 6.2 Test Main Branch (No Deployment)
+#### 6.2 Test Main Branch Deployment
 
 ```bash
 # Create PR from staging to main
-gh pr create --base main --title "Test: Main branch no-deploy"
+gh pr create --base main --title "Test: Main branch deployment"
 
 # Merge PR
-# Verify NO deployment happens
-```
-
-#### 6.3 Test Production Deployment
-
-```bash
-# Reset production to main
-git checkout production
-git reset --hard origin/main
-git push --force-with-lease origin production
 ```
 
 Verify:
-- Production Vercel project deploys
-- Application connects to new production Supabase
-- All features work correctly
+- **Current project**: Deploys as "Production" (will become staging domain later)
+- **New production project**: Also deploys from main
+- Both deployments work but serve different domains
+
+#### 6.3 Update Domain Assignments
+
+**In Current Vercel Project (Staging)**:
+1. Go to **Settings → Domains**
+2. Remove your production domain (save it for the new project)
+3. Add `staging.yourdomain.com`
+4. Assign staging domain to:
+   - Branch: `staging`
+   - Or keep on `main` if you prefer
+
+**In New Vercel Project (Production)**:
+1. Go to **Settings → Domains**
+2. Add your production domain that you removed from staging
+3. It will automatically use `main` branch deployments
 
 ### Phase 7: Cutover Checklist
 
@@ -267,15 +307,25 @@ Before going live with new production:
 - [ ] Document rollback procedure
 - [ ] Notify team of cutover time
 
-### Phase 8: DNS Cutover (Production Go-Live)
+### Phase 8: Final Deployment Strategy
 
-1. **Note current Vercel production domain**
-2. **In old Vercel project (now staging)**:
-   - Remove production domain
-   - Add staging subdomain (e.g., `staging.clearmatch.app`)
-3. **In new Vercel production project**:
-   - Add production domain
-   - Verify DNS propagation
+Since both Vercel projects deploy from `main`, here's the final workflow:
+
+#### For Staging Testing:
+1. **Create feature branches** from `main`
+2. **Push to feature branch** → Creates preview deployment in staging project
+3. **Test using preview URL**
+4. **Merge to main** → Both projects deploy, but serve different domains
+
+#### For Production Deployment:
+1. **Ensure main branch is tested** in staging
+2. **The new production project automatically deploys** from main
+3. **No manual production branch needed** with this setup
+
+#### Domain Management:
+- **Staging project**: `staging.yourdomain.com` (points to main deployments)
+- **Production project**: `yourdomain.com` (points to main deployments)
+- Different environment variables ensure they use different databases
 
 ### Phase 9: Post-Migration
 
