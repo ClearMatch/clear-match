@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Contact, SortConfig, SortField, SortDirection } from "./Types";
+import { getEngagementScoreLabel } from "@/lib/constants/engagement-score";
 
 interface ContactsTableProps {
   contacts: Contact[];
@@ -59,20 +60,7 @@ export function ContactsTable({
 }: ContactsTableProps) {
   const router = useRouter();
   const formatEngagementScore = (score?: number) => {
-    if (!score) return '';
-    const labels = {
-      10: 'Exceptional',
-      9: 'High',
-      8: 'Strong+',
-      7: 'Strong',
-      6: 'Good',
-      5: 'Standard',
-      4: 'Below Average',
-      3: 'Sub Par',
-      2: 'Poor',
-      1: 'Avoid'
-    };
-    return labels[score as keyof typeof labels] || score.toString();
+    return getEngagementScoreLabel(score);
   };
 
   const formatDate = (dateString: string) => {
