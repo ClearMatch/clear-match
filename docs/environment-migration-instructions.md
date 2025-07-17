@@ -11,19 +11,49 @@ This guide provides step-by-step instructions to migrate from your current setup
 - **main branch** → Golden source (no deployments)
 - **production branch** → Deploys to new production environment
 
+## Modern Vercel Configuration Options
+
+**Important Update**: Vercel now provides flexible configuration options that allow you to control deployment behavior without requiring multiple projects. The original approach in this document suggested using two Vercel projects, but this is no longer necessary.
+
+### Recommended Modern Approach
+
+Use a **single Vercel project** with branch-based environment configuration:
+
+1. **Configure deployment rules** in `vercel.json`
+2. **Set custom production branch** (e.g., `production` instead of `main`)
+3. **Use environment-specific variables** based on branch/environment
+4. **Control which branches trigger deployments**
+5. **Use deployment targeting** with `vercel deploy --target=<environment>`
+
+This approach is simpler, more maintainable, and follows current Vercel best practices.
+
+### Available Vercel Environment Types
+
+- **production**: Live environment for end users
+- **preview**: Staging/testing environment
+- **development**: Local development environment
+- **custom environments**: Named environments (e.g., `staging`, `testing`)
+
 ## Migration Overview
 
-### How Vercel's GitHub App Integration Works
+### How Vercel's GitHub App Integration Actually Works
 
-With the GitHub app integration, Vercel has fixed branch → deployment mappings:
-- **main branch** → Always creates "Production" deployments
-- **All other branches** → Always create "Preview" deployments
+Vercel's GitHub app integration behavior can be controlled through configuration:
+- **Default behavior**: main branch creates "Production" deployments, other branches create "Preview" deployments
+- **Configurable**: This behavior can be customized using `vercel.json` configuration files
+- **Production branch flexibility**: You can configure any branch to be the production branch
 
-Since we can't change this behavior, we'll use **two Vercel projects**:
-1. **Current project** → Becomes staging (uses staging Supabase)
-2. **New project** → Becomes production (uses new production Supabase)
+We have two deployment strategy options:
 
-Both projects will deploy from `main`, but serve different domains and use different databases.
+**Option A: Single Project with Branch Configuration (Recommended)**
+- Use `vercel.json` to configure which branches deploy to production
+- Configure staging and production branches within one project
+- Use environment variables to point to different databases
+
+**Option B: Two Vercel Projects (Alternative)**
+- Current project → Becomes staging (uses staging Supabase)
+- New project → Becomes production (uses new production Supabase)
+- Both projects can be configured to deploy from any branch
 
 ## Migration Steps
 
@@ -83,13 +113,49 @@ Go to **Settings → Branches** in your GitHub repository:
 
 **Important**: With Vercel's GitHub app integration, we'll work with their default behavior where `main` is always the production branch. We'll use a domain-based approach instead.
 
-#### 2.1 Understanding Vercel's Default Behavior
+#### 2.1 Understanding Vercel's Configurable Behavior
 
-- **main branch** → Production deployment (can't change this)
-- **All other branches** → Preview deployments
-- We'll use domains to control which deployment serves which environment
+- **Default**: main branch → Production deployment, other branches → Preview deployments
+- **Configurable**: Can be customized using `vercel.json` with `git.deploymentEnabled` settings
+- **Production branch**: Can be configured to be any branch (staging, production, main, etc.)
+- **Environment targeting**: Use `vercel deploy --target=<environment>` for specific environments
 
-#### 2.2 Keep Current Vercel Project for Staging
+#### 2.2 Option A: Configure Single Project with Branch Rules (Recommended)
+
+**Create vercel.json configuration:**
+
+```json
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "main": false,
+      "staging": true,
+      "production": true
+    }
+  }
+}
+```
+
+This configuration:
+- Disables automatic deployments from `main` branch
+- Enables deployments from `staging` branch (creates preview deployments)
+- Enables deployments from `production` branch (creates production deployments)
+
+**Configure production branch:**
+1. Go to your Vercel project settings
+2. Navigate to **Git** section  
+3. Change **Production Branch** from `main` to `production`
+4. Save settings
+
+**Alternative: Use CLI targeting:**
+```bash
+# Deploy to specific environment regardless of branch
+vercel deploy --target=production
+vercel deploy --target=preview
+```
+
+#### 2.3 Option B: Keep Current Vercel Project for Staging (Alternative)
 
 Your current Vercel project will become staging:
 
@@ -125,7 +191,7 @@ Your current Vercel project will become staging:
    - **Output Directory**: `.next` (auto-detected)
    - **Install Command**: `pnpm install --frozen-lockfile`
 
-4. **Important**: The new project will also use `main` as production branch (can't change)
+4. **Configure production branch**: Set the production branch to your desired branch (e.g., `production`) in project settings
 
 5. **Configure Environment Variables** for the new production project:
    ```
@@ -309,22 +375,40 @@ Before going live with new production:
 
 ### Phase 8: Final Deployment Strategy
 
-Since both Vercel projects deploy from `main`, here's the final workflow:
+#### Option A: Single Project with Branch Configuration
 
-#### For Staging Testing:
+**For Staging Testing:**
+1. **Create feature branches** from `main`
+2. **Push to feature branch** → Creates preview deployment
+3. **Merge to staging** → Creates staging deployment (preview environment)
+4. **Test using staging URL**
+
+**For Production Deployment:**
+1. **Merge staging to main** → No automatic deployment (disabled in vercel.json)
+2. **Create PR from main to production** → Review and approve
+3. **Merge to production** → Triggers production deployment
+
+**Domain Management:**
+- **Staging deployments**: Use staging subdomain or preview URLs
+- **Production deployments**: Use production domain
+- Environment variables automatically set based on branch/environment
+
+#### Option B: Two Projects Strategy
+
+**For Staging Testing:**
 1. **Create feature branches** from `main`
 2. **Push to feature branch** → Creates preview deployment in staging project
 3. **Test using preview URL**
-4. **Merge to main** → Both projects deploy, but serve different domains
+4. **Merge to main** → Staging project deploys, production project can be configured to deploy from `production` branch
 
-#### For Production Deployment:
+**For Production Deployment:**
 1. **Ensure main branch is tested** in staging
-2. **The new production project automatically deploys** from main
-3. **No manual production branch needed** with this setup
+2. **Create production branch from main**
+3. **Production project deploys** from `production` branch
 
-#### Domain Management:
-- **Staging project**: `staging.yourdomain.com` (points to main deployments)
-- **Production project**: `yourdomain.com` (points to main deployments)
+**Domain Management:**
+- **Staging project**: `staging.yourdomain.com`
+- **Production project**: `yourdomain.com`
 - Different environment variables ensure they use different databases
 
 ### Phase 9: Post-Migration
