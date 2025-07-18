@@ -163,7 +163,7 @@ export const fetchAssigneeOptions = async (): Promise<
 
   if (!data) return [];
 
-  return data.map((contact) => ({
+  return (data as { id: string; first_name: string; last_name: string }[]).map((contact) => ({
     value: contact.id,
     label: `${contact.first_name} ${contact.last_name}`.trim(),
   }));
@@ -206,7 +206,7 @@ export const fetchCreatorOptions = async (): Promise<
 
   if (!data) return [];
 
-  return data.map((profile) => ({
+  return (data as { id: string; first_name: string; last_name: string }[]).map((profile) => ({
     value: profile.id,
     label: `${profile.first_name} ${profile.last_name}`.trim(),
   }));

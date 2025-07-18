@@ -1,0 +1,48 @@
+name: Production Deployment
+
+on:
+  push:
+    branches: [production]
+
+jobs:
+  pre-deploy-checks:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Validate production deployment
+        run: |
+          echo "🔍 Validating production deployment..."
+          echo "📝 Branch: ${{ github.ref_name }}"
+          echo "📊 Commit: ${{ github.sha }}"
+          echo "👤 Triggered by: ${{ github.actor }}"
+          
+      - name: Check if commit exists in main
+        run: |
+          git fetch origin main
+          if git merge-base --is-ancestor ${{ github.sha }} origin/main; then
+            echo "✅ Commit exists in main branch - deployment authorized"
+          else
+            echo "❌ ERROR: Commit not found in main branch!"
+            echo "Production should only deploy commits that exist in main."
+            exit 1
+          fi
+
+  deploy-notification:
+    needs: pre-deploy-checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Production deployment started
+        run: |
+          echo "🚀 PRODUCTION DEPLOYMENT INITIATED"
+          echo "=================================="
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Author: ${{ github.event.head_commit.author.name }}"
+          echo "Message: ${{ github.event.head_commit.message }}"
+          echo "=================================="
+          echo "🔗 Vercel will deploy to production environment"
+          echo "⏱️  Monitor deployment status in Vercel dashboard"

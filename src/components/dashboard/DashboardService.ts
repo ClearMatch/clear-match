@@ -3,6 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import { FilterState } from "../Contact/ContactList/Types";
 import { DashboardStats, RecentActivity, RecommendedAction } from "./Types";
+import { ActivityData } from "@/components/MyTask/Services/Types";
 
 // Minimal contact interface for dashboard stats
 interface DashboardContact {
@@ -87,7 +88,7 @@ const fetchRecentActivities = async (
     .limit(5);
 
   return (
-    activitiesResult?.map((activity) => ({
+    activitiesResult?.map((activity: ActivityData) => ({
       id: activity.id,
       contactName: "Activity",
       contactId: activity.contact_id || "",

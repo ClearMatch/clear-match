@@ -1,0 +1,31 @@
+
+ name                               value               environments (git branch)           created    
+ NEXT_PUBLIC_SUPABASE_URL           Encrypted           Preview (add-events-jobs-tables)    26d ago    
+ POSTGRES_URL                       Encrypted           Preview (add-events-jobs-tables)    26d ago    
+ POSTGRES_PRISMA_URL                Encrypted           Preview (add-events-jobs-tables)    26d ago    
+ POSTGRES_URL_NON_POOLING           Encrypted           Preview (add-events-jobs-tables)    26d ago    
+ POSTGRES_USER                      Encrypted           Preview (add-events-jobs-tables)    26d ago    
+ POSTGRES_HOST                      Encrypted           Preview (add-events-jobs-tables)    26d ago    
+ POSTGRES_PASSWORD                  Encrypted           Preview (add-events-jobs-tables)    26d ago    
+ POSTGRES_DATABASE                  Encrypted           Preview (add-events-jobs-tables)    26d ago    
+ SUPABASE_ANON_KEY                  Encrypted           Preview (add-events-jobs-tables)    26d ago    
+ SUPABASE_URL                       Encrypted           Preview (add-events-jobs-tables)    26d ago    
+ SUPABASE_SERVICE_ROLE_KEY          Encrypted           Preview (add-events-jobs-tables)    26d ago    
+ SUPABASE_JWT_SECRET                Encrypted           Preview (add-events-jobs-tables)    26d ago    
+ NEXT_PUBLIC_SUPABASE_ANON_KEY      Encrypted           Preview (add-events-jobs-tables)    26d ago    
+ POSTGRES_URL                       Encrypted           Production                          46d ago    
+ POSTGRES_PRISMA_URL                Encrypted           Production                          46d ago    
+ POSTGRES_URL_NON_POOLING           Encrypted           Production                          46d ago    
+ POSTGRES_USER                      Encrypted           Production                          46d ago    
+ POSTGRES_HOST                      Encrypted           Production                          46d ago    
+ POSTGRES_PASSWORD                  Encrypted           Production                          46d ago    
+ POSTGRES_DATABASE                  Encrypted           Production                          46d ago    
+ SUPABASE_ANON_KEY                  Encrypted           Production                          46d ago    
+ SUPABASE_URL                       Encrypted           Production                          46d ago    
+ SUPABASE_SERVICE_ROLE_KEY          Encrypted           Production                          46d ago    
+ SUPABASE_JWT_SECRET                Encrypted           Production                          46d ago    
+ NEXT_PUBLIC_SUPABASE_URL           Encrypted           Production, Preview, Development    46d ago    
+ NEXT_PUBLIC_SUPABASE_ANON_KEY      Encrypted           Production, Preview, Development    46d ago    
+ HUBSPOT_ACCESS_TOKEN               Encrypted           Production, Preview, Development    46d ago    
+ PARAGON_PROJECT_ID                 Encrypted           Production, Preview, Development    46d ago    
+

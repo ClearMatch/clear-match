@@ -99,7 +99,7 @@ function ContactListComponent() {
   return (
     <div>
       <div data-testid="contacts-list">
-        {contacts?.map(contact => (
+        {contacts?.map((contact: any) => (
           <div key={contact.id} data-testid={`contact-${contact.id}`}>
             {contact.firstName} {contact.lastName}
             <button 
@@ -163,7 +163,7 @@ function ContactWithTasksComponent({ contactId }: { contactId: string }) {
         {contact?.firstName} {contact?.lastName}
       </div>
       <div data-testid="contact-tasks">
-        {tasks?.map(task => (
+        {tasks?.map((task: any) => (
           <div key={task.id} data-testid={`task-${task.id}`}>
             {task.title} - {task.status}
           </div>
@@ -447,7 +447,7 @@ describe('TanStack Query Integration Tests', () => {
   describe('Related Data Fetching', () => {
     it('should fetch contact and related tasks', async () => {
       let callCount = 0;
-      mockSupabase.from.mockImplementation((table) => {
+      mockSupabase.from.mockImplementation((table: any) => {
         callCount++;
         if (table === 'contacts') {
           return {
