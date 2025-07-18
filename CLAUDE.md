@@ -426,26 +426,61 @@ describe('Candidate API', () => {
 ## Deployment
 
 ### Environment Configuration
-- **Development**: Local Supabase instance
-- **Staging**: Staging Supabase project
-- **Production**: Production Supabase project
+
+#### Database Architecture
+- **Development**: Local Supabase instance (Docker or Supabase CLI)
+- **Staging**: Separate Supabase project with its own database
+- **Production**: Production Supabase project (isolated from staging)
+
+**Important**: Each environment uses a completely separate database instance:
+- Local development uses either Docker or a dedicated development Supabase project
+- Staging has its own Supabase project and database for testing
+- Production is completely isolated with its own Supabase project
+
+#### Branch Deployment Mapping
+- **main branch**: No automatic deployments (source of truth)
+- **staging branch**: Deploys to staging environment at `https://clear-match-git-staging-clear-match.vercel.app`
+- **production branch**: Deploys to production environment
 
 ### Deployment Process
 1. **Merge to main**: Ensure all tests pass
-2. **Deploy migrations**: Apply database changes
-3. **Deploy application**: Use Vercel or preferred platform
+2. **Deploy migrations**: Apply database changes to the target environment
+3. **Deploy application**: Automatic via Vercel git integration
 4. **Monitor**: Check for errors and performance
 
 ### Environment Variables
 ```bash
-# Required environment variables
+# Required environment variables for each environment
 # Note: Never commit these values to the repository
-# Use .env.local for local development
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+# Each environment needs its own set of credentials
+
+# Local Development (.env.local)
+NEXT_PUBLIC_SUPABASE_URL=your_local_or_dev_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_local_or_dev_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_local_or_dev_service_role_key
+HUBSPOT_API_KEY=your_hubspot_api_key
+
+# Staging (Configure in Vercel Dashboard for Preview)
+NEXT_PUBLIC_SUPABASE_URL=your_staging_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_staging_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_staging_service_role_key
+HUBSPOT_API_KEY=your_hubspot_api_key
+
+# Production (Configure in Vercel Dashboard for Production)
+NEXT_PUBLIC_SUPABASE_URL=your_production_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_production_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_production_service_role_key
 HUBSPOT_API_KEY=your_hubspot_api_key
 ```
+
+### Setting Up a New Environment
+1. **Create Supabase Project**: Create a new project in Supabase dashboard
+2. **Get Credentials**: Copy the project URL and keys from project settings
+3. **Configure Vercel**: Add environment variables in Vercel dashboard
+   - For staging: Set variables for "Preview" environment
+   - For production: Set variables for "Production" environment
+4. **Run Migrations**: Apply database schema to the new environment
+5. **Test Authentication**: Verify login and RLS policies work correctly
 
 ---
 
