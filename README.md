@@ -395,13 +395,21 @@ npm test src/lib/__tests__/security.test.ts
 
 ## Environment Configuration
 
-The application requires several environment variables. Copy `.env.example` to `.env.local` and configure:
+The application uses separate database instances for each environment to ensure proper isolation:
 
+### Environment Architecture
+- **Local Development**: Uses local Supabase (Docker) or a dedicated development Supabase project
+- **Staging**: Has its own Supabase project and database for testing
+- **Production**: Completely isolated production Supabase project
+
+### Configuration Steps
+
+1. **Local Development** - Copy `.env.example` to `.env.local` and configure:
 ```bash
-# Required
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-key
+# Local/Development Database
+NEXT_PUBLIC_SUPABASE_URL=https://your-dev-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-dev-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-dev-service-key
 HUBSPOT_API_KEY=your-hubspot-key
 SESSION_SECRET=your-32-character-secret
 
@@ -409,6 +417,14 @@ SESSION_SECRET=your-32-character-secret
 UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
 UPSTASH_REDIS_REST_TOKEN=your-redis-token
 ```
+
+2. **Staging Environment** - Configure in Vercel Dashboard (Preview environment):
+- Create a separate Supabase project for staging
+- Add all required environment variables with staging-specific values
+
+3. **Production Environment** - Configure in Vercel Dashboard (Production environment):
+- Create a separate Supabase project for production
+- Add all required environment variables with production-specific values
 
 ## Deployment
 
@@ -457,4 +473,4 @@ For support and questions:
 
 ---
 
-**Built with ❤️ by the Clear Match AI team**
+**Built with ❤️ by the Clear Match AI team**// Trigger redeployment
