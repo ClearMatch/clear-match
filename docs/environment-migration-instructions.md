@@ -11,28 +11,34 @@ This guide provides step-by-step instructions to migrate from your current setup
 - **main branch** → Golden source (no deployments)
 - **production branch** → Deploys to new production environment
 
-## Modern Vercel Configuration Options
+## Real-World Context
 
-**Important Update**: Vercel now provides flexible configuration options that allow you to control deployment behavior without requiring multiple projects. The original approach in this document suggested using two Vercel projects, but this is no longer necessary.
+**Based on actual Clear Match Vercel setup (as of 2025-07-18):**
 
-### Recommended Modern Approach
+### Current State
+- **Single Vercel project** with team account
+- **Environment variables** set per environment in Vercel (not prefixed)
+- **Branches already created**: main, staging, production
+- **Simple local setup**: Only 3 environment variables needed locally
 
-Use a **single Vercel project** with branch-based environment configuration:
+### Key Learnings
+- Vercel automatically manages different variable values per environment
+- No need for complex variable prefixing (DEV_*, STAGING_*, PROD_*)
+- The application uses `NEXT_PUBLIC_*` prefix for client-side variables
+- Vercel adds additional variables (like Postgres) that aren't needed locally
 
-1. **Configure deployment rules** in `vercel.json`
-2. **Set custom production branch** (e.g., `production` instead of `main`)
-3. **Use environment-specific variables** based on branch/environment
-4. **Control which branches trigger deployments**
-5. **Use deployment targeting** with `vercel deploy --target=<environment>`
+## Simplified Migration Approach
 
-This approach is simpler, more maintainable, and follows current Vercel best practices.
+### Recommended Strategy
 
-### Available Vercel Environment Types
+Use your **existing single Vercel project** with proper environment configuration:
 
-- **production**: Live environment for end users
-- **preview**: Staging/testing environment
-- **development**: Local development environment
-- **custom environments**: Named environments (e.g., `staging`, `testing`)
+1. **Keep current Vercel project** - No need for multiple projects
+2. **Set production branch** to `production` in Vercel settings
+3. **Update environment variables** per environment in Vercel dashboard
+4. **Use Vercel's built-in environment system** - It handles the complexity for you
+
+This approach matches your current setup and Vercel best practices.
 
 ## Migration Overview
 
@@ -57,28 +63,24 @@ We have two deployment strategy options:
 
 ## Migration Steps
 
-### Phase 1: GitHub Configuration
+### Phase 1: GitHub Configuration ✅ COMPLETED
 
-#### 1.1 Create New Branches
+#### 1.1 Create New Branches ✅ COMPLETED
 
-```bash
-# First, ensure main is up to date
-git checkout main
-git pull origin main
+**Branches Created:**
+- `main` - Golden source branch (existing)
+- `staging` - Staging environment branch ✅
+- `production` - Production environment branch ✅
+- Currently on branch `9` for development work
 
-# Create staging branch from current main
-git checkout -b staging
-git push -u origin staging
+#### 1.2 Update Branch Protection Rules ✅ COMPLETED
 
-# Create production branch from main
-git checkout main
-git checkout -b production
-git push -u origin production
-```
+**Branch Protection Active:**
+- Main branch protection configured
+- Staging branch protection configured  
+- Production branch protection configured
 
-#### 1.2 Update Branch Protection Rules
-
-Go to **Settings → Branches** in your GitHub repository:
+Go to **Settings → Branches** in your GitHub repository for reference:
 
 **For `main` branch:**
 - ✅ Require pull request before merging
@@ -109,7 +111,14 @@ Go to **Settings → Branches** in your GitHub repository:
 - ✅ Allow deletions: No
 - Allowed users: Deployment team only
 
-### Phase 2: Vercel Configuration
+### Phase 2: Vercel Configuration 🚧 READY FOR MANUAL COMPLETION
+
+**Current Status**: Production Supabase is ready. Environment variables prepared. Manual Vercel configuration needed.
+
+**NEXT STEPS TO COMPLETE:**
+1. **Update Vercel environment variables** (see `production-env-variables.txt`)
+2. **Set production branch** to `production` in Vercel settings
+3. **Test both environments**
 
 **Important**: With Vercel's GitHub app integration, we'll work with their default behavior where `main` is always the production branch. We'll use a domain-based approach instead.
 
@@ -159,20 +168,26 @@ vercel deploy --target=preview
 
 Your current Vercel project will become staging:
 
-1. **First, backup your environment variables**:
-   - Go to **Settings → Environment Variables**
-   - Copy all variables to a text file
-   - Note which environment each is set for
+1. **Environment variables are already backed up** (see `docs/vercel-config/`)
 
-2. **Update Environment Variables** (keep them in place):
+2. **Update Environment Variables Strategy** 🚧 READY FOR MANUAL COMPLETION:
    - Go to **Settings → Environment Variables**
-   - Add these new variables for **all environments**:
+   - **DO NOT create prefixed variables** (no STAGING_*, PROD_*, etc.)
+   - Instead, use Vercel's environment selector:
+     - Set different values for the SAME variable name per environment
+     - Example: `NEXT_PUBLIC_SUPABASE_URL` has different values for Production vs Preview
+   
+3. **Variables to update** ✅ PREPARED:
    ```
-   STAGING_SUPABASE_URL=<your-current-supabase-url>
-   STAGING_SUPABASE_ANON_KEY=<your-current-anon-key>
-   STAGING_SUPABASE_SERVICE_ROLE_KEY=<your-current-service-key>
+   # All production values are prepared in production-env-variables.txt
+   NEXT_PUBLIC_SUPABASE_URL       # Production: aogbiuouulzurceewpye.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY  # Production: [new production key]
+   SUPABASE_SERVICE_ROLE_KEY      # Production: [new production key]  
+   SUPABASE_URL                   # Production: aogbiuouulzurceewpye.supabase.co
+   SUPABASE_ANON_KEY              # Production: [new production key]
    ```
-   - Keep existing variables for backward compatibility
+
+   **Action Required**: Copy values from `production-env-variables.txt` to Vercel Dashboard
 
 3. **Configure Domains**:
    - Go to **Settings → Domains**
@@ -193,12 +208,16 @@ Your current Vercel project will become staging:
 
 4. **Configure production branch**: Set the production branch to your desired branch (e.g., `production`) in project settings
 
-5. **Configure Environment Variables** for the new production project:
+5. **Configure Environment Variables** (if using two projects):
    ```
-   PROD_SUPABASE_URL=<will-get-from-new-supabase>
-   PROD_SUPABASE_ANON_KEY=<will-get-from-new-supabase>
-   PROD_SUPABASE_SERVICE_ROLE_KEY=<will-get-from-new-supabase>
-   HUBSPOT_API_KEY=<your-existing-hubspot-key>
+   # Use the SAME variable names as staging, NOT prefixed versions
+   NEXT_PUBLIC_SUPABASE_URL=<will-get-from-new-supabase>
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=<will-get-from-new-supabase>
+   SUPABASE_SERVICE_ROLE_KEY=<will-get-from-new-supabase>
+   SUPABASE_URL=<will-get-from-new-supabase>
+   SUPABASE_ANON_KEY=<will-get-from-new-supabase>
+   HUBSPOT_ACCESS_TOKEN=<your-existing-hubspot-key>
+   PARAGON_PROJECT_ID=<your-existing-paragon-id>
    ```
 
 6. **Add Production Domain**:
@@ -212,76 +231,65 @@ Your current Vercel project will become staging:
 
 No changes needed - your current Supabase project automatically becomes the staging database.
 
-#### 3.2 Create New Production Supabase Project
+#### 3.2 Create New Production Supabase Project ✅ COMPLETED
 
-1. Go to [Supabase Dashboard](https://app.supabase.com)
-2. Click "New Project"
-3. Configure:
-   - **Name**: `clear-match-production`
-   - **Database Password**: Generate and save securely
-   - **Region**: Same as current (for consistency)
-   - **Pricing Plan**: Pro (recommended for production)
+**Production Supabase Project Created:**
+- **Name**: `clear-match-production`
+- **Project ID**: `aogbiuouulzurceewpye`
+- **Region**: us-west-1 (same as staging)
+- **Plan**: Pro ($10/month)
+- **Status**: Active and healthy
 
-4. Wait for project to be provisioned
+#### 3.3 Migrate Schema to Production ✅ COMPLETED
 
-#### 3.3 Migrate Schema to Production
+**Schema Migration Completed:**
+- Applied all 31 migration files to production database
+- 9 tables created with proper structure and relationships:
+  - `organizations`, `profiles`, `contacts`, `activities`, `events`, `job_postings`, `tags`, `contact_tags`, `templates`
+- All RLS policies migrated and functional
+- All foreign key relationships established
+- All indexes and constraints applied
 
-```bash
-# Install Supabase CLI if not already installed
-brew install supabase/tap/supabase
+#### 3.4 Configure Production RLS Policies ✅ COMPLETED
 
-# Pull schema from staging (current production)
-supabase db pull \
-  --db-url "postgresql://postgres:[YOUR-CURRENT-PASSWORD]@db.[YOUR-CURRENT-PROJECT-REF].supabase.co:5432/postgres" \
-  --schema public,auth
+**RLS Security Implemented:**
+- All tables have Row Level Security enabled
+- Organization-based isolation policies active
+- Helper function `get_user_organization_id()` created
+- Comprehensive policies for SELECT, INSERT, UPDATE, DELETE operations
+- Junction table `contact_tags` properly configured
 
-# Link to new production project
-supabase link --project-ref [NEW-PRODUCTION-PROJECT-REF]
+#### 3.5 Get Production Credentials ✅ COMPLETED
 
-# Push schema to production
-supabase db push
-```
+**Production Database Credentials:**
+- **Project URL**: `https://aogbiuouulzurceewpye.supabase.co`
+- **Anon Key**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvZ2JpdW91dWx6dXJjZWV3cHllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NjI4OTUsImV4cCI6MjA2ODQzODg5NX0.3C2cAOZHF7k3E7XRIXsNZO419COiGGCH0FKme6CkV64`
+- **Service Role Key**: Available from Supabase dashboard → Settings → API
 
-#### 3.4 Configure Production RLS Policies
+**Next Step**: Update Vercel environment variables with these credentials ✅ PREPARED
 
-1. Go to new production Supabase dashboard
-2. Navigate to **Authentication → Policies**
-3. Verify all RLS policies were migrated correctly
-4. Test with a sample query to ensure policies work
-
-#### 3.5 Get Production Credentials
-
-From the new production Supabase dashboard:
-1. Go to **Settings → API**
-2. Copy:
-   - **Project URL** → `PROD_SUPABASE_URL`
-   - **anon/public key** → `PROD_SUPABASE_ANON_KEY`
-   - **service_role key** → `PROD_SUPABASE_SERVICE_ROLE_KEY`
-
-3. Add these to your Production Vercel project
+**Environment Variables Ready**: All production database credentials are prepared in `production-env-variables.txt` file (git-ignored for security).
 
 ### Phase 4: Update Application Code
 
-#### 4.1 Update Environment Detection
+#### 4.1 Update Environment Variables
 
-The application already has multi-environment support, but verify `.env.example` is updated:
+**Important**: Based on the actual Clear Match setup, the application does NOT use prefixed environment variables. Update `.env.example` to reflect the actual variables used:
 
 ```bash
-# Development (points to staging database)
-DEV_SUPABASE_URL=<your-current-supabase-url>
-DEV_SUPABASE_ANON_KEY=<your-current-anon-key>
-DEV_SUPABASE_SERVICE_ROLE_KEY=<your-current-service-key>
+# Core Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-# Staging
-STAGING_SUPABASE_URL=<your-current-supabase-url>
-STAGING_SUPABASE_ANON_KEY=<your-current-anon-key>
-STAGING_SUPABASE_SERVICE_ROLE_KEY=<your-current-service-key>
+# Optional: Only if your app uses these server-side
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# Production
-PROD_SUPABASE_URL=<new-production-url>
-PROD_SUPABASE_ANON_KEY=<new-production-anon-key>
-PROD_SUPABASE_SERVICE_ROLE_KEY=<new-production-service-key>
+# Third-party integrations
+HUBSPOT_ACCESS_TOKEN=your_hubspot_token
+PARAGON_PROJECT_ID=your_paragon_id
 ```
+
+**Note**: Vercel will automatically provide the correct values based on the environment (production, preview, development).
 
 #### 4.2 Update Developer .env.local Files
 
@@ -289,17 +297,15 @@ Send this to all developers:
 
 ```bash
 # UPDATE YOUR .env.local FILE
-# Our current production is now staging
-# Update your local environment to point to staging
+# Our current production database is becoming staging
+# Your local setup remains simple - just 3 variables:
 
-APP_ENV=staging
+NEXT_PUBLIC_SUPABASE_URL=<current-production-supabase-url>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<current-production-anon-key>
+HUBSPOT_ACCESS_TOKEN=<existing-hubspot-key>
 
-# These remain the same (pointing to what is now staging)
-STAGING_SUPABASE_URL=<current-supabase-url>
-STAGING_SUPABASE_ANON_KEY=<current-anon-key>
-STAGING_SUPABASE_SERVICE_ROLE_KEY=<current-service-key>
-
-HUBSPOT_API_KEY=<existing-hubspot-key>
+# That's it! No complex prefixes or environment detection needed.
+# The app uses these same variable names across all environments.
 ```
 
 ### Phase 5: GitHub Actions Updates
@@ -474,6 +480,54 @@ Please acknowledge receipt and complete the required actions.
 
 Questions? Reach out in #engineering
 ```
+
+## HOW TO RESUME AFTER BREAK 🚀
+
+**Current Status**: Production Supabase database is ready. Environment variables prepared. Ready for manual Vercel configuration.
+
+### Immediate Next Steps
+
+1. **Update Vercel Environment Variables** (5 minutes)
+   - Open `production-env-variables.txt` (git-ignored file with all credentials)
+   - Go to Vercel Dashboard → Your Project → Settings → Environment Variables
+   - Update PRODUCTION environment only (leave Preview/Development as-is)
+   - Copy each variable from the file to Vercel
+
+2. **Configure Production Branch** (2 minutes)
+   - In same Vercel project settings → Git section
+   - Change Production Branch from `main` to `production`
+   - Save settings
+
+3. **Test Both Environments** (10 minutes)
+   - Deploy to staging branch → Should use staging database (zkqeoppjgdyzarkhhbqc)
+   - Deploy to production branch → Should use production database (aogbiuouulzurceewpye)
+   - Verify database connections work correctly
+
+4. **Update Documentation** (5 minutes)
+   - Mark Phase 2 as completed in this file
+   - Document any issues encountered
+   - Update team on new workflow
+
+### Files to Reference
+
+- `production-env-variables.txt` - All credentials ready to copy
+- `docs/vercel-env-backup-20250718.txt` - Current variable backup
+- `docs/migration-progress-20250718.md` - Detailed session notes
+
+### What's Already Done ✅
+
+- Production Supabase project created and configured
+- Database schema migrated (9 tables, RLS policies)
+- GitHub branches and protection rules set up
+- Environment variables prepared and secured
+- Documentation updated with progress
+
+### What's Left to Do 🚧
+
+- Manual Vercel environment variable updates
+- Set production branch in Vercel settings
+- Test deployments to both environments
+- Final verification and team communication
 
 ## Success Criteria
 
