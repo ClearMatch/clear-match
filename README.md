@@ -397,10 +397,218 @@ npm test src/lib/__tests__/security.test.ts
 
 The application uses separate database instances for each environment to ensure proper isolation:
 
+### Environment URLs
+- **Production**: https://clear-match-sigma.vercel.app
+- **Staging**: https://clear-match-git-staging-clear-match.vercel.app
+
 ### Environment Architecture
 - **Local Development**: Uses local Supabase (Docker) or a dedicated development Supabase project
 - **Staging**: Has its own Supabase project and database for testing
 - **Production**: Completely isolated production Supabase project
+
+## Local Supabase Development Setup
+
+### Prerequisites
+
+Before setting up local Supabase, ensure you have:
+- **Docker Desktop**: Download and install from [docker.com](https://www.docker.com/products/docker-desktop/)
+- **Node.js**: Version 18.17.0 or later
+- **Git**: For cloning and version control
+
+### Step 1: Install Supabase CLI
+
+```bash
+# Install via npm (recommended)
+npm install -g supabase
+
+# Or install via Homebrew (macOS)
+brew install supabase/tap/supabase
+
+# Verify installation
+supabase --version
+```
+
+### Step 2: Start Local Supabase
+
+```bash
+# Navigate to your project directory
+cd clear-match
+
+# Start all Supabase services locally
+supabase start
+
+# This will start:
+# - PostgreSQL database
+# - PostgREST API server
+# - Supabase Auth
+# - Supabase Storage
+# - Realtime server
+# - Supabase Studio (local dashboard)
+```
+
+**Expected Output:**
+```
+Started supabase local development setup.
+
+         API URL: http://localhost:54321
+     GraphQL URL: http://localhost:54321/graphql/v1
+          DB URL: postgresql://postgres:postgres@localhost:54322/postgres
+      Studio URL: http://localhost:54323
+    Inbucket URL: http://localhost:54324
+      JWT secret: super-secret-jwt-token-with-at-least-32-characters-long
+        anon key: [your-anon-key]
+service_role key: [your-service-role-key]
+```
+
+### Step 3: Configure Environment Variables
+
+Create your local environment file:
+
+```bash
+# Copy the example environment file
+cp .env.example .env.local
+```
+
+Update `.env.local` with your local Supabase credentials:
+
+```bash
+# Local Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[anon-key-from-supabase-start-output]
+SUPABASE_SERVICE_ROLE_KEY=[service-role-key-from-supabase-start-output]
+
+# Other required variables
+HUBSPOT_API_KEY=your-hubspot-key
+SESSION_SECRET=your-32-character-secret-for-csrf-protection
+
+# Optional: Redis for rate limiting (use memory fallback in development)
+# UPSTASH_REDIS_REST_URL=
+# UPSTASH_REDIS_REST_TOKEN=
+```
+
+### Step 4: Apply Database Migrations
+
+```bash
+# Reset database and apply all migrations
+supabase db reset
+
+# Or apply migrations individually
+supabase db push
+```
+
+### Step 5: Access Local Services
+
+Once running, you can access:
+
+- **Supabase Studio**: http://localhost:54323 (Database management UI)
+- **API**: http://localhost:54321 (REST API)
+- **Database**: postgresql://postgres:postgres@localhost:54322/postgres
+- **Inbucket**: http://localhost:54324 (Email testing)
+
+### Step 6: Start the Application
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Open application
+open http://localhost:3000
+```
+
+## Local Development Workflow
+
+### Daily Development
+
+```bash
+# Start Supabase (if not already running)
+supabase start
+
+# Start the application
+npm run dev
+
+# When done for the day
+supabase stop
+```
+
+### Database Management
+
+```bash
+# View database status
+supabase status
+
+# Reset database (destroys all data)
+supabase db reset
+
+# Create a new migration
+supabase db diff -f migration_name
+
+# Apply pending migrations
+supabase db push
+
+# Generate TypeScript types
+supabase gen types typescript --local > src/types/supabase.ts
+```
+
+### Useful Supabase CLI Commands
+
+```bash
+# View all services status
+supabase status
+
+# View logs for specific service
+supabase logs db
+supabase logs api
+supabase logs auth
+
+# Stop all services
+supabase stop
+
+# Remove all containers and volumes (complete reset)
+supabase stop --no-backup
+```
+
+## Troubleshooting Local Setup
+
+### Common Issues and Solutions
+
+**1. Docker not running**
+```
+Error: Cannot connect to the Docker daemon
+```
+**Solution**: Start Docker Desktop and ensure it's running.
+
+**2. Port conflicts**
+```
+Error: Port 54321 is already in use
+```
+**Solution**: Stop conflicting services or change ports in `supabase/config.toml`.
+
+**3. Database connection issues**
+```
+Error: database "postgres" does not exist
+```
+**Solution**: Run `supabase db reset` to recreate the database.
+
+**4. Migration errors**
+```
+Error: relation "public.profiles" does not exist
+```
+**Solution**: Ensure all migrations are applied with `supabase db reset`.
+
+**5. Environment variable issues**
+```
+Error: Invalid API key
+```
+**Solution**: Copy the exact keys from `supabase start` output to your `.env.local`.
+
+### Performance Tips
+
+- **Use SSD storage** for better database performance
+- **Allocate sufficient RAM** to Docker (minimum 4GB recommended)
+- **Close unnecessary services** when not developing to save resources
 
 ### Configuration Steps
 
