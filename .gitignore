@@ -26,6 +26,12 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env.staging
+.env.preview
+.env.production
+.env.staging-setup
+.env.preview.check
+.env.prod.check
 
 # sensitive environment variable files
 production-env-variables.txt
