@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { User, Settings, LogOut, ChevronDown } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { LogOut, Settings, User } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 interface ProfileDropdownProps {
   children: React.ReactNode;
@@ -17,7 +17,10 @@ export function ProfileDropdown({ children }: ProfileDropdownProps) {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
@@ -38,10 +41,9 @@ export function ProfileDropdown({ children }: ProfileDropdownProps) {
     router.push("/profile/change-password");
   };
 
-  const handleLogOut = async () => {
+  const handleLogOut = () => {
     setIsOpen(false);
-    await signOut();
-    router.push("/auth");
+    router.push("/auth/logout");
   };
 
   return (
