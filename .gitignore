@@ -27,6 +27,10 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# sensitive environment variable files
+production-env-variables.txt
+docs/environment-migration-instructions.md
+
 # vercel
 .vercel
 
