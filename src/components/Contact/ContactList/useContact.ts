@@ -23,7 +23,25 @@ export function useContacts() {
     past_company_sizes: [],
     urgency_level: [],
     employment_status: [],
+    engagement_score: [],
   });
+
+
+  // Check if there are active filters to determine auto-open
+  const hasActiveFilters = () => {
+    return (
+      filters.contact_type.length > 0 ||
+      filters.location_category.length > 0 ||
+      filters.functional_role.length > 0 ||
+      filters.is_active_looking !== null ||
+      filters.current_company_size.length > 0 ||
+      filters.past_company_sizes.length > 0 ||
+      filters.urgency_level.length > 0 ||
+      filters.employment_status.length > 0 ||
+      filters.engagement_score.length > 0
+      // Don't auto-open for hidden range filters from ProfileCard
+    );
+  };
 
   const debouncedSearchQuery = useDebounce(searchInputValue, 500);
   const isSearching = searchInputValue !== debouncedSearchQuery;
@@ -37,7 +55,7 @@ export function useContacts() {
     hasNextPage,
     fetchNextPage,
   } = useInfiniteQuery({
-    queryKey: ["contacts", { search: debouncedSearchQuery, filters, sort, userId: auth.user?.id }],
+    queryKey: ["contacts", "list", { search: debouncedSearchQuery, filters, sort, userId: auth.user?.id }],
     queryFn: ({ pageParam }: { pageParam: string | undefined }) => {
       if (!auth.user?.id) return Promise.resolve({ contacts: [], hasMore: false, totalCount: 0 });
       
@@ -81,7 +99,7 @@ export function useContacts() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const refetchContacts = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    queryClient.invalidateQueries({ queryKey: ["contacts", "list"] });
   }, [queryClient]);
 
   const handleSortChange = useCallback((field: SortField) => {
@@ -103,6 +121,7 @@ export function useContacts() {
     // Filters
     filters,
     setFilters,
+    hasActiveFilters: hasActiveFilters(),
 
     // Sorting
     sort,

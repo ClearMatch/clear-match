@@ -77,6 +77,11 @@ export const contactService = {
       query = query.in("employment_status", filters.employment_status);
     }
 
+    // Apply engagement score filter
+    if (filters.engagement_score.length > 0) {
+      query = query.in("engagement_score", filters.engagement_score.map(score => parseInt(score)));
+    }
+
     // Check abort signal before making the request
     if (signal?.aborted) {
       throw new DOMException("Request was aborted", "AbortError");
@@ -194,6 +199,11 @@ export const contactService = {
 
     if (filters.employment_status.length > 0) {
       query = query.in("employment_status", filters.employment_status);
+    }
+
+    // Apply engagement score filter
+    if (filters.engagement_score.length > 0) {
+      query = query.in("engagement_score", filters.engagement_score.map(score => parseInt(score)));
     }
 
     if (signal?.aborted) {

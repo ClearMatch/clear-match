@@ -1,7 +1,7 @@
 "use client";
 
 import { useOpenable } from "@/hooks";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { ContactsList } from "./Contact/ContactList";
 import { SearchAndFilterBar } from "./Contact/ContactList/SearchAndFilterBar";
@@ -27,6 +27,7 @@ export function Contacts() {
     setSearchInputValue,
     filters,
     setFilters,
+    hasActiveFilters,
     isSearching,
     hasMore,
     onLoadMore,
@@ -34,6 +35,13 @@ export function Contacts() {
     sort,
     onSortChange,
   } = useContacts();
+
+  // Auto-open filters when there are active filters (e.g., from ProfileCard navigation)
+  useEffect(() => {
+    if (hasActiveFilters && !showFilters) {
+      setShowFilters(true);
+    }
+  }, [hasActiveFilters, showFilters]);
 
   // Edit is now handled directly in the table component
   const handleDeleteClick = (contactId: string) => {
@@ -51,6 +59,7 @@ export function Contacts() {
       past_company_sizes: [],
       urgency_level: [],
       employment_status: [],
+      engagement_score: [],
     });
   };
 

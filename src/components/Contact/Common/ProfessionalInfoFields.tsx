@@ -4,7 +4,8 @@ import SelectField from "./SelectField";
 import { 
   companySizeOptions, 
   relationshipOptions, 
-  locationPreferenceOptions 
+  locationPreferenceOptions,
+  engagementScoreOptions
 } from "./constants";
 
 interface ProfessionalInfoFieldsProps {
@@ -86,6 +87,21 @@ export default function ProfessionalInfoFields({ form, contactId }: Professional
           placeholder="Select Company Size"
           options={companySizeOptions}
           required
+        />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <TextInputField
+          control={form.control}
+          name="years_of_experience"
+          label="Years of Experience"
+          placeholder="Enter years of experience"
+        />
+        <SelectField
+          control={form.control}
+          name="engagement_score"
+          label="Engagement Score"
+          placeholder="Select engagement score"
+          options={engagementScoreOptions}
         />
       </div>
     </>

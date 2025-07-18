@@ -42,6 +42,17 @@ export const DatabaseFormatters = {
     }
     return "candidate"; // Default fallback
   },
+
+  /**
+   * Convert years of experience to string for database storage
+   */
+  toYearsOfExperience: (value: string | null | undefined): string | null => {
+    if (value === null || value === undefined) return null;
+    
+    // Return trimmed string or null if empty
+    const trimmed = value.trim();
+    return trimmed === "" ? null : trimmed;
+  },
 };
 
 /**
@@ -87,6 +98,16 @@ export const FormNormalizers = {
     }
     return Boolean(value);
   },
+
+  /**
+   * Convert years of experience from database to form string
+   */
+  toYearsOfExperience: (value: any): string => {
+    if (value === null || value === undefined) return "";
+    
+    // Return as string
+    return String(value);
+  },
 };
 
 /**
@@ -105,6 +126,8 @@ export const ContactDataTransformer = {
     compensation_expectations: formData.compensation_expectations || null,
     contact_type: DatabaseFormatters.toContactType(formData.contact_type),
     visa_requirements: FormNormalizers.toBoolean(formData.visa_requirements),
+    years_of_experience: DatabaseFormatters.toYearsOfExperience(formData.years_of_experience),
+    engagement_score: formData.engagement_score || null,
   }),
 
   /**
@@ -140,6 +163,8 @@ export const ContactDataTransformer = {
     past_company_sizes: FormNormalizers.toString(dbData.past_company_sizes),
     urgency_level: FormNormalizers.toString(dbData.urgency_level),
     employment_status: FormNormalizers.toString(dbData.employment_status),
+    years_of_experience: FormNormalizers.toYearsOfExperience(dbData.years_of_experience),
+    engagement_score: dbData.engagement_score || undefined,
   }),
 };
 

@@ -12,6 +12,7 @@ import {
   locationPreferenceOptions,
   relationshipOptions,
   urgencyOptions,
+  engagementScoreOptions,
 } from "../Common/constants";
 
 interface SearchAndFilterBarProps {
@@ -43,6 +44,32 @@ export function SearchAndFilterBar({
       });
     };
 
+  const handleEngagementScoreChange = (value: string) => {
+    onFiltersChange({
+      ...filters,
+      engagement_score: value ? [value] : [],
+    });
+  };
+
+  // Count active filters
+  const getActiveFilterCount = () => {
+    let count = 0;
+    if (filters.contact_type.length > 0) count++;
+    if (filters.location_category.length > 0) count++;
+    if (filters.functional_role.length > 0) count++;
+    if (filters.is_active_looking !== null) count++;
+    if (filters.current_company_size.length > 0) count++;
+    if (filters.past_company_sizes.length > 0) count++;
+    if (filters.urgency_level.length > 0) count++;
+    if (filters.employment_status.length > 0) count++;
+    // Count engagement score as one filter only if dropdown is selected
+    // Range filtering from ProfileCard should not show in filter count if dropdown is empty
+    if (filters.engagement_score.length > 0) count++;
+    return count;
+  };
+
+  const activeFilterCount = getActiveFilterCount();
+
   return (
     <>
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
@@ -67,6 +94,11 @@ export function SearchAndFilterBar({
         >
           <Filter className="h-4 w-4 mr-2" />
           Filters
+          {activeFilterCount > 0 && (
+            <span className="ml-1 bg-white text-indigo-600 rounded-full px-2 py-0.5 text-xs font-bold">
+              {activeFilterCount}
+            </span>
+          )}
           <ChevronDown className="h-4 w-4 ml-2" />
         </button>
       </div>
@@ -123,6 +155,13 @@ export function SearchAndFilterBar({
                 options={employmentStatusOptions}
                 placeholder="Select Employment Status"
                 label="Employment Status"
+              />
+              <FilterSelect
+                selected={filters.engagement_score[0] || ""}
+                onChange={handleEngagementScoreChange}
+                options={engagementScoreOptions.map(opt => ({ value: opt.value.toString(), label: opt.label }))}
+                placeholder="Select Engagement Score"
+                label="Engagement Score"
               />
             </div>
             <div className="flex justify-end mb-4">

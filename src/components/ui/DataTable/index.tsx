@@ -41,7 +41,7 @@ function DataTable<T>({
     <div className="overflow-x-auto">
       <table
         className={cn(
-          "bg-white-600 box-border min-w-full text-sm ",
+          "bg-white box-border min-w-full text-sm ",
           className?.table
         )}
       >

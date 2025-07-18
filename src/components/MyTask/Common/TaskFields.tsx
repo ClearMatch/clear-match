@@ -138,6 +138,7 @@ function TaskFields({
           name="due_date"
           label="Due Date"
           placeholder="Select due date"
+          required
         />
         <SelectField
           control={form.control}

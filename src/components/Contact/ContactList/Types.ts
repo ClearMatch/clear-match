@@ -14,7 +14,7 @@ export interface Contact {
   functional_role: string;
   is_active_looking: boolean;
   tech_stack: string[];
-  years_of_experience?: number;
+  years_of_experience?: string;
   engagement_score?: number;
   created_at: string;
   updated_at: string;
@@ -34,6 +34,7 @@ export interface FilterState {
   past_company_sizes: string[];
   urgency_level: string[];
   employment_status: string[];
+  engagement_score: string[];
 }
 
 export interface PaginationParams {

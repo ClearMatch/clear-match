@@ -47,6 +47,12 @@ export function AddTaskForm({
         operationType: "create",
       });
 
+      // Force refetch TaskPriority counts for dashboard
+      queryClient.refetchQueries({ 
+        queryKey: ["taskPriorityCounts"],
+        type: "all" // Refetch all matching queries regardless of state
+      });
+
       router.push("/task");
     },
     onError: (error) => {
@@ -73,6 +79,15 @@ export function AddTaskForm({
       toast({
         title: "Error",
         description: "Please select an activity type",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!data.due_date) {
+      toast({
+        title: "Error",
+        description: "Please select a due date",
         variant: "destructive",
       });
       return;

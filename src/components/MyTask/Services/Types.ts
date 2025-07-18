@@ -48,10 +48,10 @@ export const getFullName = (firstName?: string, lastName?: string): string => {
 };
 
 const priorityMap: Record<number, string> = {
-  1: "High",
-  2: "High-Medium",
-  3: "Medium",
-  4: "Low",
+  4: "Critical",
+  3: "High",
+  2: "Medium",
+  1: "Low",
 };
 
 export const getPriorityLabel = (priority: number): string =>

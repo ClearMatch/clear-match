@@ -90,3 +90,25 @@ export const hybridDaysOptions = [
   { value: "3 days", label: "3 days" },
   { value: "4 days", label: "4 days" },
 ];
+
+export const engagementScoreOptions = [
+  { value: 10, label: "10 - Exceptional" },
+  { value: 9, label: "9 - High" },
+  { value: 8, label: "8 - Strong+" },
+  { value: 7, label: "7 - Strong" },
+  { value: 6, label: "6 - Good" },
+  { value: 5, label: "5 - Standard" },
+  { value: 4, label: "4 - Below Average" },
+  { value: 3, label: "3 - Sub Par" },
+  { value: 2, label: "2 - Poor" },
+  { value: 1, label: "1 - Avoid" },
+];
+
+export const yearsOfExperienceOptions = [
+  { value: "0-2", label: "0-2 years" },
+  { value: "2-5", label: "2-5 years" },
+  { value: "5-8", label: "5-8 years" },
+  { value: "8-12", label: "8-12 years" },
+  { value: "12-15", label: "12-15 years" },
+  { value: "15+", label: "15+ years" },
+];

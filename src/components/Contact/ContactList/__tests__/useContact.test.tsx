@@ -47,8 +47,8 @@ const mockContacts = [
     functional_role: 'engineering',
     is_active_looking: true,
     tech_stack: ['React', 'TypeScript'],
-    years_of_experience: 5,
-    engagement_score: 85,
+    years_of_experience: '5',
+    engagement_score: 8,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
     tags: []
@@ -69,8 +69,8 @@ const mockContacts = [
     functional_role: 'product',
     is_active_looking: false,
     tech_stack: ['Product Management', 'Analytics'],
-    years_of_experience: 7,
-    engagement_score: 92,
+    years_of_experience: '7',
+    engagement_score: 9,
     created_at: '2024-01-02T00:00:00Z',
     updated_at: '2024-01-02T00:00:00Z',
     tags: []
@@ -200,6 +200,7 @@ describe('useContacts Hook', () => {
         past_company_sizes: [],
         urgency_level: [],
         employment_status: [],
+        engagement_score: [],
       };
 
       act(() => {
@@ -289,6 +290,7 @@ describe('useContacts Hook', () => {
           past_company_sizes: [],
           urgency_level: [],
           employment_status: [],
+          engagement_score: [],
         });
         result.current.onSortChange('first_name');
       });
@@ -374,6 +376,7 @@ describe('useContacts Hook', () => {
           past_company_sizes: [],
           urgency_level: [],
           employment_status: [],
+          engagement_score: [],
         });
       });
 
@@ -390,6 +393,7 @@ describe('useContacts Hook', () => {
           past_company_sizes: [],
           urgency_level: [],
           employment_status: [],
+          engagement_score: [],
         });
       });
 

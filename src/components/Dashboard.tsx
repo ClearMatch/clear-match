@@ -1,80 +1,31 @@
 "use client";
 
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useAuth } from "@/hooks/useAuth";
-import { RecentActivities } from "./dashboard/RecentActivities";
-import { RecommendedActions } from "./dashboard/RecommendedActions";
-import { StatsGrid } from "./dashboard/StatsGrid";
-import { useDashboard } from "./dashboard/useDashboard";
+import { format } from "date-fns";
+import TaskPriority from "./dashboard/TaskPriority";
+import TaskTimeLine from "./dashboard/TaskTimeLine";
+import ProfileCard from "./dashboard/ProfileCard";
 
-interface DashboardHeaderProps {
-  title: string;
-  subtitle: string;
-}
-
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({
-  title,
-  subtitle,
-}) => (
-  <div className="mb-8">
-    <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
-    <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
-  </div>
-);
-
-const ErrorMessage: React.FC<{ message: string; onRetry?: () => void }> = ({
-  message,
-  onRetry,
-}) => (
-  <div className="flex flex-col items-center justify-center h-64 text-center">
-    <div className="text-red-600 mb-4">
-      <p className="text-lg font-medium">Error loading dashboard</p>
-      <p className="text-sm text-gray-600">{message}</p>
-    </div>
-    {onRetry && (
-      <button
-        onClick={onRetry}
-        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-      >
-        Try Again
-      </button>
-    )}
-  </div>
-);
-
-export function Dashboard() {
+export default function Dashboard() {
   const { user } = useAuth();
-  const { data, loading, error, refetch } = useDashboard(user?.id);
 
-  if (loading) {
-    return <LoadingSpinner size="lg" />;
-  }
-
-  if (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return <ErrorMessage message={errorMessage} onRetry={refetch} />;
-  }
-
-  if (!data) {
+  if (!user) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-gray-500">No dashboard data available</p>
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-gray-500">Loading dashboard...</div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <DashboardHeader
-        title="Dashboard"
-        subtitle="Overview of your contact pipeline and recommended actions"
-      />
-
-      <StatsGrid stats={data.stats} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <RecommendedActions actions={data.recommendedActions} />
-        <RecentActivities activities={data.recentActivities} />
+    <div className="min-h-screen p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <h1 className="text-2xl font-normal text-gray-800">
+          {format(new Date(), "EEEE MMMM d, yyyy")}
+        </h1>
+        <TaskPriority userId={user.id} />
+        <TaskTimeLine userId={user.id} />
+        <ProfileCard />
       </div>
     </div>
   );

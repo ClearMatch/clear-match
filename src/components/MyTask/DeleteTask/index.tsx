@@ -44,6 +44,11 @@ const DeleteTask = ({ isOpen, onClose, taskId }: Props) => {
       
       // Only invalidate cache after successful server confirmation
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      // Force refetch TaskPriority counts for dashboard
+      queryClient.refetchQueries({ 
+        queryKey: ["taskPriorityCounts"],
+        type: "all" // Refetch all matching queries regardless of state
+      });
       onClose();
     } catch (error) {
       console.error("Delete task error:", error);
