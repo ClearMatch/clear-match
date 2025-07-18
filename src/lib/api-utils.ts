@@ -5,6 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { validateCSRFForAPI } from './csrf';
 import { sanitize, validateFileUpload } from './security';
 import { z } from 'zod';
+// Remove complex environment detection imports
 
 /**
  * Standardized API error responses
@@ -175,13 +176,29 @@ export interface AuthResult {
 
 /**
  * Creates a Supabase server client with proper cookie handling
+ * @param useServiceRole - Use service role key instead of anon key (for admin operations)
  */
-export async function createSupabaseServerClient(): Promise<SupabaseClient> {
+export async function createSupabaseServerClient(useServiceRole: boolean = false): Promise<SupabaseClient> {
   const cookieStore = await cookies();
   
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new ApiError('Missing required Supabase environment variables', 500);
+  }
+  
+  // Use service role key if requested and available
+  const key = useServiceRole && supabaseServiceRoleKey ? supabaseServiceRoleKey : supabaseAnonKey;
+  
+  if (useServiceRole && !supabaseServiceRoleKey) {
+    throw new ApiError('Service role key is required for this operation', 500);
+  }
+  
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    key,
     {
       cookies: {
         get(name: string) {
