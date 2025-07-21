@@ -6,5 +6,7 @@
       "staging": true,
       "production": true
     }
-  }
+  },
+  "passwordProtection": false,
+  "public": true
 }
