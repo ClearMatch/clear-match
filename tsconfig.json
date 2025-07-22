@@ -35,5 +35,5 @@
     "tailwind.config.js",
     "src/types/jest-dom.d.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "supabase/functions/**/*"]
 }
