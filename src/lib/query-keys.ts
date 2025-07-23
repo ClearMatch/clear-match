@@ -250,6 +250,8 @@ export const queryKeyUtils = {
     // If we have a specific task, invalidate its details
     if (taskId) {
       queryClient.invalidateQueries({ queryKey: taskKeys.detail(taskId) });
+      // CRITICAL FIX: Also invalidate the activities query used by task show page
+      queryClient.invalidateQueries({ queryKey: ["activities", taskId] });
     }
     
     // If task is related to a contact, invalidate contact's tasks
