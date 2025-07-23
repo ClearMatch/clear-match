@@ -203,14 +203,14 @@ export const fetchActivitiesWithRelations = async (
       last_name
     )`;
 
-  const assignedProfileSelect = includeAssignedProfiles 
+  const assignedProfileSelect = includeAssignedProfiles
     ? `,
     assigned_to_profile:assigned_to (
       id,
       first_name,
       last_name
-    )` 
-    : '';
+    )`
+    : "";
 
   let query = supabase
     .from("activities")
@@ -236,7 +236,7 @@ export const fetchActivitiesWithRelations = async (
     }
 
     if (filters?.assigned_to?.length > 0) {
-      query = query.in("contact_id", filters.assigned_to);
+      query = query.in("assigned_to", filters.assigned_to);
     }
 
     if (filters?.created_by?.length > 0) {
