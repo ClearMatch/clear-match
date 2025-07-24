@@ -21,24 +21,26 @@ function HeaderColumn<T>({ col, handleSort, sortSelection }: Props<T>) {
       style={{ width: col.width }}
       onClick={handleSort(col)}
     >
-      {col.header}
-      {sortSelection ? (
-        <>
-          {sortSelection.sortBy === col.key && col.sortable && (
-            <span className="ml-1">
-              {sortSelection.sortOrder === "asc" ? (
-                <ArrowUp size="xs" />
-              ) : sortSelection.sortOrder === "desc" ? (
-                <ArrowDownIcon size="xs" />
-              ) : (
-                ""
-              )}
-            </span>
-          )}
-        </>
-      ) : (
-        emptyFragment()
-      )}
+      <div className="flex items-center">
+        {col.header}
+        {sortSelection ? (
+          <>
+            {sortSelection.sortBy === col.key && col.sortable && (
+              <span className="ml-1">
+                {sortSelection.sortOrder === "asc" ? (
+                  <ArrowUp className="h-3 w-3" />
+                ) : sortSelection.sortOrder === "desc" ? (
+                  <ArrowDownIcon className="h-3 w-3" />
+                ) : (
+                  ""
+                )}
+              </span>
+            )}
+          </>
+        ) : (
+          emptyFragment()
+        )}
+      </div>
     </th>
   );
 }

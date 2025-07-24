@@ -1,9 +1,9 @@
 "use client";
 
 import { formatDate } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
-  ArrowLeft,
   ArrowLeftIcon,
   Calendar,
   CheckCircle2,
@@ -14,13 +14,16 @@ import {
   User,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import { fetchTaskById } from "../Services";
 import {
   ActivityWithRelations,
   getFullName,
   getPriorityLabel,
 } from "../Services/Types";
+import ContactContext from "./ContactContext";
+import EventDetailsSection from "./EventDetailsSection";
+import JobPostingDetails from "./JobPostingDetails";
+import PriorityCalculationBreakdown from "./PriorityCalculationBreakdown";
 import { getPriorityColor, getStatusColor } from "./Types";
 
 function ShowTask() {
@@ -64,14 +67,7 @@ function ShowTask() {
         <h1 className="font-bold text-md ">Task Details</h1>
       </div>
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between mb-6">
-          <button
-            onClick={() => router.push("/task")}
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-800 transition-colors mb-4"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="text-sm font-medium">Back to Tasks</span>
-          </button>
+        <div className="flex justify-end mb-6">
           <button
             onClick={() => router.push(`/task/edit/${taskData?.id}`)}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md"
@@ -108,6 +104,8 @@ function ShowTask() {
                 </div>
               </div>
             </div>
+
+            {/* Task Details */}
             <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
                 <CheckCircle2 className="w-6 h-6 text-indigo-600" />
@@ -171,8 +169,22 @@ function ShowTask() {
                 </div>
               </div>
             </div>
+
+            <PriorityCalculationBreakdown
+              priority={taskData?.priority || 1}
+              eventId={taskData?.event_id}
+              contactId={taskData?.contact_id}
+              activityType={taskData?.type}
+            />
+            <EventDetailsSection eventId={taskData?.event_id} />
+            <JobPostingDetails jobPostingId={taskData?.job_posting_id} />
           </div>
+
           <div className="space-y-8">
+            <ContactContext
+              contactId={taskData?.contact_id}
+              currentTaskId={taskData?.id}
+            />
             <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                 <User className="w-5 h-5 text-indigo-600" />
@@ -202,6 +214,7 @@ function ShowTask() {
                 </div>
               </div>
             </div>
+            {/* System Information */}
             <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-indigo-600" />
@@ -223,13 +236,17 @@ function ShowTask() {
                 <div className="flex justify-between items-center py-2">
                   <span className="text-gray-600 text-sm">Job Posting</span>
                   <span className="text-gray-500 text-sm">
-                    {taskData?.job_posting_id || "None"}
+                    {taskData?.job_posting_id
+                      ? `${taskData.job_posting_id.slice(0, 8)}...`
+                      : "None"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2">
                   <span className="text-gray-600 text-sm">Event</span>
                   <span className="text-gray-500 text-sm">
-                    {taskData?.event_id || "None"}
+                    {taskData?.event_id
+                      ? `${taskData.event_id.slice(0, 8)}...`
+                      : "None"}
                   </span>
                 </div>
               </div>
