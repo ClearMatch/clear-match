@@ -7,7 +7,7 @@ A comprehensive **Contact Relationship Management (CRM)** platform built for mod
 ### Prerequisites
 
 - Node.js 18.17.0 or later
-- npm or yarn
+- pnpm (via corepack)
 - Supabase account
 - Git
 
@@ -21,7 +21,7 @@ A comprehensive **Contact Relationship Management (CRM)** platform built for mod
 
 2. **Install dependencies**
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. **Environment setup**
@@ -32,7 +32,7 @@ A comprehensive **Contact Relationship Management (CRM)** platform built for mod
 
 4. **Start development server**
    ```bash
-   npm run dev
+   pnpm dev
    ```
 
 5. **Open your browser**
@@ -58,7 +58,7 @@ A comprehensive **Contact Relationship Management (CRM)** platform built for mod
 
 ### **Form & Data Management**
 - **Forms**: React Hook Form 7.53.0 with Zod validation
-- **Data Fetching**: SWR 2.3.3 for client-side data fetching and caching
+- **Data Fetching**: TanStack Query (React Query) 5.81.5 for client-side data fetching and caching
 - **Validation**: Zod 3.23.8 for schema validation and type safety
 - **Date Handling**: date-fns 3.6.0
 
@@ -163,13 +163,13 @@ job_postings          # Job posting management
 ### Available Scripts
 
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-npm run test         # Run Jest tests
-npm run test:watch   # Run tests in watch mode
-npm run test:coverage # Generate coverage report
+pnpm dev             # Start development server
+pnpm build           # Build for production
+pnpm start           # Start production server
+pnpm lint            # Run ESLint
+pnpm test            # Run Jest tests
+pnpm test:watch      # Run tests in watch mode
+pnpm test:coverage   # Generate coverage report
 ```
 
 ### Project Structure
@@ -304,12 +304,12 @@ const validatedData = validateString(input, 'Name', 100, true)
 
 **Data Fetching Patterns:**
 ```typescript
-// SWR with error handling and caching
-const { data, error, isLoading } = useSWR(
-  `/api/contacts/${id}`,
-  fetcher,
-  { revalidateOnFocus: false }
-)
+// TanStack Query with error handling and caching
+const { data, error, isLoading } = useQuery({
+  queryKey: ['contact', id],
+  queryFn: () => fetchContact(id),
+  staleTime: 5 * 60 * 1000 // 5 minutes
+})
 ```
 
 ## Implementation Status
@@ -509,10 +509,10 @@ Once running, you can access:
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm dev
 
 # Open application
 open http://localhost:3000

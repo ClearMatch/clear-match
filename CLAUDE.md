@@ -18,12 +18,12 @@
 **Clear Match** is a comprehensive candidate relationship management platform built for modern recruiting teams. The application helps organizations manage candidates, tasks, and recruitment workflows efficiently.
 
 ### Tech Stack
-- **Frontend**: Next.js 13.5.1 with App Router
+- **Frontend**: Next.js 15.3.5 with App Router
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS with Radix UI components
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: Supabase Auth with Row Level Security (RLS)
-- **State Management**: SWR for data fetching
+- **State Management**: TanStack Query (React Query) for data fetching
 - **Form Management**: React Hook Form with Zod validation
 - **UI Components**: Custom components built on Radix UI primitives
 - **External Integrations**: HubSpot API integration
