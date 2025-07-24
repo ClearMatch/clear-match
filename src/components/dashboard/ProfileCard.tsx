@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Bot, Flame, Heart, User } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +12,7 @@ import LoadingSkeleton from "./LoadingSkeleton";
 
 function ProfileCard() {
   const { user } = useAuth();
+  const router = useRouter();
   const [profileGroups, setProfileGroups] = useState<ProfileGroup[]>([
     {
       name: "Profile A",
@@ -107,6 +109,16 @@ function ProfileCard() {
     setIsModalOpen(true);
   };
 
+  const handleCardClick = (group: ProfileGroup) => {
+    // Navigate to contacts page with engagement score filter
+    const params = new URLSearchParams();
+    params.set('engagement_min', group.minScore.toString());
+    params.set('engagement_max', group.maxScore.toString());
+    params.set('profile_type', group.name);
+    
+    router.push(`/contacts?${params.toString()}`);
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedGroup(null);
@@ -124,6 +136,7 @@ function ProfileCard() {
             key={index}
             group={group}
             onShowMore={() => handleGroupClick(group)}
+            onCardClick={() => handleCardClick(group)}
           />
         ))}
       </div>
