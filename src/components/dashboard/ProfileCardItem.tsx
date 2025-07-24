@@ -6,9 +6,10 @@ import ProfileAvatar from "./ProfileAvatar";
 interface ProfileCardItemProps {
   group: ProfileGroup;
   onShowMore: (group: ProfileGroup) => void;
+  onCardClick: () => void;
 }
 
-export default function ProfileCardItem({ group, onShowMore }: ProfileCardItemProps) {
+export default function ProfileCardItem({ group, onShowMore, onCardClick }: ProfileCardItemProps) {
 
   const renderAvatars = () => {
     const displayContacts = group.contacts.slice(0, 5);
@@ -41,7 +42,16 @@ export default function ProfileCardItem({ group, onShowMore }: ProfileCardItemPr
 
   return (
     <div
-      className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+      className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+      onClick={onCardClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onCardClick();
+        }
+      }}
     >
       <div className="flex items-center gap-3 mb-4">
         <group.icon className={`w-4 h-4 ${group.iconColor}`} />

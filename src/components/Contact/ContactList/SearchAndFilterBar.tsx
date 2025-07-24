@@ -51,6 +51,13 @@ export function SearchAndFilterBar({
     });
   };
 
+  const handleEngagementRangeChange = (value: string) => {
+    onFiltersChange({
+      ...filters,
+      engagement_range: value ? [value] : [],
+    });
+  };
+
   // Count active filters
   const getActiveFilterCount = () => {
     let count = 0;
@@ -62,8 +69,6 @@ export function SearchAndFilterBar({
     if (filters.past_company_sizes.length > 0) count++;
     if (filters.urgency_level.length > 0) count++;
     if (filters.employment_status.length > 0) count++;
-    // Count engagement score as one filter only if dropdown is selected
-    // Range filtering from ProfileCard should not show in filter count if dropdown is empty
     if (filters.engagement_score.length > 0) count++;
     return count;
   };
@@ -159,7 +164,10 @@ export function SearchAndFilterBar({
               <FilterSelect
                 selected={filters.engagement_score[0] || ""}
                 onChange={handleEngagementScoreChange}
-                options={engagementScoreOptions.map(opt => ({ value: opt.value.toString(), label: opt.label }))}
+                options={engagementScoreOptions.map((opt) => ({
+                  value: opt.value.toString(),
+                  label: opt.label,
+                }))}
                 placeholder="Select Engagement Score"
                 label="Engagement Score"
               />
