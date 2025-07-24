@@ -1,19 +1,15 @@
 import { useDebounce } from "@/hooks/useDebounce";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
-import { contactService } from "./contactService";
-import { Contact, FilterState, SortConfig, SortField } from "./Types";
 import { useAuth } from "@/hooks/useAuth";
+import { fetchContactsPaginated } from "./contactService";
+import { Contact, FilterState, SortConfig, SortField } from "./Types";
 
 const PAGE_SIZE = 25;
 
 export function useContacts() {
   const auth = useAuth();
   const [searchInputValue, setSearchInputValue] = useState("");
-  const [sort, setSort] = useState<SortConfig>({ 
-    field: 'updated_at', 
-    direction: 'desc' 
-  });
   const [filters, setFilters] = useState<FilterState>({
     contact_type: [],
     functional_role: [],
@@ -24,120 +20,96 @@ export function useContacts() {
     urgency_level: [],
     employment_status: [],
     engagement_score: [],
+    engagement_range: [],
   });
-
-
-  // Check if there are active filters to determine auto-open
-  const hasActiveFilters = () => {
-    return (
-      filters.contact_type.length > 0 ||
-      filters.location_category.length > 0 ||
-      filters.functional_role.length > 0 ||
-      filters.is_active_looking !== null ||
-      filters.current_company_size.length > 0 ||
-      filters.past_company_sizes.length > 0 ||
-      filters.urgency_level.length > 0 ||
-      filters.employment_status.length > 0 ||
-      filters.engagement_score.length > 0
-      // Don't auto-open for hidden range filters from ProfileCard
-    );
-  };
 
   const debouncedSearchQuery = useDebounce(searchInputValue, 500);
   const isSearching = searchInputValue !== debouncedSearchQuery;
-  const queryClient = useQueryClient();
+
+  const filterKey = useMemo(() => {
+    return JSON.stringify({
+      search: debouncedSearchQuery || '',
+      filters: filters,
+      userId: auth.user?.id
+    });
+  }, [debouncedSearchQuery, filters, auth.user?.id]);
 
   const {
     data,
     error,
-    isLoading,
-    isFetchingNextPage,
-    hasNextPage,
     fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+    isLoading,
   } = useInfiniteQuery({
-    queryKey: ["contacts", "list", { search: debouncedSearchQuery, filters, sort, userId: auth.user?.id }],
-    queryFn: ({ pageParam }: { pageParam: string | undefined }) => {
-      if (!auth.user?.id) return Promise.resolve({ contacts: [], hasMore: false, totalCount: 0 });
-      
-      return contactService.fetchContactsCursor(
-        auth.user.id,
-        debouncedSearchQuery,
-        filters,
-        sort,
+    queryKey: ["contacts", filterKey],
+    queryFn: ({ pageParam = 0 }) =>
+      fetchContactsPaginated(
         pageParam,
-        PAGE_SIZE
-      );
+        PAGE_SIZE,
+        debouncedSearchQuery || undefined,
+        filters
+      ),
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < PAGE_SIZE) return undefined;
+      return allPages.length;
     },
+    initialPageParam: 0,
     enabled: !!auth.user?.id,
-    initialPageParam: undefined as string | undefined, // Initial cursor is undefined
-    getNextPageParam: (lastPage) => {
-      if (!lastPage.hasMore) return undefined;
-      
-      // Get cursor from the last contact based on sort field
-      const lastContact = lastPage.contacts[lastPage.contacts.length - 1];
-      return lastContact ? lastContact[sort.field] as string : undefined;
-    },
-    placeholderData: (previousData) => previousData, // Keep previous data while loading
-    staleTime: 60000, // 1 minute
+    staleTime: 5000,
   });
 
   // Flatten all pages of contacts into a single array
   const contacts = useMemo(() => {
-    return data?.pages.flatMap(page => page.contacts) || [];
-  }, [data]);
+    return data?.pages?.flat() || [];
+  }, [data?.pages]);
 
-  const handleLoadMore = useCallback(async () => {
-    if (!hasNextPage || isFetchingNextPage) {
-      return;
+  const fetchMoreData = useCallback(async () => {
+    if (!isFetchingNextPage && hasNextPage) {
+      try {
+        await fetchNextPage();
+      } catch (error) {
+        console.error('Failed to load more contacts:', error);
+      }
     }
+  }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
 
-    try {
-      await fetchNextPage();
-    } catch (err) {
-      console.error("Error loading more contacts:", err);
-    }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  const refetchContacts = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["contacts", "list"] });
-  }, [queryClient]);
-
-  const handleSortChange = useCallback((field: SortField) => {
-    setSort(prevSort => ({
-      field,
-      direction: prevSort.field === field && prevSort.direction === 'asc' ? 'desc' : 'asc'
-    }));
+  const handleSortChange = useCallback(() => {
+    // Sort functionality can be added later if needed
   }, []);
 
   return {
     // Data
     contacts,
+    totalCount: 0, // Not needed for infinite scroll
 
     // Search
     searchInputValue,
     setSearchInputValue,
-    debouncedSearchQuery,
 
     // Filters
     filters,
     setFilters,
-    hasActiveFilters: hasActiveFilters(),
 
-    // Sorting
-    sort,
+    // Sorting (placeholder)
+    sort: { field: 'updated_at', direction: 'desc' } as SortConfig,
     onSortChange: handleSortChange,
 
     // Loading states
     loading: isLoading,
     isSearching,
+    isValidating: isFetching,
     isFetchingMore: isFetchingNextPage,
     error,
 
     // Pagination
     hasMore: hasNextPage,
-    onLoadMore: handleLoadMore,
+    onLoadMore: fetchMoreData,
 
     // Actions
-    refetchContacts,
+    refetchContacts: () => {
+      // Will be implemented when needed
+    },
   };
 }
