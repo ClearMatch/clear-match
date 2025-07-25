@@ -65,9 +65,13 @@ export function useContacts() {
     return data?.pages?.flat() || [];
   }, [data?.pages]);
 
-  const fetchMoreData = useCallback(() => {
+  const fetchMoreData = useCallback(async () => {
     if (!isFetchingNextPage && hasNextPage) {
-      fetchNextPage();
+      try {
+        await fetchNextPage();
+      } catch (error) {
+        console.error('Failed to load more contacts:', error);
+      }
     }
   }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
 
