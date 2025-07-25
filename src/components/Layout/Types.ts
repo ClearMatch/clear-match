@@ -22,7 +22,7 @@ export const menuItems = [
     items: [
       { name: "Dashboard", icon: ChartNoAxesCombined, path: "/dashboard" },
       { name: "Contacts", icon: Users, path: "/contacts" },
-      { name: "My Task", icon: ListChecks, path: "/task" },
+      { name: "Tasks", icon: ListChecks, path: "/task" },
       { name: "Event", icon: CalendarRange, path: "/event" },
     ],
   },
