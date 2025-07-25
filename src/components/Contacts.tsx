@@ -2,6 +2,7 @@
 
 import { useOpenable } from "@/hooks";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "../hooks/useAuth";
 import { ContactsList } from "./Contact/ContactList";
 import { SearchAndFilterBar } from "./Contact/ContactList/SearchAndFilterBar";
@@ -11,6 +12,7 @@ import Header from "./Contact/Header";
 
 export function Contacts() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [selectId, setSelectId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -20,15 +22,20 @@ export function Contacts() {
     onClose: onDeleteClose,
   } = useOpenable();
 
+  const engagementMin = searchParams.get('engagement_min');
+  const engagementMax = searchParams.get('engagement_max');
+
   const {
     contacts,
+    totalCount,
     loading,
     searchInputValue,
     setSearchInputValue,
     filters,
     setFilters,
-    hasActiveFilters,
     isSearching,
+    isValidating,
+    isFetchingMore,
     hasMore,
     onLoadMore,
     refetchContacts,
@@ -36,12 +43,24 @@ export function Contacts() {
     onSortChange,
   } = useContacts();
 
-  // Auto-open filters when there are active filters (e.g., from ProfileCard navigation)
+  // Apply URL parameters to filters on component mount
   useEffect(() => {
-    if (hasActiveFilters && !showFilters) {
-      setShowFilters(true);
+    if (engagementMin && engagementMax) {
+      // Set engagement range filter for the UI
+      const minScore = parseInt(engagementMin);
+      const maxScore = parseInt(engagementMax);
+      const rangeFilter = `${minScore}-${maxScore}`;
+
+      setFilters(prevFilters => ({
+        ...prevFilters,
+        engagement_score: [], // Clear individual scores
+        engagement_range: [rangeFilter], // Use range filter instead
+      }));
+      
+      // Keep filters closed by default when coming from dashboard
+      setShowFilters(false);
     }
-  }, [hasActiveFilters, showFilters]);
+  }, [engagementMin, engagementMax, setFilters]);
 
   // Edit is now handled directly in the table component
   const handleDeleteClick = (contactId: string) => {
@@ -49,7 +68,7 @@ export function Contacts() {
     onDeleteOpen();
   };
 
-  const handleToggleFilters = () => {
+  const handleClearFilters = () => {
     setFilters({
       contact_type: [],
       location_category: [],
@@ -60,6 +79,7 @@ export function Contacts() {
       urgency_level: [],
       employment_status: [],
       engagement_score: [],
+      engagement_range: [],
     });
   };
 
@@ -84,11 +104,14 @@ export function Contacts() {
         onFiltersChange={setFilters}
         showFilters={showFilters}
         onToggleFilters={() => setShowFilters(!showFilters)}
-        clearFilter={handleToggleFilters}
+        clearFilter={handleClearFilters}
       />
       <ContactsList
         contacts={contacts}
+        totalCount={totalCount}
         loading={loading}
+        isValidating={isValidating}
+        isFetchingNextPage={isFetchingMore}
         onDeleteContact={handleDeleteClick}
         hasMore={hasMore}
         onLoadMore={onLoadMore}

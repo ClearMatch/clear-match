@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTimelineData } from "./hooks/useUnifiedDashboard";
 import { getPriorityLabel, getPriorityColor, TimelineTask } from "./Services";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,7 @@ interface TaskTimeLineProps {
 function TaskTimeLine({ userId }: TaskTimeLineProps) {
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
   const { timeline, isLoading, error } = useTimelineData(userId);
+  const router = useRouter();
 
   const timelineGroups = timeline
     ? [
@@ -27,6 +29,10 @@ function TaskTimeLine({ userId }: TaskTimeLineProps) {
     const contactInfo = task.contact_name ? ` - ${task.contact_name}` : "";
     const subjectInfo = task.subject ? ` (${task.subject})` : "";
     return `[${priorityLabel}] ${task.description}${contactInfo}${subjectInfo}`;
+  };
+
+  const handleTaskClick = (taskId: string) => {
+    router.push(`/task/show/${taskId}`);
   };
   if (isLoading) {
     return (
@@ -89,13 +95,25 @@ function TaskTimeLine({ userId }: TaskTimeLineProps) {
 
             {/* Collapsible Content for each column */}
             <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              className={`overflow-auto transition-all duration-300 ease-in-out ${
                 isTimelineOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
               }`}
             >
               <div className="space-y-3 pt-4 border-t border-gray-100">
                 {group.tasks.map((task, taskIndex) => (
-                  <div key={taskIndex} className="flex items-start gap-3">
+                  <div
+                    key={taskIndex}
+                    className="flex items-start gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors duration-200 -mx-2"
+                    onClick={() => handleTaskClick(task.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleTaskClick(task.id);
+                      }
+                    }}
+                  >
                     <div
                       className={cn(
                         `w-6 h-6 rounded-full mt-1.5`,
@@ -103,7 +121,7 @@ function TaskTimeLine({ userId }: TaskTimeLineProps) {
                       )}
                     />
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm text-gray-700 block">
+                      <span className="text-sm text-gray-700 block hover:text-indigo-600 transition-colors">
                         {formatTaskText(task)}
                       </span>
                       {task.status !== "todo" && (

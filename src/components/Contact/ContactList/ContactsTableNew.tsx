@@ -50,14 +50,7 @@ function ContactsTable({
 
   const formatEngagementScore = (score?: number) => {
     if (!score) return "";
-    const labels = {
-      5: "High",
-      4: "Strong",
-      3: "Standard",
-      2: "Sub Par",
-      1: "Avoid",
-    };
-    return labels[score as keyof typeof labels] || score.toString();
+    return score.toString();
   };
 
   const formatDate = (dateString: string) => {

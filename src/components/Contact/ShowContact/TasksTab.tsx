@@ -67,7 +67,13 @@ function TasksTab({ contactId, contactName = "Contact" }: TasksTabProps) {
       <TaskList
         tasks={tasks}
         loading={isLoading}
+        isValidating={false}
+        isFetchingNextPage={false}
         isSearching={false}
+        hasMoreData={false}
+        fetchMoreData={() => {}}
+        error={error}
+        totalCount={tasks.length}
         hasNoResults={!isLoading && tasks.length === 0}
       />
 
