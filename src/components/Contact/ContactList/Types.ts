@@ -35,6 +35,7 @@ export interface FilterState {
   urgency_level: string[];
   employment_status: string[];
   engagement_score: string[];
+  engagement_range: string[]; // Will store values like "8-10", "6-7", etc.
 }
 
 export interface PaginationParams {

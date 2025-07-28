@@ -66,7 +66,7 @@ function EventsList({
           >
             <div
               id="scrollableDiv"
-              className="max-h-[calc(100vh-150px)] w-full overflow-auto"
+              className="max-h-[calc(100vh-286px)] w-full overflow-auto"
             >
               <DataTable
                 columns={Columns()}

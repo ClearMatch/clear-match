@@ -1,14 +1,17 @@
 "use client";
 
-import { emptyFragment } from "@/components/ui/emptyFragment";
-import InfiniteScroll from "@/components/ui/infiniteScroll";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Loader2 } from "lucide-react";
+import InfiniteScroll from "react-infinite-scroll-component";
 import ContactsTable from "./ContactsTableNew";
 import { Contact, SortConfig, SortField } from "./Types";
 
 interface ContactsListProps {
   contacts: Contact[];
+  totalCount: number;
   loading: boolean;
+  isValidating?: boolean;
+  isFetchingNextPage?: boolean;
   onDeleteContact: (contactId: string) => void;
   hasMore: boolean;
   onLoadMore: () => void;
@@ -18,14 +21,16 @@ interface ContactsListProps {
 
 export function ContactsList({
   contacts,
+  totalCount,
   loading,
+  isValidating = false,
+  isFetchingNextPage = false,
   hasMore,
   onLoadMore,
   onDeleteContact,
   sort,
   onSortChange,
 }: ContactsListProps) {
-  const scrollableContainerId = "contacts-scroll-container";
   if (loading && contacts.length === 0) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -41,32 +46,61 @@ export function ContactsList({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="text-sm text-gray-600">
-        Showing {contacts.length} contacts
-      </div>
-      <div id={scrollableContainerId} className="max-h-[70vh] overflow-y-auto">
-        <InfiniteScroll
-          dataLength={contacts.length}
-          next={onLoadMore}
-          hasMore={hasMore}
-          loader={
-            <div className="flex justify-center py-4">
-              <Loader2 className="animate-spin h-5 w-5 text-indigo-500" />
+    <>
+      {/* Contact Counter Display */}
+      {!loading && contacts.length > 0 && (
+        <div className="mb-4 px-4 py-2 bg-gray-50 border rounded-lg">
+          <p className="text-sm text-gray-600">
+            Showing{" "}
+            <span className="font-medium text-gray-900">
+              {contacts.length} contacts
+            </span>
+          </p>
+        </div>
+      )}
+
+      {loading && contacts.length === 0 ? (
+        <div className="flex justify-center p-8">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <div className="relative">
+          {/* Background refresh indicator */}
+          {isValidating && !isFetchingNextPage && contacts.length > 0 && (
+            <div className="absolute top-2 right-2 z-10 bg-white/90 rounded-full p-2 shadow-sm">
+              <LoadingSpinner size="sm" />
             </div>
-          }
-          endMessage={emptyFragment()}
-          scrollThreshold={0.6}
-          scrollableTarget={scrollableContainerId}
-        >
-          <ContactsTable
-            contacts={contacts}
-            onDelete={onDeleteContact}
-            sort={sort}
-            onSortChange={onSortChange}
-          />
-        </InfiniteScroll>
-      </div>
-    </div>
+          )}
+          <InfiniteScroll
+            dataLength={contacts.length}
+            next={onLoadMore}
+            hasMore={hasMore}
+            scrollableTarget="scrollableDiv"
+            loader={
+              isFetchingNextPage && (
+                <div className="flex justify-center p-4">
+                  <LoadingSpinner />
+                  <span className="ml-2 text-sm text-gray-500">
+                    Loading more contacts...
+                  </span>
+                </div>
+              )
+            }
+          >
+            <div
+              id="scrollableDiv"
+              className="max-h-[calc(100vh-286px)] w-full overflow-auto"
+            >
+              <ContactsTable
+                contacts={contacts}
+                onDelete={onDeleteContact}
+                sort={sort}
+                onSortChange={onSortChange}
+              />
+            </div>
+          </InfiniteScroll>
+        </div>
+      )}
+    </>
   );
 }

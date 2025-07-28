@@ -60,7 +60,8 @@ export function ContactsTable({
 }: ContactsTableProps) {
   const router = useRouter();
   const formatEngagementScore = (score?: number) => {
-    return getEngagementScoreLabel(score);
+    if (!score) return "";
+    return score.toString();
   };
 
   const formatDate = (dateString: string) => {

@@ -18,15 +18,41 @@ function AddContact() {
   const form = useUserForm();
   const { toast } = useToast();
   const router = useRouter();
-  const auth = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   async function insertContact(data: Schema) {
     try {
+      // Validate user authentication
+      if (!user?.id) {
+        throw new DetailedError("User authentication is required to create contacts", {
+          operation: "create",
+          field: "created_by",
+        });
+      }
+
+      // Get user profile data from the API
+      const profileResponse = await fetch('/api/profile');
+      if (!profileResponse.ok) {
+        throw new DetailedError("Failed to get user profile", {
+          operation: "create",
+          field: "organization_id",
+        });
+      }
+      
+      const profile = await profileResponse.json();
+      if (!profile.organization_id) {
+        throw new DetailedError("Organization context is required to create contacts", {
+          operation: "create",
+          field: "organization_id",
+        });
+      }
+
       // Use centralized data transformer
       const insertData = {
         ...ContactDataTransformer.forCreate(data),
-        created_by: auth.user?.id,
+        organization_id: profile.organization_id,
+        created_by: user.id,
       };
 
       const { error } = await supabase.from("contacts").insert(insertData);
@@ -62,8 +88,8 @@ function AddContact() {
       queryClient.invalidateQueries({ queryKey: ["contacts", "list"] });
       
       // Also invalidate dashboard stats
-      if (auth.user?.id) {
-        queryClient.invalidateQueries({ queryKey: ["dashboard", "stats", auth.user.id] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ["dashboard", "stats", user.id] });
       }
       
       router.push("/contacts");

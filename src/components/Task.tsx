@@ -19,7 +19,12 @@ function Task() {
     assigneeOptions,
     creatorOptions,
     loading,
+    isValidating,
+    isFetchingNextPage,
     error,
+    hasMoreData,
+    fetchMoreData,
+    totalCount,
   } = useTasks();
 
   if (error) {
@@ -48,7 +53,13 @@ function Task() {
       <TaskList
         tasks={tasks}
         loading={loading}
+        isValidating={isValidating}
+        isFetchingNextPage={isFetchingNextPage}
         isSearching={isSearching}
+        hasMoreData={hasMoreData}
+        fetchMoreData={fetchMoreData}
+        error={error}
+        totalCount={totalCount}
         hasNoResults={
           tasks.length === 0 &&
           (!!searchInputValue ||
