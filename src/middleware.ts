@@ -14,6 +14,8 @@ import { createServerClient } from '@supabase/ssr'
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = [
   '/auth',
+  '/auth/reset-password',
+  '/auth/reset-password/confirm',
 ]
 
 export async function middleware(request: NextRequest) {
