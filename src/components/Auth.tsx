@@ -68,23 +68,52 @@ export function Auth() {
         if (authData.user) {
           console.log("User created, finding Clear Match Talent organization...");
           
-          // Find the Clear Match Talent organization
-          const { data: orgData, error: orgError } = await supabase
-            .from('organizations')
-            .select('id')
-            .eq('name', 'Clear Match Talent')
-            .single();
+          // Find the organization (try multiple variations for compatibility)
+          let orgData = null;
+          let orgError = null;
+          
+          const orgNames = ['Clear Match Talent', 'Clear Match', 'clear match talent'];
+          
+          for (const orgName of orgNames) {
+            const { data, error } = await supabase
+              .from('organizations')
+              .select('id')
+              .eq('name', orgName)
+              .single();
+              
+            if (data && !error) {
+              orgData = data;
+              break;
+            }
+            orgError = error;
+          }
+          
+          // If no organization found, try to get the first available one
+          if (!orgData) {
+            const { data, error } = await supabase
+              .from('organizations')
+              .select('id')
+              .limit(1)
+              .single();
+              
+            if (data && !error) {
+              orgData = data;
+              orgError = null;
+            } else {
+              orgError = error;
+            }
+          }
 
           console.log("Organization lookup result:", { orgData, orgError });
 
-          if (orgError) {
+          if (orgError || !orgData) {
             console.error("Organization lookup error:", orgError);
-            throw new Error("Unable to find Clear Match Talent organization. Please contact support.");
+            throw new Error("Unable to find organization. Please contact support.");
           }
 
           console.log("Organization found, creating profile...");
 
-          // Create profile with Clear Match Talent organization
+          // Create profile with found organization
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .insert([{
@@ -101,7 +130,15 @@ export function Auth() {
 
           if (profileError) {
             console.error("Profile creation error:", profileError);
-            throw profileError;
+            console.error("Profile creation context:", {
+              userId: authData.user.id,
+              userEmail: authData.user.email,
+              organizationId: orgData.id,
+              firstName,
+              lastName,
+              timestamp: new Date().toISOString()
+            });
+            throw new Error(`Profile creation failed: ${profileError.message}. Please contact support.`);
           }
 
           console.log("Signup completed successfully!");
