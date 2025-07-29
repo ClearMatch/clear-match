@@ -304,7 +304,18 @@ export function Auth() {
             </div>
           </form>
 
-          <div className="mt-6">
+          <div className="mt-6 space-y-4">
+            {!isSignUp && (
+              <div className="text-center">
+                <a
+                  href="/auth/reset-password"
+                  className="text-sm text-indigo-600 hover:text-indigo-500"
+                >
+                  Forgot your password?
+                </a>
+              </div>
+            )}
+            
             <button
               onClick={() => setIsSignUp(!isSignUp)}
               className="w-full text-center text-sm text-indigo-600 hover:text-indigo-500"
