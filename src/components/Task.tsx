@@ -50,6 +50,13 @@ function Task() {
         assigneeOptions={assigneeOptions}
         creatorOptions={creatorOptions}
       />
+
+      <div className="mb-4">
+        <div className="text-sm text-gray-600">
+          Showing {tasks.length} tasks
+        </div>
+      </div>
+
       <TaskList
         tasks={tasks}
         loading={loading}
