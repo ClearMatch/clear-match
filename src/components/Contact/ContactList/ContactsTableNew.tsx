@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Actions from "./Actions";
 import { Contact, SortConfig, SortField } from "./Types";
+import { EngagementScoreDropdown } from "./EngagementScoreDropdown";
 
 interface ContactsTableProps {
   contacts: Contact[];
@@ -48,10 +49,6 @@ function ContactsTable({
     onSortChange(finalSortSelection.sortBy as SortField);
   };
 
-  const formatEngagementScore = (score?: number) => {
-    if (!score) return "";
-    return score.toString();
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
@@ -92,18 +89,9 @@ function ContactsTable({
     },
     {
       key: "current_job_title",
-      header: "Title & Company",
+      header: "Job Title",
       render: (row) => (
-        <div className="space-y-1">
-          {row.current_job_title && (
-            <div className="text-sm font-medium text-gray-500">
-              {row.current_job_title}
-            </div>
-          )}
-          {row.current_company && (
-            <div className="text-sm text-gray-500">{row.current_company}</div>
-          )}
-        </div>
+        <span className="text-sm text-gray-600">{row.current_job_title}</span>
       ),
     },
     {
@@ -132,82 +120,14 @@ function ContactsTable({
       ),
     },
     {
-      key: "current_location",
-      header: "Location",
-      render: (row) => (
-        <span className="text-sm text-gray-500">
-          {typeof row.current_location === "string"
-            ? row.current_location
-            : row.current_location?.location || "-"}
-        </span>
-      ),
-    },
-    {
-      key: "years_of_experience",
-      header: "Experience",
-      sortable: true,
-      render: (row) => (
-        <span className="text-sm text-gray-500">
-          {row.years_of_experience ? `${row.years_of_experience} years` : "-"}
-        </span>
-      ),
-    },
-    {
       key: "engagement_score",
       header: "Engagement",
       render: (row) => (
-        <div>
-          {row.engagement_score ? (
-            <Badge variant="outline" className="text-xs">
-              {formatEngagementScore(row.engagement_score)}
-            </Badge>
-          ) : (
-            <span className="text-sm text-gray-500">-</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "tech_stack",
-      header: "Tech Stack",
-      render: (row) => (
-        <div className="flex flex-wrap gap-1">
-          {row.tech_stack?.slice(0, 3).map((tech, index) => (
-            <Badge key={index} variant="secondary" className="text-xs">
-              {tech}
-            </Badge>
-          ))}
-          {row.tech_stack && row.tech_stack.length > 3 && (
-            <Badge variant="secondary" className="text-xs">
-              +{row.tech_stack.length - 3}
-            </Badge>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "is_active_looking",
-      header: "Status",
-      render: (row) => (
-        <div className="flex flex-wrap gap-1">
-          {row.is_active_looking && (
-            <Badge className="text-xs bg-green-100 text-green-800">
-              Active
-            </Badge>
-          )}
-          {row.tags?.map((tag) => (
-            <Badge
-              key={tag.id}
-              variant="outline"
-              className="text-xs"
-              style={{
-                borderColor: tag.color,
-                color: tag.color,
-              }}
-            >
-              {tag.name}
-            </Badge>
-          ))}
+        <div onClick={(e) => e.stopPropagation()}>
+          <EngagementScoreDropdown
+            contactId={row.id}
+            currentScore={row.engagement_score}
+          />
         </div>
       ),
     },
@@ -218,16 +138,6 @@ function ContactsTable({
       render: (row) => (
         <span className="text-sm text-gray-600">
           {formatDate(row.created_at)}
-        </span>
-      ),
-    },
-    {
-      key: "updated_at",
-      header: "Updated",
-      sortable: true,
-      render: (row) => (
-        <span className="text-sm text-gray-600">
-          {formatDate(row.updated_at)}
         </span>
       ),
     },
