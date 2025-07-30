@@ -195,7 +195,8 @@ export const fetchActivitiesWithRelations = async (
     contacts:contact_id (
       id,
       first_name,
-      last_name
+      last_name,
+      engagement_score
     ),
     profiles:created_by (
       id,
