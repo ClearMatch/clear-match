@@ -3,117 +3,171 @@
 import { cn } from "@/lib/utils";
 
 interface PriorityIndicatorProps {
-  priorityLevel: string; // "1", "2", "3", "4"
-  calculatedScore: number;
-  priorityLabel: string;
+  priority: number;
   className?: string;
-  showScore?: boolean;
   showTooltip?: boolean;
+  creationType?: "manual" | "automatic";
+  calculatedScore?: number;
 }
 
 /**
- * Priority color and styling configuration based on calculated scores
- * Following the 6-level system from GitHub issue #146
+ * Manual task priority configuration (4-level system)
  */
-export const PRIORITY_CONFIG = {
-  // 85-100: High Priority (Critical)
-  critical: {
-    bgColor: "bg-red-100",
-    textColor: "text-red-800",
-    borderColor: "border-red-300",
-    dotColor: "bg-red-500",
-    range: "85-100",
+export const MANUAL_PRIORITY_CONFIG = {
+  1: {
+    label: "Low",
+    bgColor: "bg-green-100",
+    textColor: "text-green-800",
+    borderColor: "border-green-300",
+    dotColor: "bg-green-500",
   },
-  // 68-84: High-Medium (High)
-  high: {
-    bgColor: "bg-orange-100",
-    textColor: "text-orange-800",
-    borderColor: "border-orange-300",
-    dotColor: "bg-orange-500",
-    range: "68-84",
-  },
-  // 51-67: Medium
-  medium: {
+  2: {
+    label: "Medium",
     bgColor: "bg-yellow-100",
     textColor: "text-yellow-800",
     borderColor: "border-yellow-300",
     dotColor: "bg-yellow-500",
-    range: "51-67",
   },
-  // 34-50: Low-Medium (Low)
-  low: {
-    bgColor: "bg-blue-100",
-    textColor: "text-blue-800",
-    borderColor: "border-blue-300",
-    dotColor: "bg-blue-500",
-    range: "34-50",
+  3: {
+    label: "High",
+    bgColor: "bg-orange-100",
+    textColor: "text-orange-800",
+    borderColor: "border-orange-300",
+    dotColor: "bg-orange-500",
   },
-  // 17-33: Very Low
-  veryLow: {
-    bgColor: "bg-gray-100",
-    textColor: "text-gray-600",
-    borderColor: "border-gray-300",
-    dotColor: "bg-gray-400",
-    range: "17-33",
-  },
-  // 1-16: Extremely Low
-  extremelyLow: {
-    bgColor: "bg-gray-50",
-    textColor: "text-gray-500",
-    borderColor: "border-gray-200",
-    dotColor: "bg-gray-300",
-    range: "1-16",
+  4: {
+    label: "Critical",
+    bgColor: "bg-red-100",
+    textColor: "text-red-800",
+    borderColor: "border-red-300",
+    dotColor: "bg-red-500",
   },
 };
 
 /**
- * Get priority configuration based on calculated score
+ * Automatic task priority configuration (6-level system based on calculated scores)
  */
-export function getPriorityConfig(calculatedScore: number) {
-  if (calculatedScore >= 85) return PRIORITY_CONFIG.critical;
-  if (calculatedScore >= 68) return PRIORITY_CONFIG.high;
-  if (calculatedScore >= 51) return PRIORITY_CONFIG.medium;
-  if (calculatedScore >= 34) return PRIORITY_CONFIG.low;
-  if (calculatedScore >= 17) return PRIORITY_CONFIG.veryLow;
-  return PRIORITY_CONFIG.extremelyLow;
+export const AUTO_PRIORITY_CONFIG = {
+  6: {
+    // 85-100: Critical
+    label: "Critical",
+    bgColor: "bg-red-100",
+    textColor: "text-red-900",
+    borderColor: "border-red-400",
+    dotColor: "bg-red-600",
+    scoreRange: "85-100",
+  },
+  5: {
+    // 68-84: High
+    label: "High",
+    bgColor: "bg-orange-100",
+    textColor: "text-orange-900",
+    borderColor: "border-orange-400",
+    dotColor: "bg-orange-600",
+    scoreRange: "68-84",
+  },
+  4: {
+    // 51-67: Medium
+    label: "Medium",
+    bgColor: "bg-yellow-100",
+    textColor: "text-yellow-900",
+    borderColor: "border-yellow-400",
+    dotColor: "bg-yellow-600",
+    scoreRange: "51-67",
+  },
+  3: {
+    // 34-50: Low-Medium
+    label: "Low-Medium",
+    bgColor: "bg-blue-100",
+    textColor: "text-blue-900",
+    borderColor: "border-blue-400",
+    dotColor: "bg-blue-500",
+    scoreRange: "34-50",
+  },
+  2: {
+    // 17-33: Low
+    label: "Low",
+    bgColor: "bg-gray-100",
+    textColor: "text-gray-700",
+    borderColor: "border-gray-400",
+    dotColor: "bg-gray-500",
+    scoreRange: "17-33",
+  },
+  1: {
+    // 1-16: Very Low
+    label: "Very Low",
+    bgColor: "bg-gray-50",
+    textColor: "text-gray-600",
+    borderColor: "border-gray-300",
+    dotColor: "bg-gray-400",
+    scoreRange: "1-16",
+  },
+};
+
+/**
+ * Convert calculated score to priority level for automatic tasks (1-6)
+ */
+export function getAutoPriorityLevel(calculatedScore: number): number {
+  if (calculatedScore >= 85) return 6; // Critical
+  if (calculatedScore >= 68) return 5; // High
+  if (calculatedScore >= 51) return 4; // Medium
+  if (calculatedScore >= 34) return 3; // Low-Medium
+  if (calculatedScore >= 17) return 2; // Low
+  return 1; // Very Low
 }
 
 /**
- * Get priority label based on calculated score
+ * Get priority configuration based on creation type and priority level
  */
-export function getPriorityLabelByScore(calculatedScore: number): string {
-  if (calculatedScore >= 85) return "Critical";
-  if (calculatedScore >= 68) return "High";
-  if (calculatedScore >= 51) return "Medium";
-  if (calculatedScore >= 34) return "Low";
-  if (calculatedScore >= 17) return "Very Low";
-  return "Extremely Low";
+export function getPriorityConfig(
+  priority: number,
+  creationType?: "manual" | "automatic"
+) {
+  if (creationType === "automatic") {
+    return (
+      AUTO_PRIORITY_CONFIG[priority as keyof typeof AUTO_PRIORITY_CONFIG] ||
+      AUTO_PRIORITY_CONFIG[1]
+    );
+  } else {
+    // Manual tasks use 4-level system
+    return (
+      MANUAL_PRIORITY_CONFIG[priority as keyof typeof MANUAL_PRIORITY_CONFIG] ||
+      MANUAL_PRIORITY_CONFIG[1]
+    );
+  }
 }
+
+// Legacy export for backward compatibility
+export const PRIORITY_CONFIG = MANUAL_PRIORITY_CONFIG;
 
 /**
  * PriorityIndicator component displays priority with color-coded visual indicators
  */
 export default function PriorityIndicator({
-  priorityLevel,
-  calculatedScore,
-  priorityLabel,
+  priority,
   className,
-  showScore = true,
   showTooltip = true,
+  creationType = "manual",
+  calculatedScore,
 }: PriorityIndicatorProps) {
-  const config = getPriorityConfig(calculatedScore);
+  const config = getPriorityConfig(priority, creationType);
 
   const tooltipContent = showTooltip
-    ? `Priority ${priorityLevel} (${priorityLabel})\nCalculated Score: ${calculatedScore}\nScore Range: ${config.range}`
+    ? creationType === "automatic"
+      ? `Priority ${priority} (${config.label}) - Score: ${
+          calculatedScore || "N/A"
+        }`
+      : `Priority ${priority} (${config.label})`
     : undefined;
 
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border cursor-help",
+        "inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border",
         config.bgColor,
         config.textColor,
         config.borderColor,
+        showTooltip && "cursor-help",
         className
       )}
       title={tooltipContent}
@@ -121,15 +175,22 @@ export default function PriorityIndicator({
       {/* Priority level dot indicator */}
       <div className={cn("w-2 h-2 rounded-full", config.dotColor)} />
 
-      {/* Priority label and score */}
-      <span className="font-semibold">
-        {priorityLabel}
-        {showScore && (
-          <span className="ml-1 font-normal opacity-80">
-            ({calculatedScore})
-          </span>
+      {/* Priority label */}
+      <span
+        className={cn(
+          "font-semibold",
+          creationType === "automatic" &&
+            config.label === "Critical" &&
+            "font-bold"
         )}
+      >
+        {config.label}
       </span>
+
+      {/* Show calculated score for automatic tasks */}
+      {creationType === "automatic" && calculatedScore && (
+        <span className="text-xs opacity-75">({calculatedScore})</span>
+      )}
     </div>
   );
 }
@@ -138,45 +199,30 @@ export default function PriorityIndicator({
  * Compact version for table cells
  */
 export function PriorityIndicatorCompact({
-  priorityLevel,
-  calculatedScore,
-  priorityLabel,
+  priority,
   className,
-}: Omit<PriorityIndicatorProps, "showScore" | "showTooltip">) {
+  creationType = "manual",
+  calculatedScore,
+  showTooltip = false,
+}: PriorityIndicatorProps) {
   return (
     <PriorityIndicator
-      priorityLevel={priorityLevel}
-      calculatedScore={calculatedScore}
-      priorityLabel={priorityLabel}
+      priority={priority}
       className={cn("px-2 py-1 text-xs sm:px-3 sm:py-1", className)}
-      showScore={true}
-      showTooltip={false}
+      showTooltip={showTooltip}
+      creationType={creationType}
+      calculatedScore={calculatedScore}
     />
   );
 }
 
 /**
- * Utility function to get priority display data for a task
+ * Get priority label from priority number
  */
-export function getPriorityDisplayData(
-  priority: string | number,
-  calculatedScore?: number
-) {
-  const priorityLevel = String(priority);
-  const priorityMap = {
-    "4": "Critical",
-    "3": "High",
-    "2": "Medium",
-    "1": "Low",
-  };
-
-  const priorityLabel =
-    priorityMap[priorityLevel as keyof typeof priorityMap] || "Low";
-  const score = calculatedScore || parseInt(priorityLevel) * 20; // Fallback calculation
-
-  return {
-    priorityLevel,
-    priorityLabel,
-    calculatedScore: score,
-  };
+export function getPriorityLabel(
+  priority: number,
+  creationType?: "manual" | "automatic"
+): string {
+  const config = getPriorityConfig(priority, creationType);
+  return config.label;
 }

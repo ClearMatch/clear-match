@@ -14,11 +14,7 @@ import {
   fetchTasksCount,
 } from ".";
 import { TaskFilterState } from "../Filters";
-import { PRIORITY_RANGES } from "../Filters/PriorityRangeFilter";
-import {
-  calculateTaskPriorityScore,
-  sortTasksByPriorityScore,
-} from "../TaskList/utils";
+import { sortTasksByPriority } from "../TaskList/utils";
 
 const PAGE_SIZE = 25;
 
@@ -33,7 +29,6 @@ export function useTasks() {
     priority: [],
     assigned_to: [],
     created_by: [],
-    priorityRanges: [],
   });
 
   // Initialize filters from URL parameters
@@ -64,8 +59,6 @@ export function useTasks() {
       activeFilters.assigned_to = filters.assigned_to;
     if (filters?.created_by?.length > 0)
       activeFilters.created_by = filters.created_by;
-    if (filters?.priorityRanges?.length > 0)
-      activeFilters.priorityRanges = filters.priorityRanges;
 
     return activeFilters;
   }, [
@@ -74,7 +67,6 @@ export function useTasks() {
     filters?.priority,
     filters?.assigned_to,
     filters?.created_by,
-    filters?.priorityRanges,
   ]);
 
   const filterKey = useMemo(() => {
@@ -160,21 +152,9 @@ export function useTasks() {
       return true;
     });
 
-    // Apply priority range filtering if any ranges are selected
-    let filteredTasks = deduplicatedTasks;
-    if (filters.priorityRanges.length > 0) {
-      filteredTasks = deduplicatedTasks.filter((task) => {
-        const score = calculateTaskPriorityScore(task);
-        return filters.priorityRanges.some((rangeId) => {
-          const range = PRIORITY_RANGES.find((r) => r.id === rangeId);
-          return range && score >= range.min && score <= range.max;
-        });
-      });
-    }
-
     // Apply default priority sorting
-    return sortTasksByPriorityScore(filteredTasks);
-  }, [data?.pages, filters.priorityRanges]);
+    return sortTasksByPriority(deduplicatedTasks);
+  }, [data?.pages]);
 
   const fetchMoreData = useCallback(() => {
     if (!isFetchingNextPage && hasNextPage) {
@@ -232,7 +212,6 @@ export function useTasks() {
           priority: newFilters?.priority || [],
           assigned_to: newFilters?.assigned_to || [],
           created_by: newFilters?.created_by || [],
-          priorityRanges: newFilters?.priorityRanges || [],
         };
 
         const hasChanged = Object.keys(safeNewFilters).some((key) => {
@@ -275,7 +254,6 @@ export function useTasks() {
         priority: [],
         assigned_to: [],
         created_by: [],
-        priorityRanges: [],
       };
     });
   }, [queryClient]);

@@ -10,9 +10,7 @@ import DeleteTask from "../DeleteTask";
 import { ActivityWithRelations, getFullName } from "../Services/Types";
 import Actions from "./Actions";
 import { PriorityIndicatorCompact } from "./PriorityIndicator";
-import PriorityTooltip from "./PriorityTooltip";
 import TaskStatus from "./TaskStatus";
-import { getTaskPriorityDisplayData } from "./utils";
 
 interface TaskListProps {
   tasks: ActivityWithRelations[];
@@ -104,15 +102,12 @@ function TaskList({
       key: "priority",
       header: "Priority Level",
       render: (row) => {
-        const priorityData = getTaskPriorityDisplayData(row);
         return (
-          <PriorityTooltip task={row}>
-            <PriorityIndicatorCompact
-              priorityLevel={priorityData.priorityLevel}
-              calculatedScore={priorityData.calculatedScore}
-              priorityLabel={priorityData.priorityLabel}
-            />
-          </PriorityTooltip>
+          <PriorityIndicatorCompact
+            priority={row.priority || 2}
+            creationType={row.creation_type || "manual"}
+            showTooltip={true}
+          />
         );
       },
     },

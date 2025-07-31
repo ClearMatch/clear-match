@@ -19,8 +19,10 @@ export const taskSchema = z.object({
     }, "Due date cannot be in the past"),
   event_id: z.string().optional(),
   assigned_to: z.string().optional(),
-  priority: z.string().default("1"),
+  priority: z.string().default("2"),
+
   job_posting_id: z.string().optional(),
+  creation_type: z.enum(["manual", "automatic"]).default("manual"),
 });
 
 export type TaskSchema = z.infer<typeof taskSchema>;
@@ -39,8 +41,9 @@ export function useTaskForm() {
       due_date: "",
       event_id: "",
       assigned_to: "",
-      priority: "1",
+      priority: "2",
       job_posting_id: "",
+      creation_type: "manual",
     },
   });
 

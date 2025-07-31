@@ -10,7 +10,6 @@ import {
   priorityOptions,
   statusOptions,
 } from "../Common/constants";
-import PriorityRangeFilter from "./PriorityRangeFilter";
 
 export interface TaskFilterState {
   type: string[];
@@ -18,7 +17,6 @@ export interface TaskFilterState {
   priority: string[];
   assigned_to: string[];
   created_by: string[];
-  priorityRanges: string[];
 }
 
 interface TaskSearchAndFilterBarProps {
@@ -57,16 +55,6 @@ function TaskSearchAndFilterBar({
       if (currentValue !== value) {
         onFiltersChange(newFilters);
       }
-    },
-    [filters, onFiltersChange]
-  );
-
-  const handlePriorityRangeChange = useCallback(
-    (ranges: string[]) => {
-      onFiltersChange({
-        ...filters,
-        priorityRanges: ranges,
-      });
     },
     [filters, onFiltersChange]
   );
@@ -155,16 +143,6 @@ function TaskSearchAndFilterBar({
                 placeholder="Select priority"
                 label="Priority Level"
               />
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Priority Score Range
-                </label>
-                <PriorityRangeFilter
-                  selectedRanges={filters.priorityRanges}
-                  onChange={handlePriorityRangeChange}
-                />
-              </div>
 
               {assigneeOptions.length > 0 && (
                 <FilterSelect
