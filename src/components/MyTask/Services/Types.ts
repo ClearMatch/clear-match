@@ -15,6 +15,7 @@ export interface ActivityData {
   assigned_to: string | null;
   event_id: string | null;
   job_posting_id: string | null;
+  creation_type?: "manual" | "automatic";
 }
 
 export interface ActivityWithRelations extends ActivityData {
@@ -22,6 +23,7 @@ export interface ActivityWithRelations extends ActivityData {
     id: string;
     first_name: string;
     last_name: string;
+    engagement_score?: number;
   };
   profiles?: {
     id: string;
@@ -54,8 +56,26 @@ const priorityMap: Record<number, string> = {
   1: "Low",
 };
 
-export const getPriorityLabel = (priority: number): string =>
-  priorityMap[priority] || "N/A";
+export const getPriorityLabel = (
+  priority: number,
+  creationType?: "manual" | "automatic"
+): string => {
+  if (creationType === "automatic") {
+    // For automatic tasks, use different labels based on score ranges
+    const autoPriorityMap: Record<number, string> = {
+      6: "Critical",
+      5: "High",
+      4: "Medium",
+      3: "Low-Medium",
+      2: "Low",
+      1: "Very Low",
+    };
+    return autoPriorityMap[priority] || "Very Low";
+  } else {
+    // For manual tasks, use the standard 4-level system
+    return priorityMap[priority] || "Low";
+  }
+};
 
 export const statusOptions = [
   { value: "todo", label: "To Do" },

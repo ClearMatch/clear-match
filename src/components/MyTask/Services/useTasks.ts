@@ -1,16 +1,20 @@
 import { useDebounce } from "@/hooks/useDebounce";
-import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useInfiniteQueryPerformanceMonitor } from "@/hooks/usePerformanceMonitor";
-import { useCallback, useMemo, useState, useEffect } from "react";
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   fetchActivitiesWithRelationsPaginated,
-  fetchTasksCount,
   fetchAssigneeOptions,
   fetchCreatorOptions,
+  fetchTasksCount,
 } from ".";
 import { TaskFilterState } from "../Filters";
-import { ActivityWithRelations } from "./Types";
+import { sortTasksByPriority } from "../TaskList/utils";
 
 const PAGE_SIZE = 25;
 
@@ -67,10 +71,12 @@ export function useTasks() {
 
   const filterKey = useMemo(() => {
     // Create a stable, sorted key to ensure consistent caching
-    const filterEntries = Object.entries(memoizedFilters).sort(([a], [b]) => a.localeCompare(b));
-    return JSON.stringify({ 
-      search: debouncedSearchQuery || '', 
-      filters: Object.fromEntries(filterEntries) 
+    const filterEntries = Object.entries(memoizedFilters).sort(([a], [b]) =>
+      a.localeCompare(b)
+    );
+    return JSON.stringify({
+      search: debouncedSearchQuery || "",
+      filters: Object.fromEntries(filterEntries),
     });
   }, [debouncedSearchQuery, memoizedFilters]);
 
@@ -137,7 +143,7 @@ export function useTasks() {
     const tasks = data?.pages?.flat() || [];
     // Deduplicate tasks by ID to prevent duplicate key errors
     const seen = new Set();
-    return tasks.filter(task => {
+    const deduplicatedTasks = tasks.filter((task) => {
       if (seen.has(task.id)) {
         console.warn(`Duplicate task ID detected: ${task.id}`);
         return false;
@@ -145,6 +151,9 @@ export function useTasks() {
       seen.add(task.id);
       return true;
     });
+
+    // Apply default priority sorting
+    return sortTasksByPriority(deduplicatedTasks);
   }, [data?.pages]);
 
   const fetchMoreData = useCallback(() => {
@@ -179,46 +188,52 @@ export function useTasks() {
     staleTime: 60000, // 1 minute
   });
 
-  const handleSearchChange = useCallback((value: string) => {
-    setSearchInputValue(value);
-    // Reset pagination state when search changes
-    if (value !== searchInputValue) {
-      setHasMoreData(true);
-    }
-  }, [searchInputValue]);
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearchInputValue(value);
+      // Reset pagination state when search changes
+      if (value !== searchInputValue) {
+        setHasMoreData(true);
+      }
+    },
+    [searchInputValue]
+  );
 
   const handleToggleFilters = useCallback(() => {
     setShowFilters((prev) => !prev);
   }, []);
 
-  const handleFiltersChange = useCallback((newFilters: TaskFilterState) => {
-    setFilters((prevFilters) => {
-      const safeNewFilters = {
-        type: newFilters?.type || [],
-        status: newFilters?.status || [],
-        priority: newFilters?.priority || [],
-        assigned_to: newFilters?.assigned_to || [],
-        created_by: newFilters?.created_by || [],
-      };
+  const handleFiltersChange = useCallback(
+    (newFilters: TaskFilterState) => {
+      setFilters((prevFilters) => {
+        const safeNewFilters = {
+          type: newFilters?.type || [],
+          status: newFilters?.status || [],
+          priority: newFilters?.priority || [],
+          assigned_to: newFilters?.assigned_to || [],
+          created_by: newFilters?.created_by || [],
+        };
 
-      const hasChanged = Object.keys(safeNewFilters).some((key) => {
-        const filterKey = key as keyof TaskFilterState;
-        return (
-          JSON.stringify(prevFilters[filterKey]) !==
-          JSON.stringify(safeNewFilters[filterKey])
-        );
+        const hasChanged = Object.keys(safeNewFilters).some((key) => {
+          const filterKey = key as keyof TaskFilterState;
+          return (
+            JSON.stringify(prevFilters[filterKey]) !==
+            JSON.stringify(safeNewFilters[filterKey])
+          );
+        });
+
+        if (hasChanged) {
+          setHasMoreData(true);
+          // Clear the query cache to prevent stale data
+          queryClient.removeQueries({ queryKey: ["tasks"] });
+          queryClient.removeQueries({ queryKey: ["tasks-count"] });
+        }
+
+        return hasChanged ? safeNewFilters : prevFilters;
       });
-
-      if (hasChanged) {
-        setHasMoreData(true);
-        // Clear the query cache to prevent stale data
-        queryClient.removeQueries({ queryKey: ["tasks"] });
-        queryClient.removeQueries({ queryKey: ["tasks-count"] });
-      }
-
-      return hasChanged ? safeNewFilters : prevFilters;
-    });
-  }, [queryClient]);
+    },
+    [queryClient]
+  );
 
   const clearFilters = useCallback(() => {
     setFilters((prevFilters) => {

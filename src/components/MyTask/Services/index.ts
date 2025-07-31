@@ -195,7 +195,8 @@ export const fetchActivitiesWithRelations = async (
     contacts:contact_id (
       id,
       first_name,
-      last_name
+      last_name,
+      engagement_score
     ),
     profiles:created_by (
       id,
@@ -203,14 +204,14 @@ export const fetchActivitiesWithRelations = async (
       last_name
     )`;
 
-  const assignedProfileSelect = includeAssignedProfiles 
+  const assignedProfileSelect = includeAssignedProfiles
     ? `,
     assigned_to_profile:assigned_to (
       id,
       first_name,
       last_name
-    )` 
-    : '';
+    )`
+    : "";
 
   let query = supabase
     .from("activities")

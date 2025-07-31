@@ -4,7 +4,6 @@ import { formatDate } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
-  ArrowLeftIcon,
   Calendar,
   CheckCircle2,
   Edit,
@@ -15,16 +14,12 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { fetchTaskById } from "../Services";
-import {
-  ActivityWithRelations,
-  getFullName,
-  getPriorityLabel,
-} from "../Services/Types";
+import { ActivityWithRelations, getFullName } from "../Services/Types";
+import PriorityIndicator from "../TaskList/PriorityIndicator";
 import ContactContext from "./ContactContext";
 import EventDetailsSection from "./EventDetailsSection";
 import JobPostingDetails from "./JobPostingDetails";
-import PriorityCalculationBreakdown from "./PriorityCalculationBreakdown";
-import { getPriorityColor, getStatusColor } from "./Types";
+import { getStatusColor } from "./Types";
 
 function ShowTask() {
   const params = useParams();
@@ -136,13 +131,13 @@ function ShowTask() {
                   </div>
                   <div className="flex justify-between items-center py-3 border-b border-gray-100">
                     <span className="text-gray-600 font-medium">Priority</span>
-                    <span
-                      className={`px-2 py-1 rounded text-sm font-bold ${getPriorityColor(
-                        taskData?.priority || 0
-                      )}`}
-                    >
-                      {getPriorityLabel(taskData?.priority || 0)}
-                    </span>
+                    <PriorityIndicator
+                      priority={taskData?.priority || 1}
+                      creationType={
+                        taskData?.creation_type as "manual" | "automatic"
+                      }
+                      showTooltip={true}
+                    />
                   </div>
                 </div>
                 <div className="space-y-4">
@@ -163,12 +158,6 @@ function ShowTask() {
               </div>
             </div>
 
-            <PriorityCalculationBreakdown
-              priority={taskData?.priority || 1}
-              eventId={taskData?.event_id}
-              contactId={taskData?.contact_id}
-              activityType={taskData?.type}
-            />
             <EventDetailsSection eventId={taskData?.event_id} />
             <JobPostingDetails jobPostingId={taskData?.job_posting_id} />
           </div>

@@ -4,18 +4,13 @@ import { Column } from "@/components/ui/DataTable/Types";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useOpenable } from "@/hooks";
 import { formatDate } from "@/lib/utils";
-import { Loader } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import DeleteTask from "../DeleteTask";
-import {
-  ActivityWithRelations,
-  getFullName,
-  getPriorityLabel,
-} from "../Services/Types";
+import { ActivityWithRelations, getFullName } from "../Services/Types";
 import Actions from "./Actions";
+import { PriorityIndicatorCompact } from "./PriorityIndicator";
 import TaskStatus from "./TaskStatus";
-import { supabase } from "@/lib/supabase";
 
 interface TaskListProps {
   tasks: ActivityWithRelations[];
@@ -106,9 +101,15 @@ function TaskList({
     {
       key: "priority",
       header: "Priority Level",
-      render: (row) => (
-        <span className="text-sm">{getPriorityLabel(row.priority)}</span>
-      ),
+      render: (row) => {
+        return (
+          <PriorityIndicatorCompact
+            priority={row.priority || 2}
+            creationType={row.creation_type || "manual"}
+            showTooltip={true}
+          />
+        );
+      },
     },
     {
       key: "status",
