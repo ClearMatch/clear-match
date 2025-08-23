@@ -1,4 +1,4 @@
-import { serve } from "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -10,12 +10,17 @@ const corsHeaders = {
 // Allowed event types (matching database constraint)
 const ALLOWED_EVENT_TYPES = [
   'none',
-  'job-group-posting', 
+  'job-group-posting',
   'layoff',
   'birthday',
   'funding-event',
   'new-job'
 ];
+
+// Map Clay event types to our database types
+const EVENT_TYPE_MAPPING: Record<string, string> = {
+  'job-posting': 'job-group-posting',  // Clay sends 'job-posting', we store 'job-group-posting'
+};
 
 // Reserved database column names to filter from data JSONB
 const RESERVED_FIELDS = [
@@ -40,7 +45,7 @@ interface WebhookLog {
   event_id: string | null;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -106,17 +111,63 @@ serve(async (req) => {
 
     // Parse request body
     let body: any;
+    let rawText = '';
     try {
-      const text = await req.text();
-      body = JSON.parse(text);
+      rawText = await req.text();
+      
+      // Log request details for debugging
+      console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+      console.log('Raw request body length:', rawText.length);
+      console.log('Raw request body (first 500 chars):', rawText.substring(0, 500));
+      
+      // Check for empty body
+      if (!rawText || rawText.trim().length === 0) {
+        webhookLog.response_status = 400;
+        webhookLog.error = 'Empty request body';
+        webhookLog.headers = Object.fromEntries(req.headers.entries());
+        await logWebhook(webhookLog);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Empty request body',
+            hint: 'Ensure Clay HTTP API is configured to send JSON in the request body'
+          }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      // Aggressive sanitization of undefined values
+      // Use simple global replace for all undefined patterns
+      let sanitizedText = rawText
+        .replace(/:\s*undefined/g, ': null')  // Object values
+        .replace(/,\s*undefined/g, ', null')  // Array/object middle values
+        .replace(/\[\s*undefined/g, '[null')  // Array start
+        .replace(/undefined\s*\]/g, 'null]')  // Array end
+        .replace(/undefined\s*}/g, 'null}')  // Object end
+        .replace(/"undefined"/g, 'null');     // String "undefined"
+      
+      // Log if we made changes
+      if (rawText !== sanitizedText) {
+        console.log('Sanitized JSON (changes made, first 500 chars):', sanitizedText.substring(0, 500));
+      }
+      
+      body = JSON.parse(sanitizedText);
       webhookLog.payload = body;
       webhookLog.headers = Object.fromEntries(req.headers.entries());
-    } catch (parseError) {
+    } catch (parseError: any) {
       webhookLog.response_status = 400;
       webhookLog.error = `Invalid JSON: ${parseError.message}`;
+      console.error('JSON parse error:', parseError.message);
+      console.error('Failed to parse text (first 1000 chars):', rawText.substring(0, 1000));
       await logWebhook(webhookLog);
       return new Response(
-        JSON.stringify({ error: 'Invalid JSON payload' }),
+        JSON.stringify({ 
+          error: 'Invalid JSON payload',
+          details: parseError.message,
+          hint: 'Check Clay field mappings for undefined values'
+        }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -132,7 +183,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           error: 'Missing required field: type',
-          allowed_types: ALLOWED_EVENT_TYPES
+          allowed_types: [...ALLOWED_EVENT_TYPES, ...Object.keys(EVENT_TYPE_MAPPING)]
         }),
         { 
           status: 400, 
@@ -141,15 +192,18 @@ serve(async (req) => {
       );
     }
 
+    // Map Clay event types to our database types
+    const mappedType = EVENT_TYPE_MAPPING[body.type] || body.type;
+
     // Validate event type
-    if (!ALLOWED_EVENT_TYPES.includes(body.type)) {
+    if (!ALLOWED_EVENT_TYPES.includes(mappedType)) {
       webhookLog.response_status = 400;
       webhookLog.error = `Invalid event type: ${body.type}`;
       await logWebhook(webhookLog);
       return new Response(
         JSON.stringify({ 
           error: `Invalid event type: ${body.type}`,
-          allowed_types: ALLOWED_EVENT_TYPES
+          allowed_types: [...ALLOWED_EVENT_TYPES, ...Object.keys(EVENT_TYPE_MAPPING)]
         }),
         { 
           status: 400, 
@@ -192,7 +246,7 @@ serve(async (req) => {
       );
     }
 
-    // Extract fields and filter reserved ones
+    // Extract fields and filter reserved ones (use mapped type)
     const { type, email, ...allFields } = body;
     const cleanData: Record<string, any> = {};
     
@@ -226,11 +280,11 @@ serve(async (req) => {
       }
     }
 
-    // Insert event record
+    // Insert event record (use mapped type)
     const { data: event, error: eventError } = await supabase
       .from('events')
       .insert({
-        type,
+        type: mappedType,  // Use the mapped type here
         contact_id: contactId,
         organization_id: organizationId,
         data: cleanData
