@@ -57,10 +57,12 @@ export const fetchEventsPaginated = async (
   let query = supabase
     .from("events")
     .select(
-      ` *, 
-contact:contact_id(id, first_name, last_name), 
-profiles:created_by (id, first_name, last_name), 
-organizations:organization_id(id, name)`
+      `id, contact_id, organization_id, type, created_at, updated_at, created_by,
+      position, posted_on, metro_area, company_name, contact_name,
+      company_website, job_listing_url, company_location, contact_linkedin, data,
+      contact:contact_id(id, first_name, last_name), 
+      profiles:created_by (id, first_name, last_name), 
+      organizations:organization_id(id, name)`
     )
     .order("created_at", { ascending: false });
 
@@ -79,6 +81,44 @@ organizations:organization_id(id, name)`
 
     if (filters.organization && filters.organization !== "") {
       query = query.eq("organization_id", filters.organization);
+    }
+
+    // Clay webhook specific filters
+    if (filters.position && filters.position !== "") {
+      query = query.ilike("position", `%${filters.position}%`);
+    }
+
+    if (filters.companyName && filters.companyName !== "") {
+      query = query.ilike("company_name", `%${filters.companyName}%`);
+    }
+
+    if (filters.metroArea && filters.metroArea !== "") {
+      query = query.ilike("metro_area", `%${filters.metroArea}%`);
+    }
+
+    // Date range filters
+    if (filters.dateRange && filters.dateRange !== "") {
+      const now = new Date();
+      let startDate: Date;
+
+      switch (filters.dateRange) {
+        case "recent":
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days ago
+          break;
+        case "this_month":
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case "this_quarter":
+          const quarter = Math.floor(now.getMonth() / 3);
+          startDate = new Date(now.getFullYear(), quarter * 3, 1);
+          break;
+        default:
+          startDate = new Date(0); // All time
+      }
+
+      if (filters.dateRange !== "all_time") {
+        query = query.gte("created_at", startDate.toISOString());
+      }
     }
   }
 

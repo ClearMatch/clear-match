@@ -10,7 +10,7 @@ const corsHeaders = {
 // Allowed event types (matching database constraint)
 const ALLOWED_EVENT_TYPES = [
   'none',
-  'job-group-posting',
+  'job-posting',  // Updated to match Clay's actual event type
   'layoff',
   'birthday',
   'funding-event',
@@ -18,8 +18,22 @@ const ALLOWED_EVENT_TYPES = [
 ];
 
 // Map Clay event types to our database types
+// Clay sends 'job-posting' and we now store it as 'job-posting' (no mapping needed)
 const EVENT_TYPE_MAPPING: Record<string, string> = {
-  'job-posting': 'job-group-posting',  // Clay sends 'job-posting', we store 'job-group-posting'
+  // No mapping needed - Clay's 'job-posting' matches our database constraint
+};
+
+// Map Clay payload fields to database columns
+const CLAY_FIELD_MAPPING: Record<string, string> = {
+  'position': 'position',
+  'posted_on': 'posted_on',
+  'metro_area': 'metro_area',
+  'company_name': 'company_name',
+  'contact_name': 'contact_name',
+  'company_website': 'company_website',
+  'job_listing_url': 'job_listing_url',
+  'company_location': 'company_location',
+  'contact_linkedin': 'contact_linkedin',
 };
 
 // Reserved database column names to filter from data JSONB
@@ -30,7 +44,8 @@ const RESERVED_FIELDS = [
   'created_at',
   'updated_at',
   'created_by',
-  'type'
+  'type',
+  'email' // Add email to reserved fields since it's used for contact lookup
 ];
 
 interface WebhookLog {
@@ -43,6 +58,31 @@ interface WebhookLog {
   error: string | null;
   processing_time_ms: number | null;
   event_id: string | null;
+}
+
+// Helper function to validate URLs
+function isValidUrl(url: string): boolean {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Helper function to parse and validate dates
+function parseDate(dateString: string): string | null {
+  try {
+    const parsedDate = new Date(dateString);
+    if (isNaN(parsedDate.getTime())) {
+      console.warn('Invalid date format:', dateString);
+      return null;
+    }
+    return parsedDate.toISOString();
+  } catch (error) {
+    console.warn('Date parsing error:', error);
+    return null;
+  }
 }
 
 Deno.serve(async (req) => {
@@ -246,16 +286,64 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Extract fields and filter reserved ones (use mapped type)
+    // Extract fields and process them based on event type
     const { type, email, ...allFields } = body;
-    const cleanData: Record<string, any> = {};
+    const structuredData: Record<string, any> = {};
+    const jsonbData: Record<string, any> = {};
     
-    // Filter out reserved database column names
-    for (const [key, value] of Object.entries(allFields)) {
-      if (!RESERVED_FIELDS.includes(key)) {
-        cleanData[key] = value;
+    // Enhanced data processing for job-posting events
+    if (mappedType === 'job-posting') {
+      console.log('Processing job-posting event with structured field mapping');
+      
+      // Process Clay fields into structured columns vs JSONB
+      for (const [clayField, dbColumn] of Object.entries(CLAY_FIELD_MAPPING)) {
+        if (clayField in allFields && allFields[clayField] !== null && allFields[clayField] !== undefined) {
+          let fieldValue = allFields[clayField];
+          
+          // Special handling for posted_on date field
+          if (clayField === 'posted_on' && typeof fieldValue === 'string') {
+            const parsedDate = parseDate(fieldValue);
+            if (parsedDate) {
+              structuredData[dbColumn] = parsedDate;
+            } else {
+              // If date parsing fails, store in JSONB instead
+              jsonbData[clayField] = fieldValue;
+            }
+          }
+          // Special handling for URL fields
+          else if (['company_website', 'job_listing_url', 'contact_linkedin'].includes(clayField) && typeof fieldValue === 'string') {
+            if (isValidUrl(fieldValue)) {
+              structuredData[dbColumn] = fieldValue;
+            } else {
+              console.warn(`Invalid URL for ${clayField}: ${fieldValue}, storing in JSONB`);
+              jsonbData[clayField] = fieldValue;
+            }
+          }
+          // Regular text fields
+          else {
+            structuredData[dbColumn] = fieldValue;
+          }
+        }
+      }
+      
+      // Store remaining fields in JSONB (no duplication)
+      for (const [key, value] of Object.entries(allFields)) {
+        if (!CLAY_FIELD_MAPPING.hasOwnProperty(key) && !RESERVED_FIELDS.includes(key)) {
+          jsonbData[key] = value;
+        }
+      }
+    } else {
+      // For non-job events, keep current behavior (everything in JSONB)
+      console.log(`Processing ${mappedType} event - storing all data in JSONB`);
+      for (const [key, value] of Object.entries(allFields)) {
+        if (!RESERVED_FIELDS.includes(key)) {
+          jsonbData[key] = value;
+        }
       }
     }
+    
+    console.log('Structured fields:', Object.keys(structuredData));
+    console.log('JSONB fields:', Object.keys(jsonbData));
 
     // Lookup contact by email if provided
     let contactId: string | null = null;
@@ -280,15 +368,28 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Insert event record (use mapped type)
+    // Prepare event data with both structured fields and JSONB
+    const eventData = {
+      type: mappedType,  // Use the mapped type here
+      contact_id: contactId,
+      organization_id: organizationId,
+      data: Object.keys(jsonbData).length > 0 ? jsonbData : null, // Only store JSONB if there's data
+      // Add all structured fields dynamically
+      ...structuredData
+    };
+    
+    console.log('Inserting event with data:', {
+      type: eventData.type,
+      contact_id: eventData.contact_id,
+      structured_fields: Object.keys(structuredData),
+      jsonb_fields: Object.keys(jsonbData),
+      has_jsonb_data: eventData.data !== null
+    });
+
+    // Insert event record with enhanced data structure
     const { data: event, error: eventError } = await supabase
       .from('events')
-      .insert({
-        type: mappedType,  // Use the mapped type here
-        contact_id: contactId,
-        organization_id: organizationId,
-        data: cleanData
-      })
+      .insert(eventData)
       .select('id')
       .single();
 
@@ -305,12 +406,22 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Success response
+    // Enhanced success response with processing details
     const responseBody = {
       success: true,
       event_id: event.id,
       contact_linked: !!contactId,
-      filtered_fields: RESERVED_FIELDS.filter(field => field in body)
+      contact_strategy: contactId ? 'email' : null,
+      structured_fields_processed: Object.keys(structuredData),
+      jsonb_fields_stored: Object.keys(jsonbData),
+      filtered_fields: RESERVED_FIELDS.filter(field => field in body),
+      event_type_mapped: body.type !== mappedType ? `${body.type} → ${mappedType}` : null,
+      data_processing: {
+        total_fields: Object.keys(allFields).length,
+        structured_count: Object.keys(structuredData).length,
+        jsonb_count: Object.keys(jsonbData).length,
+        reserved_filtered: RESERVED_FIELDS.filter(field => field in body).length
+      }
     };
 
     webhookLog.event_id = event.id;

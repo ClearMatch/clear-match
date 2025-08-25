@@ -60,13 +60,13 @@ function ShowEvent() {
       textColor: "text-gray-600",
       label: "None",
     },
-    "job-group-posting": {
+    "job-posting": {
       icon: <Users className="w-6 h-6" />,
       color: "bg-blue-500",
       bgColor: "bg-blue-50",
       borderColor: "border-blue-200",
       textColor: "text-blue-600",
-      label: "Job Group Posting",
+      label: "Job Posting",
     },
     layoff: {
       icon: <TrendingDown className="w-6 h-6" />,
@@ -237,10 +237,10 @@ function ShowEvent() {
                     <Building className="w-6 h-6 text-green-600" />
                   </div>
                   <h3 className="font-semibold text-slate-800 text-center text-lg">
-                    {data.organizations.name}
+                    {data.organizations?.[0]?.name}
                   </h3>
                   <p className="text-sm text-slate-600 text-center mt-1">
-                    ID: {data.organizations.id.slice(0, 8)}...
+                    ID: {data.organizations?.[0]?.id.slice(0, 8)}...
                   </p>
                 </div>
               </div>
@@ -265,10 +265,10 @@ function ShowEvent() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-slate-800">
-                      {data.contact?.first_name} {data.contact?.last_name}
+                      {data.contact?.[0]?.first_name} {data.contact?.[0]?.last_name}
                     </h3>
                     <p className="text-sm text-slate-600">
-                      ID: {data.contact.id.slice(0, 8)}...
+                      ID: {data.contact?.[0]?.id.slice(0, 8)}...
                     </p>
                   </div>
                 </div>
@@ -291,10 +291,10 @@ function ShowEvent() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-slate-800">
-                      {data.profiles.first_name} {data.profiles.last_name}
+                      {data.profiles?.[0]?.first_name} {data.profiles?.[0]?.last_name}
                     </h3>
                     <p className="text-sm text-slate-600">
-                      ID: {data.profiles.id.slice(0, 8)}...
+                      ID: {data.profiles?.[0]?.id.slice(0, 8)}...
                     </p>
                   </div>
                 </div>

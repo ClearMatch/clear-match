@@ -26,6 +26,7 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env.vercel
 .env.staging
 .env.preview
 .env.production
@@ -63,3 +64,4 @@ supabase/.temp/
 .playwright-mcp/
 test-results/
 playwright-report/
+.env.vercel
