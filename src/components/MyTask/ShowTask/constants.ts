@@ -1,5 +1,5 @@
 export const EVENT_TYPE_LABELS: Record<string, string> = {
-  "job-group-posting": "Job Group Posting",
+  "job-posting": "Job Posting",
   layoff: "Layoff",
   birthday: "Birthday",
   "funding-event": "Funding Event",
@@ -8,7 +8,7 @@ export const EVENT_TYPE_LABELS: Record<string, string> = {
 };
 
 export const EVENT_TYPE_COLORS: Record<string, string> = {
-  "job-group-posting": "bg-blue-50 text-blue-700 border-blue-200",
+  "job-posting": "bg-blue-50 text-blue-700 border-blue-200",
   layoff: "bg-red-50 text-red-700 border-red-200",
   birthday: "bg-green-50 text-green-700 border-green-200",
   "funding-event": "bg-purple-50 text-purple-700 border-purple-200",

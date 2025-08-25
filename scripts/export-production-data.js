@@ -6,7 +6,7 @@ const path = require('path');
 
 // Production Supabase credentials
 const SUPABASE_URL = 'https://zkqeoppjgdyzarkhhbqc.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcWVvcHBqZ2R5emFya2hoYnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5MDM0MzIsImV4cCI6MjA2MDQ3OTQzMn0.uw4tUmYW_SkEW0Zq7BgFBLEG4We_BtKgRmY3ILj5toY';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_PRODUCTION_ANON_KEY;
 
 // Initialize Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

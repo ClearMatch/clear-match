@@ -5,11 +5,13 @@ import { getFullName } from "@/components/MyTask/Services/Types";
 import { useTaskData } from "@/components/MyTask/Services/useTaskData";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useOpenable } from "@/hooks";
 import { ChevronDown, Filter, X } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { eventTypes } from "../Common/constants";
-import { FilterConfig, FilterState, INITIAL_FILTERS } from "./Types";
+import { FilterConfig, FilterState, INITIAL_FILTERS, DATE_RANGE_OPTIONS } from "./Types";
 
 interface EventFiltersProps {
   onFiltersApply: (filters: FilterState) => void;
@@ -39,34 +41,62 @@ function EventFilters({ onFiltersApply, onFiltersClear }: EventFiltersProps) {
     [contacts, users, organizations]
   );
 
-  const filterConfigs: FilterConfig[] = useMemo(
+  const selectFilterConfigs: FilterConfig[] = useMemo(
     () => [
       {
         key: "type",
-        placeholder: "Type",
-        label: "Type",
+        placeholder: "All Types",
+        label: "Event Type",
         options: eventTypes,
+        type: 'select',
+      },
+      {
+        key: "dateRange",
+        placeholder: "All Time",
+        label: "Date Range",
+        options: DATE_RANGE_OPTIONS,
+        type: 'select',
       },
       {
         key: "createdBy",
-        placeholder: "Created By",
+        placeholder: "All Users",
         label: "Created By",
         options: filterOptions.user,
+        type: 'select',
       },
       {
         key: "contact",
-        placeholder: "Contact",
+        placeholder: "All Contacts",
         label: "Contact",
         options: filterOptions.contact,
-      },
-      {
-        key: "organization",
-        placeholder: "Organization",
-        label: "Organization",
-        options: filterOptions.organization,
+        type: 'select',
       },
     ],
     [filterOptions]
+  );
+
+  const textFilterConfigs: FilterConfig[] = useMemo(
+    () => [
+      {
+        key: "position",
+        placeholder: "Search positions...",
+        label: "Job Position",
+        type: 'text',
+      },
+      {
+        key: "companyName",
+        placeholder: "Search companies...",
+        label: "Company Name",
+        type: 'text',
+      },
+      {
+        key: "metroArea",
+        placeholder: "Search locations...",
+        label: "Metro Area",
+        type: 'text',
+      },
+    ],
+    []
   );
 
   const handleFilterChange = useCallback(
@@ -112,17 +142,42 @@ function EventFilters({ onFiltersApply, onFiltersClear }: EventFiltersProps) {
             className="hover:text-gray-600 float-right cursor-pointer"
           />
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {filterConfigs.map((config) => (
+            {/* Select Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              {selectFilterConfigs.map((config) => (
                 <FilterSelect
                   key={config.key}
                   selected={selectedFilters[config.key]}
                   onChange={(value) => handleFilterChange(config.key, value)}
-                  options={config.options}
+                  options={config.options || []}
                   placeholder={config.placeholder}
                   label={config.label}
                 />
               ))}
+            </div>
+
+            {/* Job Listing Specific Filters */}
+            <div className="border-t pt-4 mb-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">
+                Job Listing Filters (for job-posting events)
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {textFilterConfigs.map((config) => (
+                  <div key={config.key} className="space-y-2">
+                    <Label htmlFor={config.key} className="text-sm font-medium">
+                      {config.label}
+                    </Label>
+                    <Input
+                      id={config.key}
+                      type="text"
+                      placeholder={config.placeholder}
+                      value={selectedFilters[config.key]}
+                      onChange={(e) => handleFilterChange(config.key, e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="flex justify-end w-full gap-4 mt-4">
               <Button
