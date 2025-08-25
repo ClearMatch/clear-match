@@ -147,6 +147,51 @@ Claude should always ask "Does this look good?" and wait for confirmation before
 - Creating pull requests
 - Making any changes that affect the remote repository
 
+### 🚨 CRITICAL: Always Test Build and Tests Before Committing
+**MANDATORY REQUIREMENTS**: Before committing ANY code changes:
+
+1. **Run Tests First**: Always run `pnpm test` to ensure all tests pass
+2. **Run Linting**: Always run `pnpm run lint` to catch code quality issues
+3. **Run Build**: Always run `pnpm run build` to ensure no TypeScript errors or build failures
+4. **Fix All Issues**: Address any build errors, failing tests, or linting errors before committing
+5. **Never Push Without Testing**: NEVER push code that hasn't passed all three checks
+
+**🚨 CRITICAL LESSON LEARNED**: 
+- **Always run the complete testing pipeline before ANY commit/push**
+- **GitHub Actions will fail if local tests don't pass first**
+- **Fix issues locally before they reach the remote repository**
+
+**Build/Test Failure Protocol**:
+- If tests fail: Debug and fix failing test cases immediately
+- If linting fails: Fix ESLint errors (e.g., missing display names, duplicate properties)
+- If build fails: Fix TypeScript errors, missing dependencies, or configuration issues
+- Never commit code that doesn't pass all three checks
+- Always include full verification in your workflow
+
+**MANDATORY Commands to Run Before Every Commit**:
+```bash
+# 1. Run tests (FIRST - catches runtime issues)
+pnpm test
+
+# 2. Check linting (catches code quality issues)
+pnpm run lint
+
+# 3. Check build (catches TypeScript compilation issues)  
+pnpm run build
+
+# 4. Only commit after ALL three pass
+git add . && git commit -m "your message"
+
+# 5. Push only after local verification
+git push origin <branch>
+```
+
+**Common Issues and Fixes**:
+- **React component missing displayName**: Add `ComponentName.displayName = 'ComponentName';`
+- **Duplicate object properties**: Fix duplicate keys in object literals (e.g., multiple `system:` properties)
+- **TypeScript errors**: Address type mismatches, missing imports, or incorrect type definitions
+- **Test failures**: Fix assertion logic, mock configurations, or async handling
+
 ### Pull Request Management
 1. **Create descriptive PRs** with clear titles and descriptions
 2. **Wait for GitHub Actions** to complete

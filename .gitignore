@@ -58,3 +58,8 @@ yarn.lock
 
 # supabase temporary files
 supabase/.temp/
+
+# playwright screenshots and artifacts
+.playwright-mcp/
+test-results/
+playwright-report/

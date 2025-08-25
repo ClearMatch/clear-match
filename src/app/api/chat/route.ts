@@ -2,6 +2,7 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { streamText, CoreMessage } from 'ai';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getDefaultModel, getModelById } from '@/config/models';
 
 // Type definitions for message formats from AI SDK
 interface MessagePart {
@@ -18,6 +19,7 @@ interface UIMessage {
 
 interface ChatRequestBody {
   messages: UIMessage[];
+  model?: string;
 }
 
 // Configuration constants
@@ -72,7 +74,7 @@ export async function POST(req: NextRequest) {
 
     // Parse the request body
     const body: ChatRequestBody = await req.json();
-    const { messages } = body;
+    const { messages, model: requestedModel } = body;
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
@@ -80,6 +82,17 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Determine which model to use
+    let selectedModel = requestedModel || getDefaultModel();
+    
+    // Validate the requested model exists in our configuration
+    if (requestedModel && !getModelById(requestedModel)) {
+      console.warn(`Unknown model requested: ${requestedModel}, falling back to default`);
+      selectedModel = getDefaultModel();
+    }
+
+    console.log(`Using AI model: ${selectedModel} for user: ${user.id}`);
 
     // Convert UI messages to the format expected by streamText
     // Handle both old format (with parts) and new format (direct content)
@@ -150,7 +163,7 @@ Current user ID: ${user.id}`;
 
     // Create the chat completion with streaming
     const result = await streamText({
-      model: openrouter(CHAT_API_CONFIG.MODEL),
+      model: openrouter(selectedModel),
       system: systemPrompt,
       messages: formattedMessages,
       temperature: CHAT_API_CONFIG.TEMPERATURE,

@@ -49,6 +49,25 @@ jest.mock('next/navigation', () => ({
 
 // Supabase mocks will be handled in individual test files
 
+// Mock ResizeObserver for components that use ScrollArea
+global.ResizeObserver = class ResizeObserver {
+  constructor(callback) {
+    this.callback = callback;
+  }
+  
+  observe() {
+    // Mock implementation
+  }
+  
+  unobserve() {
+    // Mock implementation
+  }
+  
+  disconnect() {
+    // Mock implementation
+  }
+};
+
 // Mock environment variables
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key'

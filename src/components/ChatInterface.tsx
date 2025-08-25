@@ -1,11 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { useChat } from '@ai-sdk/react';
-import { UIMessage } from 'ai';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useChat, UIMessage } from '@ai-sdk/react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -14,6 +12,8 @@ import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import { Send, Bot, User, AlertCircle, Lightbulb } from 'lucide-react';
 import { SuggestedPrompts } from '@/components/SuggestedPrompts';
+import { ModelSelector } from '@/components/ModelSelector';
+import { getDefaultModel } from '@/config/models';
 
 /**
  * Supabase User type for better type safety
@@ -22,6 +22,10 @@ interface SupabaseUser {
   id: string;
   email?: string;
   user_metadata?: Record<string, unknown>;
+}
+
+interface ProcessedUIMessage extends UIMessage {
+  processedContent: string;
 }
 
 // Configuration constants
@@ -76,28 +80,41 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
   // Input state managed manually since @ai-sdk/react v2 doesn't provide input handling
   const [input, setInput] = useState('');
   
-  // Initialize chat with Vercel AI SDK v2
+  // Model selection state
+  const [selectedModel, setSelectedModel] = useState<string>(() => {
+    // Try to get saved model from localStorage, fallback to default
+    if (typeof window !== 'undefined') {
+      const savedModel = localStorage.getItem('clear-match-selected-model');
+      return savedModel || getDefaultModel();
+    }
+    return getDefaultModel();
+  });
+  
+  // Initialize chat with Vercel AI SDK v5
   const {
     messages,
     sendMessage,
     status,
     error,
   } = useChat({
-    api: '/api/chat',
-    credentials: 'include', // Include cookies for authentication
     onError: (error: Error) => {
       console.error('Chat error:', error);
     },
   });
 
-  // Derived state for loading
-  const isLoading = status === 'awaiting_message' || status === 'in_progress';
+  // Simple loading state - will be true when submitting
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Limit messages to prevent memory issues
-  const displayMessages = useMemo(() => 
-    messages.slice(-CHAT_CONFIG.MAX_MESSAGES),
-    [messages]
-  );
+  // Limit messages to prevent memory issues and optimize content processing
+  const displayMessages = useMemo(() => {
+    const limitedMessages = messages.slice(-CHAT_CONFIG.MAX_MESSAGES);
+    return limitedMessages.map(message => ({
+      ...message,
+      processedContent: message.parts?.map(part => 
+        part.type === 'text' ? part.text : ''
+      ).join('') || ''
+    })) as ProcessedUIMessage[];
+  }, [messages]);
 
   /**
    * Effect: Check and monitor authentication status
@@ -165,10 +182,17 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
   }, [displayMessages]);
 
   /**
-   * Handle input change
+   * Handle input change for textarea
    */
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
+  };
+
+  /**
+   * Handle form submission with proper typing
+   */
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    onSubmit(e);
   };
 
   /**
@@ -179,22 +203,32 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
    * 
    * @param {React.FormEvent} e - Form event
    */
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input?.trim() || isLoading || !user) return;
+    if (!input?.trim() || isSubmitting || !user) return;
     
     setShowSuggestions(false); // Hide suggestions when user sends message
+    setIsSubmitting(true);
     
     // Send message using the new API
     const messageText = input.trim();
     setInput(''); // Clear input immediately
     
     try {
-      await sendMessage({ text: messageText });
+      await sendMessage(
+        { text: messageText },
+        {
+          body: {
+            model: selectedModel,
+          },
+        }
+      );
     } catch (error) {
       console.error('Failed to send message:', error);
+    } finally {
+      setIsSubmitting(false);
     }
-  };
+  }, [input, isSubmitting, user, sendMessage, selectedModel]);
 
   /**
    * Handle suggested prompt selection
@@ -203,6 +237,16 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
   const handlePromptSelect = (prompt: string) => {
     setInput(prompt);
     setShowSuggestions(false);
+  };
+
+  /**
+   * Handle model selection change
+   * @param {string} modelId - The selected model ID
+   */
+  const handleModelChange = (modelId: string) => {
+    setSelectedModel(modelId);
+    // Note: The model change will take effect on the next message
+    // due to how useChat body parameter works
   };
 
   // Show loading state while checking authentication
@@ -253,7 +297,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
                   </div>
                   <h3 className="text-xl font-semibold mb-3 text-gray-900">Welcome to Clear Match AI</h3>
                   <p className="text-muted-foreground max-w-md mx-auto mb-6 text-base leading-relaxed">
-                    I'm here to help you analyze candidate data, track recruitment activities, and optimize your workflows. Ask me anything!
+                    I&apos;m here to help you analyze candidate data, track recruitment activities, and optimize your workflows. Ask me anything!
                   </p>
                   <Button
                     variant="outline"
@@ -277,7 +321,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
                 </div>
               )}
               
-              {displayMessages.map((message: UIMessage) => (
+              {displayMessages.map((message: ProcessedUIMessage) => (
                 <div
                   key={message.id}
                   className={`flex gap-4 ${
@@ -312,16 +356,12 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
                     >
                       {message.role === 'user' ? (
                         <div className="text-sm whitespace-pre-wrap">
-                          {message.parts?.map((part, partIndex) => 
-                            part.type === 'text' ? part.text : ''
-                          ).join('') || message.content}
+                          {message.processedContent}
                         </div>
                       ) : (
                         <div className="prose prose-sm max-w-none dark:prose-invert">
                           <ReactMarkdown>
-                            {message.parts?.map((part, partIndex) => 
-                              part.type === 'text' ? part.text : ''
-                            ).join('') || message.content}
+                            {message.processedContent}
                           </ReactMarkdown>
                         </div>
                       )}
@@ -331,7 +371,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
               ))}
               
               {/* Show loading indicator when AI is responding */}
-              {isLoading && (
+              {isSubmitting && (
                 <div className="flex gap-4 justify-start">
                   <Avatar className="h-8 w-8 flex-shrink-0 mt-1">
                     <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary border">
@@ -366,31 +406,49 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
           
           {/* Input Area */}
           <div className="border-t p-6 bg-gray-50/50">
+            {/* Model Selector */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  AI Model
+                </label>
+                <ModelSelector
+                  selectedModel={selectedModel}
+                  onModelChange={handleModelChange}
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
+            
             <form onSubmit={onSubmit} className="flex gap-4 w-full items-end">
               <div className="flex-1 min-w-0">
                 <textarea
                   value={input || ''}
                   onChange={handleInputChange}
                   placeholder="Ask me anything about your data..."
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                   rows={3}
                   className="w-full p-4 rounded-xl border border-gray-200 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-base leading-relaxed"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
-                      onSubmit(e as React.FormEvent);
+                      // Create a synthetic form event for submission
+                      const form = e.currentTarget.form;
+                      if (form) {
+                        const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+                        form.dispatchEvent(submitEvent);
+                      }
                     }
                   }}
                 />
               </div>
               <Button
                 type="submit"
-                disabled={isLoading || !input?.trim()}
-                size="lg"
-                className="h-12 w-12 rounded-xl flex-shrink-0 shadow-sm"
+                disabled={isSubmitting || !input?.trim()}
+                className="h-14 w-14 rounded-2xl flex-shrink-0 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-white shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105"
               >
-                <Send className="h-5 w-5" />
+                <Send className="h-6 w-6" />
                 <span className="sr-only">Send message</span>
               </Button>
             </form>
