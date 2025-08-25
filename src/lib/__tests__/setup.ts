@@ -145,6 +145,23 @@ Object.defineProperty(global, 'crypto', {
 global.btoa = (str: string) => Buffer.from(str, 'binary').toString('base64')
 global.atob = (str: string) => Buffer.from(str, 'base64').toString('binary')
 
+// Mock Web Streams API for AI SDK v5
+global.TransformStream = class MockTransformStream {
+  readable: ReadableStream
+  writable: WritableStream
+
+  constructor() {
+    this.readable = new ReadableStream()
+    this.writable = new WritableStream()
+  }
+} as any
+
+// Mock DOM methods for tests
+Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+  value: jest.fn(),
+  configurable: true
+})
+
 // Mock File API for file upload tests
 global.File = class MockFile {
   public name: string

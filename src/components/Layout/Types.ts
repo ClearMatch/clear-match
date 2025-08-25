@@ -1,4 +1,5 @@
 import {
+  Bot,
   CalendarRange,
   ChartNoAxesCombined,
   ListChecks,
@@ -24,6 +25,7 @@ export const menuItems = [
       { name: "Contacts", icon: Users, path: "/contacts" },
       { name: "My Task", icon: ListChecks, path: "/task" },
       { name: "Event", icon: CalendarRange, path: "/event" },
+      { name: "AI Assistant", icon: Bot, path: "/chat" },
     ],
   },
 ];
