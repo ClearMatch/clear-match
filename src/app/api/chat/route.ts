@@ -204,7 +204,15 @@ Current user ID: ${user.id}`;
         description: 'Create a new activity or task, optionally associated with a contact',
         parameters: z.object({
           contactId: z.string().optional().describe('ID of the contact this activity is for (optional)'),
-          type: z.enum(['follow-up', 'interview', 'call', 'email', 'meeting', 'text', 'video']).default('follow-up').describe('Type of activity (must match database constraint)'),
+          type: z.enum([
+            // Original types from database constraint
+            'none', 'email', 'call', 'video', 'text',
+            // New event types from GitHub issue #138
+            'new-job-posting', 'open-to-work', 'laid-off', 'interview', 
+            'funding-news', 'company-layoffs', 'birthday', 'meeting',
+            'm-and-a-activity', 'email-reply-received', 'follow-up', 
+            'holiday', 'personal-interest-tag', 'dormant-status'
+          ]).default('follow-up').describe('Type of activity (must match database constraint exactly)'),
           subject: z.string().describe('Brief subject/title of the activity'),
           description: z.string().describe('Detailed description of the activity'),
           dueDate: z.string().optional().describe('Due date in ISO format (optional, defaults to 1 week from now)'),

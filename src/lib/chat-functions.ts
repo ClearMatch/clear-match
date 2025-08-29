@@ -112,7 +112,14 @@ export interface SearchContactsParams {
 
 export interface CreateActivityParams {
   contactId?: string;
-  type: 'follow-up' | 'interview' | 'call' | 'email' | 'meeting' | 'text' | 'video';
+  type: 
+    // Original types from database constraint
+    | 'none' | 'email' | 'call' | 'video' | 'text'
+    // New event types from GitHub issue #138
+    | 'new-job-posting' | 'open-to-work' | 'laid-off' | 'interview'
+    | 'funding-news' | 'company-layoffs' | 'birthday' | 'meeting'
+    | 'm-and-a-activity' | 'email-reply-received' | 'follow-up'
+    | 'holiday' | 'personal-interest-tag' | 'dormant-status';
   subject: string;
   description: string;
   dueDate?: string;
