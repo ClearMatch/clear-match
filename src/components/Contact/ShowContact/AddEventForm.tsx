@@ -61,7 +61,7 @@ function AddEventForm({
   // Set the contact_id in the form when component mounts
   useEffect(() => {
     form.setValue("contact_id", contactId);
-  }, [contactId, form.setValue]);
+  }, [contactId, form]);
 
   const onSubmit = async (data: EventSchema) => {
     if (!data.type) {
