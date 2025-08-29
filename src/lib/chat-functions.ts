@@ -249,6 +249,19 @@ export async function createActivity(params: CreateActivityParams, userId: strin
     priority = 2
   } = params;
 
+  // Validate required parameters
+  if (!type) {
+    throw new Error('Activity type is required and cannot be null or empty');
+  }
+  
+  if (!subject?.trim()) {
+    throw new Error('Activity subject is required and cannot be empty');
+  }
+  
+  if (!description?.trim()) {
+    throw new Error('Activity description is required and cannot be empty');
+  }
+
   // Use service role client for server-side operations
   const supabase = await createSupabaseServerClient(true);
 

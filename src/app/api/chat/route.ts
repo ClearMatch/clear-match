@@ -223,8 +223,12 @@ Current user ID: ${user.id}`;
           console.log('🛠️ Executing createActivity with params:', JSON.stringify(params, null, 2));
           console.log('🔍 Activity type received:', params.type, 'typeof:', typeof params.type);
           
-          // Use params directly since Zod validation ensures correct types
-          const processedParams: CreateActivityParams = params;
+          // Ensure defaults are applied correctly (AI SDK v5 compatibility fix)
+          const processedParams: CreateActivityParams = {
+            ...params,
+            type: params.type || 'follow-up', // Explicit default handling
+            priority: params.priority || 2    // Explicit default handling
+          };
           
           console.log('🔄 Processed params:', JSON.stringify(processedParams, null, 2));
           console.log('🔍 Final activity type to database:', processedParams.type);
