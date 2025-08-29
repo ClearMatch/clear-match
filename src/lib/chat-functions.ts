@@ -249,7 +249,7 @@ export async function createActivity(params: CreateActivityParams, userId: strin
     priority = 2
   } = params;
 
-  // Validate required parameters
+  // Validate required parameters (should be handled by AI tool description, but keep as safety net)
   if (!type) {
     throw new Error('Activity type is required and cannot be null or empty');
   }
