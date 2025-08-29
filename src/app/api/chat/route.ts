@@ -1,8 +1,21 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { streamText, CoreMessage } from 'ai';
+import { streamText, CoreMessage, tool } from 'ai';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getDefaultModel, getModelById } from '@/config/models';
+import { z } from 'zod';
+import { 
+  searchContacts,
+  createActivity,
+  getRecentActivities,
+  getContactById,
+  getContactActivities,
+  getContactStats,
+  updateActivityStatus,
+  type SearchContactsParams,
+  type CreateActivityParams,
+  type GetContactStatsParams
+} from '@/lib/chat-functions';
 
 // Type definitions for message formats from AI SDK
 interface MessagePart {
@@ -161,13 +174,146 @@ Current user ID: ${user.id}`;
       apiKey: process.env.OPENROUTER_API_KEY,
     });
 
-    // Create the chat completion with streaming
+    // Define tools using the tool() helper from AI SDK
+    const tools = {
+      searchContacts: tool({
+        description: 'Search for contacts based on various criteria like name, company, tech stack, engagement score, etc.',
+        parameters: z.object({
+          searchTerm: z.string().optional().describe('Search term to match against names, companies, or job titles'),
+          techStack: z.array(z.string()).optional().describe('Array of technologies/skills to search for'),
+          company: z.string().optional().describe('Company name to search for'),
+          engagementScoreMin: z.number().optional().describe('Minimum engagement score (1-10)'),
+          yearsExperienceMin: z.number().optional().describe('Minimum years of experience'),
+          isActiveLooking: z.boolean().optional().describe('Whether to filter for actively looking candidates'),
+          limit: z.number().optional().describe('Maximum number of results to return (default: 20)')
+        }),
+        execute: async (params: SearchContactsParams) => {
+          console.log('🔍 Executing searchContacts:', params);
+          const result = await searchContacts(params);
+          console.log('✅ searchContacts result:', result);
+          return result;
+        },
+      }),
+      
+      createActivity: tool({
+        description: 'Create a new activity or task, optionally associated with a contact',
+        parameters: z.object({
+          contactId: z.string().optional().describe('ID of the contact this activity is for (optional)'),
+          type: z.enum(['follow-up', 'interview', 'call', 'email', 'meeting', 'text', 'video']).default('follow-up').describe('Type of activity'),
+          subject: z.string().describe('Brief subject/title of the activity'),
+          description: z.string().describe('Detailed description of the activity'),
+          dueDate: z.string().optional().describe('Due date in ISO format (optional, defaults to 1 week from now)'),
+          priority: z.union([
+            z.number().min(1).max(4),
+            z.enum(['low', 'medium', 'high', 'critical']).transform(val => {
+              const mapping = { low: 1, medium: 2, high: 3, critical: 4 };
+              return mapping[val];
+            })
+          ]).optional().default(2).describe('Priority level: 1=Low, 2=Medium, 3=High, 4=Critical (or use words: low, medium, high, critical)')
+        }),
+        execute: async (params: CreateActivityParams) => {
+          console.log('🛠️ Executing createActivity with params:', JSON.stringify(params, null, 2));
+          
+          // Ensure priority is a number, not a string
+          const priorityMapping = { low: 1, medium: 2, high: 3, critical: 4 };
+          const processedParams = {
+            ...params,
+            priority: typeof params.priority === 'string' 
+              ? (priorityMapping[params.priority.toLowerCase() as keyof typeof priorityMapping] || 2)
+              : (params.priority || 2)
+          };
+          
+          console.log('🔄 Processed params:', JSON.stringify(processedParams, null, 2));
+          
+          const result = await createActivity(processedParams, user.id);
+          console.log('✅ createActivity result:', result);
+          return result;
+        },
+      }),
+      
+      getRecentActivities: tool({
+        description: 'Get recent activities/tasks for the current user',
+        parameters: z.object({
+          limit: z.number().optional().describe('Number of activities to retrieve (default: 20)')
+        }),
+        execute: async (params: { limit?: number }) => {
+          console.log('📋 Executing getRecentActivities:', params);
+          const result = await getRecentActivities(params.limit);
+          console.log('✅ getRecentActivities result:', result);
+          return result;
+        },
+      }),
+      
+      getContactById: tool({
+        description: 'Get detailed information about a specific contact by ID',
+        parameters: z.object({
+          contactId: z.string().describe('The unique ID of the contact')
+        }),
+        execute: async (params: { contactId: string }) => {
+          console.log('👤 Executing getContactById:', params);
+          const result = await getContactById(params.contactId);
+          console.log('✅ getContactById result:', result);
+          return result;
+        },
+      }),
+      
+      getContactActivities: tool({
+        description: 'Get recent activities/tasks for a specific contact',
+        parameters: z.object({
+          contactId: z.string().describe('The ID of the contact'),
+          limit: z.number().optional().describe('Number of activities to retrieve (default: 10)')
+        }),
+        execute: async (params: { contactId: string; limit?: number }) => {
+          console.log('📝 Executing getContactActivities:', params);
+          const result = await getContactActivities(params.contactId, params.limit);
+          console.log('✅ getContactActivities result:', result);
+          return result;
+        },
+      }),
+      
+      getContactStats: tool({
+        description: 'Get statistical insights about contacts (total count, engagement, top companies, etc.)',
+        parameters: z.object({
+          timeframe: z.enum(['week', 'month', 'quarter', 'year']).optional().describe('Timeframe for statistics (default: month)')
+        }),
+        execute: async (params: GetContactStatsParams) => {
+          console.log('📊 Executing getContactStats:', params);
+          const result = await getContactStats(params);
+          console.log('✅ getContactStats result:', result);
+          return result;
+        },
+      }),
+      
+      updateActivityStatus: tool({
+        description: 'Update the status of an activity/task',
+        parameters: z.object({
+          activityId: z.string().describe('The ID of the activity to update'),
+          status: z.enum(['todo', 'in-progress', 'done']).describe('New status for the activity')
+        }),
+        execute: async (params: { activityId: string; status: 'todo' | 'in-progress' | 'done' }) => {
+          console.log('🔄 Executing updateActivityStatus:', params);
+          const result = await updateActivityStatus(params.activityId, params.status);
+          console.log('✅ updateActivityStatus result:', result);
+          return result;
+        },
+      }),
+    };
+
+    console.log('🚀 Starting streamText with tools for user:', user.id);
+    console.log('📝 Messages count:', formattedMessages.length);
+    console.log('🛠️ Tools available:', Object.keys(tools));
+
+    // Create the chat completion with streaming and tools
     const result = await streamText({
       model: openrouter(selectedModel),
       system: systemPrompt,
       messages: formattedMessages,
+      tools,
       temperature: CHAT_API_CONFIG.TEMPERATURE,
+      maxTokens: 2000,
     });
+
+    console.log('✅ streamText created successfully');
 
     // Return the streaming response in UI message format
     return result.toUIMessageStreamResponse();
