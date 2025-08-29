@@ -39,7 +39,7 @@ function ShowContact() {
   // Optimize contact name computation
   const contactFullName = useMemo(
     () => (contact ? `${contact.first_name} ${contact.last_name}` : ""),
-    [contact?.first_name, contact?.last_name]
+    [contact]
   );
 
   if (isLoading) {
