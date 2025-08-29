@@ -204,7 +204,7 @@ Current user ID: ${user.id}`;
         description: 'Create a new activity or task, optionally associated with a contact',
         parameters: z.object({
           contactId: z.string().optional().describe('ID of the contact this activity is for (optional)'),
-          type: z.enum(['follow-up', 'interview', 'call', 'email', 'meeting', 'text', 'video']).default('follow-up').describe('Type of activity'),
+          type: z.enum(['follow-up', 'interview', 'call', 'email', 'meeting', 'text', 'video']).default('follow-up').describe('Type of activity (must match database constraint)'),
           subject: z.string().describe('Brief subject/title of the activity'),
           description: z.string().describe('Detailed description of the activity'),
           dueDate: z.string().optional().describe('Due date in ISO format (optional, defaults to 1 week from now)'),
@@ -213,11 +213,13 @@ Current user ID: ${user.id}`;
         // @ts-ignore - AI SDK v5 tool typing compatibility
         execute: async (params: CreateActivityParams) => {
           console.log('🛠️ Executing createActivity with params:', JSON.stringify(params, null, 2));
+          console.log('🔍 Activity type received:', params.type, 'typeof:', typeof params.type);
           
           // Use params directly since Zod validation ensures correct types
           const processedParams: CreateActivityParams = params;
           
           console.log('🔄 Processed params:', JSON.stringify(processedParams, null, 2));
+          console.log('🔍 Final activity type to database:', processedParams.type);
           
           const result = await createActivity(processedParams, user.id);
           console.log('✅ createActivity result:', result);
