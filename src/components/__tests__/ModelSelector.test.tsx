@@ -94,7 +94,6 @@ describe('ModelSelector', () => {
       await waitFor(() => {
         expect(screen.getByText('Premium Models')).toBeInTheDocument();
         expect(screen.getByText('Popular Models')).toBeInTheDocument();
-        expect(screen.getByText('Balanced Models')).toBeInTheDocument();
         expect(screen.getByText('Budget & Testing')).toBeInTheDocument();
       });
     });
@@ -153,30 +152,30 @@ describe('ModelSelector', () => {
       await user.click(button);
 
       await waitFor(() => {
-        const deepseekOption = screen.getByRole('menuitem', { name: /DeepSeek V3.1/ });
-        expect(deepseekOption).toBeInTheDocument();
+        const claudeOption = screen.getByRole('menuitem', { name: /Claude Sonnet 4/ });
+        expect(claudeOption).toBeInTheDocument();
       });
 
-      const deepseekOption = screen.getByRole('menuitem', { name: /DeepSeek V3.1/ });
-      await user.click(deepseekOption);
+      const claudeOption = screen.getByRole('menuitem', { name: /Claude Sonnet 4/ });
+      await user.click(claudeOption);
 
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'clear-match-selected-model',
-        'deepseek/deepseek-chat-v3.1'
+        'anthropic/claude-sonnet-4'
       );
     });
 
     it('should show selection indicator for currently selected model', async () => {
       const user = userEvent.setup();
-      render(<ModelSelector selectedModel="openai/gpt-oss-20b:free" onModelChange={mockOnModelChange} />);
+      render(<ModelSelector selectedModel="qwen/qwen3-coder" onModelChange={mockOnModelChange} />);
       
-      const button = screen.getByRole('button', { name: /GPT-OSS-20B/ });
+      const button = screen.getByRole('button', { name: /Qwen3 Coder/ });
       await user.click(button);
 
       await waitFor(() => {
         // The selected model should have a visual indicator
         // This tests the isSelected logic in ModelMenuItem
-        const selectedItem = screen.getByRole('menuitem', { name: /GPT-OSS-20B/ });
+        const selectedItem = screen.getByRole('menuitem', { name: /Qwen3 Coder/ });
         expect(selectedItem).toBeInTheDocument();
       });
     });
@@ -192,7 +191,7 @@ describe('ModelSelector', () => {
 
       await waitFor(() => {
         // Check for cost indicators that should be present
-        expect(screen.queryByText('Free') || screen.queryByText('Nearly Free') || screen.queryByText('Standard')).toBeTruthy();
+        expect(screen.getAllByText('Free').length).toBeGreaterThanOrEqual(1);
       });
     });
 

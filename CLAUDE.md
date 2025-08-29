@@ -457,6 +457,14 @@ describe('Candidate API', () => {
 - **Duplicate Directory Issues**: Remove any duplicate directories (e.g., `mcp-testing/`)
 - **Type Mismatches**: Ensure consistent typing between forms, constants, and APIs
 
+#### AI Chat System Issues
+- **AI_MessageConversionError**: Known issue with AI SDK v5 and tool parts with "input-available" state
+  - **Workaround**: `cleanUIMessage` function in `/src/app/api/chat/route.ts` filters problematic parts
+  - **Status**: Temporary fix, monitor https://github.com/vercel/ai/issues for official resolution
+  - **Impact**: Required for function calling to work with streaming responses
+- **Function Calling Failures**: Check OpenRouter API key and model compatibility
+- **Empty Message Bubbles**: Usually caused by improper message part processing in ChatInterface
+
 #### Performance Issues
 - **Slow Queries**: Optimize database queries and add indexes
 - **Large Bundle**: Implement code splitting and lazy loading

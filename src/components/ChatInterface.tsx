@@ -90,30 +90,144 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
     return getDefaultModel();
   });
   
-  // Initialize chat with Vercel AI SDK v5
+  // Initialize chat with Vercel AI SDK
   const {
     messages,
     sendMessage,
-    status,
     error,
-  } = useChat({
-    onError: (error: Error) => {
-      console.error('Chat error:', error);
-    },
-  });
+    status,
+  } = useChat();
 
-  // Simple loading state - will be true when submitting
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Convert status to loading state (fallback to false if status doesn't exist)
+  const isLoading = status ? (status === 'submitted' || status === 'streaming') : false;
 
   // Limit messages to prevent memory issues and optimize content processing
   const displayMessages = useMemo(() => {
+    // Safety check for messages array
+    if (!messages || !Array.isArray(messages)) {
+      console.log('ChatInterface: messages is not an array:', messages);
+      return [];
+    }
+    
     const limitedMessages = messages.slice(-CHAT_CONFIG.MAX_MESSAGES);
-    return limitedMessages.map(message => ({
-      ...message,
-      processedContent: message.parts?.map(part => 
-        part.type === 'text' ? part.text : ''
-      ).join('') || ''
-    })) as ProcessedUIMessage[];
+    
+    // Process messages with robust error handling for AI SDK v2
+    return limitedMessages.map((message, index) => {
+      // Safety check for message object
+      if (!message || typeof message !== 'object') {
+        console.warn(`ChatInterface: Invalid message at index ${index}:`, message);
+        return {
+          id: `error-${index}`,
+          role: 'system',
+          processedContent: 'Invalid message',
+          parts: []
+        } as ProcessedUIMessage;
+      }
+
+      let textContent = '';
+      
+      try {
+        // AI SDK v2 uses 'parts' array for message content
+        if (message.parts && Array.isArray(message.parts)) {
+          const textParts: string[] = [];
+          
+          message.parts.forEach((part, partIndex) => {
+            try {
+              if (!part || typeof part !== 'object') {
+                console.warn(`Invalid part at ${index}.${partIndex}:`, part);
+                return;
+              }
+              
+              // Handle different part types
+              switch (part.type) {
+                case 'text':
+                  if (part.text && typeof part.text === 'string') {
+                    textParts.push(part.text);
+                  }
+                  break;
+                  
+                case 'tool-result':
+                  // Don't display raw tool results - let AI provide clean response
+                  break;
+                  
+                default:
+                  // Handle tool parts (typed as tool-${toolName} in v5)
+                  if (part.type.startsWith('tool-')) {
+                    const toolName = part.type.replace('tool-', '');
+                    
+                    // Check different tool states
+                    if ('state' in part) {
+                      switch (part.state) {
+                        case 'input-streaming':
+                        case 'input-available':
+                          textParts.push(`Calling function: ${toolName}`);
+                          if (part.input) {
+                            const input = typeof part.input === 'string' 
+                              ? part.input 
+                              : JSON.stringify(part.input, null, 2);
+                            textParts.push(`Input: ${input}`);
+                          }
+                          break;
+                        case 'output-available':
+                          // Only show function completion status, not raw results
+                          // textParts.push(`Function ${toolName} completed`);
+                          // Don't show raw JSON output - let AI provide clean response
+                          break;
+                        case 'output-error':
+                          textParts.push(`Function ${toolName} failed`);
+                          if (part.errorText) {
+                            textParts.push(`Error: ${part.errorText}`);
+                          }
+                          break;
+                      }
+                    }
+                  }
+                  // Handle unknown part types gracefully
+                  else if ('text' in part && part.text) {
+                    textParts.push(String(part.text));
+                  } else if ('content' in part && part.content) {
+                    textParts.push(String(part.content));
+                  }
+                  break;
+              }
+            } catch (partError) {
+              console.error(`Error processing part ${index}.${partIndex}:`, partError);
+            }
+          });
+          
+          textContent = textParts.join(' ').trim();
+        }
+        
+        // Fallback for older message formats or direct content
+        if (!textContent) {
+          if ('content' in message && message.content && typeof message.content === 'string') {
+            textContent = message.content;
+          } else if ('text' in message && message.text && typeof message.text === 'string') {
+            textContent = message.text;
+          }
+        }
+        
+        // Final fallback
+        if (!textContent) {
+          textContent = message.role === 'user' ? 'User message' : 'Assistant message';
+        }
+        
+      } catch (error) {
+        console.error(`Error processing message ${index}:`, error);
+        console.log('Problematic message:', message);
+        textContent = 'Error processing message';
+      }
+      
+      // Return processed message with safe structure
+      return {
+        id: message.id || `msg-${index}`,
+        role: message.role || 'assistant',
+        processedContent: textContent,
+        parts: message.parts || [],
+        createdAt: ('createdAt' in message && message.createdAt) || new Date()
+      } as ProcessedUIMessage;
+      
+    });
   }, [messages]);
 
   /**
@@ -205,17 +319,16 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
    */
   const onSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input?.trim() || isSubmitting || !user) return;
+    if (!input?.trim() || isLoading || !user) return;
     
     setShowSuggestions(false); // Hide suggestions when user sends message
-    setIsSubmitting(true);
     
-    // Send message using the new API
+    // Send message using the sendMessage function
     const messageText = input.trim();
     setInput(''); // Clear input immediately
     
     try {
-      await sendMessage(
+      sendMessage(
         { text: messageText },
         {
           body: {
@@ -225,10 +338,8 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
       );
     } catch (error) {
       console.error('Failed to send message:', error);
-    } finally {
-      setIsSubmitting(false);
     }
-  }, [input, isSubmitting, user, sendMessage, selectedModel]);
+  }, [input, isLoading, user, sendMessage, selectedModel]);
 
   /**
    * Handle suggested prompt selection
@@ -371,7 +482,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
               ))}
               
               {/* Show loading indicator when AI is responding */}
-              {isSubmitting && (
+              {isLoading && (
                 <div className="flex gap-4 justify-start">
                   <Avatar className="h-8 w-8 flex-shrink-0 mt-1">
                     <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary border">
@@ -415,7 +526,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
                 <ModelSelector
                   selectedModel={selectedModel}
                   onModelChange={handleModelChange}
-                  disabled={isSubmitting}
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -426,7 +537,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
                   value={input || ''}
                   onChange={handleInputChange}
                   placeholder="Ask me anything about your data..."
-                  disabled={isSubmitting}
+                  disabled={isLoading}
                   rows={3}
                   className="w-full p-4 rounded-xl border border-gray-200 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-base leading-relaxed"
                   autoFocus
@@ -445,7 +556,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
               </div>
               <Button
                 type="submit"
-                disabled={isSubmitting || !input?.trim()}
+                disabled={isLoading || !input?.trim()}
                 className="h-14 w-14 rounded-2xl flex-shrink-0 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-white shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105"
               >
                 <Send className="h-6 w-6" />
