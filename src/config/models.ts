@@ -8,7 +8,7 @@
 export interface AIModel {
   id: string;
   name: string;
-  provider: 'anthropic' | 'openai' | 'google' | 'deepseek';
+  provider: 'anthropic' | 'openai' | 'google' | 'deepseek' | 'qwen' | 'z-ai';
   tier: 'premium' | 'popular' | 'balanced' | 'budget' | 'free';
   description: string;
   strengths: string[];
@@ -22,18 +22,44 @@ export interface AIModel {
 
 export const AVAILABLE_MODELS: AIModel[] = [
   {
-    id: 'anthropic/claude-sonnet-4',
-    name: 'Claude Sonnet 4',
-    provider: 'anthropic',
-    tier: 'premium',
-    description: 'Latest flagship model with advanced reasoning capabilities',
-    strengths: ['Complex reasoning', 'Code analysis', 'Research tasks', 'Long-form content'],
+    id: 'qwen/qwen3-coder',
+    name: 'Qwen3 Coder (Free)',
+    provider: 'qwen',
+    tier: 'free',
+    description: 'Free model with function calling support - perfect for testing and development',
+    strengths: ['Function calling', 'Code generation', 'No cost', 'Large context', 'Testing'],
     approximateCostPer1kTokens: {
-      prompt: 0.003,
-      completion: 0.015,
+      prompt: 0,
+      completion: 0,
     },
-    contextLength: 200000,
+    contextLength: 262144,
     isRecommended: true,
+  },
+  {
+    id: 'z-ai/glm-4.5-air',
+    name: 'GLM-4.5 Air (Free)',
+    provider: 'z-ai',
+    tier: 'free',
+    description: 'Another free option with function calling support',
+    strengths: ['Function calling', 'No cost', 'Large context', 'Testing'],
+    approximateCostPer1kTokens: {
+      prompt: 0,
+      completion: 0,
+    },
+    contextLength: 131072,
+  },
+  {
+    id: 'google/gemini-2.5-flash-lite',
+    name: 'Gemini 2.5 Flash Lite',
+    provider: 'google',
+    tier: 'budget',
+    description: 'Very affordable model optimized for speed and efficiency',
+    strengths: ['Function calling', 'Fast responses', 'Cost-effective', 'Massive context'],
+    approximateCostPer1kTokens: {
+      prompt: 0.0001,
+      completion: 0.0004,
+    },
+    contextLength: 1048576,
   },
   {
     id: 'openai/gpt-4o',
@@ -41,7 +67,7 @@ export const AVAILABLE_MODELS: AIModel[] = [
     provider: 'openai',
     tier: 'popular',
     description: 'Well-rounded model excellent for creative and analytical tasks',
-    strengths: ['Creative writing', 'General intelligence', 'Conversational', 'Problem solving'],
+    strengths: ['Function calling', 'Creative writing', 'General intelligence', 'Problem solving'],
     approximateCostPer1kTokens: {
       prompt: 0.005,
       completion: 0.015,
@@ -50,61 +76,29 @@ export const AVAILABLE_MODELS: AIModel[] = [
     isRecommended: true,
   },
   {
-    id: 'google/gemini-2.5-flash',
-    name: 'Gemini 2.5 Flash',
-    provider: 'google',
-    tier: 'balanced',
-    description: 'Speed-optimized model for quick, efficient responses',
-    strengths: ['Fast responses', 'General chat', 'Quick analysis', 'Cost-effective'],
+    id: 'anthropic/claude-sonnet-4',
+    name: 'Claude Sonnet 4',
+    provider: 'anthropic',
+    tier: 'premium',
+    description: 'Latest flagship model with advanced reasoning capabilities',
+    strengths: ['Function calling', 'Complex reasoning', 'Code analysis', 'Research tasks'],
     approximateCostPer1kTokens: {
-      prompt: 0.0003,
-      completion: 0.0025,
+      prompt: 0.003,
+      completion: 0.015,
     },
-    contextLength: 1048576,
-  },
-  {
-    id: 'deepseek/deepseek-chat-v3.1',
-    name: 'DeepSeek V3.1',
-    provider: 'deepseek',
-    tier: 'budget',
-    description: 'Ultra-affordable model with solid performance',
-    strengths: ['Cost-effective', 'Code generation', 'General tasks', 'High value'],
-    approximateCostPer1kTokens: {
-      prompt: 0.0002,
-      completion: 0.0008,
-    },
-    contextLength: 32000,
-  },
-  {
-    id: 'openai/gpt-oss-20b:free',
-    name: 'GPT-OSS-20B (Free)',
-    provider: 'openai',
-    tier: 'free',
-    description: 'Free model perfect for testing and development',
-    strengths: ['No cost', 'Testing', 'Development', 'Basic tasks'],
-    approximateCostPer1kTokens: {
-      prompt: 0,
-      completion: 0,
-    },
-    contextLength: 8192,
+    contextLength: 200000,
   },
 ];
 
 /**
  * Get the default model based on environment
- * - Development/Staging: Free model for testing
- * - Production: GPT-4o for reliability
+ * - All environments: Use Claude Sonnet 4 for reliable performance
+ * - Premium model provides best function calling capabilities
  */
 export function getDefaultModel(): string {
-  const isProduction = process.env.NODE_ENV === 'production' && 
-                      process.env.VERCEL_ENV === 'production';
-  
-  if (isProduction) {
-    return 'openai/gpt-4o';
-  } else {
-    // Development or staging
-    return 'openai/gpt-oss-20b:free';
-  }
+  // Using Claude Sonnet 4 for reliable function calling capabilities
+  // Claude models have excellent function calling support through OpenRouter
+  return 'anthropic/claude-sonnet-4';
 }
 
 /**

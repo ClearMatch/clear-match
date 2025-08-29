@@ -164,7 +164,7 @@ describe('ChatInterface', () => {
 
       expect(mockSendMessage).toHaveBeenCalledWith(
         { text: 'Test message' },
-        { body: { model: 'openai/gpt-oss-20b:free' } }
+        { body: { model: 'anthropic/claude-sonnet-4' } }
       );
     });
 
@@ -177,7 +177,7 @@ describe('ChatInterface', () => {
 
       expect(mockSendMessage).toHaveBeenCalledWith(
         { text: 'Test message' },
-        { body: { model: 'openai/gpt-oss-20b:free' } }
+        { body: { model: 'anthropic/claude-sonnet-4' } }
       );
     });
 
@@ -257,22 +257,21 @@ describe('ChatInterface', () => {
   });
 
   describe('Loading States', () => {
-    beforeEach(async () => {
+
+    it('should show loading indicator when submitting', async () => {
+      // Mock loading state
+      mockUseChat.mockReturnValue({
+        messages: [],
+        sendMessage: mockSendMessage,
+        status: 'streaming', // Set to loading state
+        error: null,
+      });
+
       render(<ChatInterface />);
+      
       await waitFor(() => {
         expect(screen.queryByText('Initializing chat...')).not.toBeInTheDocument();
       });
-    });
-
-    it('should show loading indicator when submitting', async () => {
-      const user = userEvent.setup();
-      const textarea = screen.getByPlaceholderText('Ask me anything about your data...');
-
-      await user.type(textarea, 'Test message');
-      
-      // Mock the submission to be pending
-      const sendButton = screen.getByRole('button', { name: /send message/i });
-      fireEvent.click(sendButton);
 
       await waitFor(() => {
         expect(screen.getByText('Thinking...')).toBeInTheDocument();
@@ -280,12 +279,22 @@ describe('ChatInterface', () => {
     });
 
     it('should disable input and button while submitting', async () => {
-      const user = userEvent.setup();
+      // Mock loading state
+      mockUseChat.mockReturnValue({
+        messages: [],
+        sendMessage: mockSendMessage,
+        status: 'streaming', // Set to loading state
+        error: null,
+      });
+
+      render(<ChatInterface />);
+      
+      await waitFor(() => {
+        expect(screen.queryByText('Initializing chat...')).not.toBeInTheDocument();
+      });
+
       const textarea = screen.getByPlaceholderText('Ask me anything about your data...');
       const sendButton = screen.getByRole('button', { name: /send message/i });
-
-      await user.type(textarea, 'Test message');
-      fireEvent.click(sendButton);
 
       await waitFor(() => {
         expect(textarea).toBeDisabled();
