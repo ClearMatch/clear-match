@@ -354,7 +354,9 @@ You can view the full task details at: ${process.env.NEXT_PUBLIC_APP_URL || 'htt
     console.log('✅ streamText created successfully');
 
     // Return the streaming response in UI message format
-    return result.toUIMessageStreamResponse();
+    const streamResponse = result.toUIMessageStreamResponse();
+    console.log('📤 Returning stream response to client');
+    return streamResponse;
 
   } catch (error) {
     console.error('Chat API error:', error);
