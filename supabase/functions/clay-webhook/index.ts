@@ -39,13 +39,17 @@ const CLAY_FIELD_MAPPING: Record<string, string> = {
 // Reserved database column names to filter from data JSONB
 const RESERVED_FIELDS = [
   'id',
-  'contact_id', 
+  'contact_id',
+  'contact_record_id', // Add new correlation field
   'organization_id',
   'created_at',
   'updated_at',
   'created_by',
   'type',
-  'email' // Add email to reserved fields since it's used for contact lookup
+  'email', // Add email to reserved fields since it's used for contact lookup
+  'job_title', // New Clay field with dedicated column
+  'company_headcount', // New Clay field with dedicated column
+  'alert_creation_date' // New Clay field with dedicated column
 ];
 
 interface WebhookLog {
@@ -81,6 +85,195 @@ function parseDate(dateString: string): string | null {
     return parsedDate.toISOString();
   } catch (error) {
     console.warn('Date parsing error:', error);
+    return null;
+  }
+}
+
+// Event priority weights for activity generation
+const EVENT_PRIORITIES: Record<string, number> = {
+  'job-posting': 7,
+  'funding-event': 8,
+  'layoff': 6,
+  'new-job': 5,
+  'birthday': 3,
+  'none': 1
+};
+
+// Calculate event priority with modifiers
+function calculateEventPriority(eventType: string, eventData: any): number {
+  let basePriority = EVENT_PRIORITIES[eventType] || 1;
+  
+  // Apply modifiers
+  let modifiers = 0;
+  
+  // Recent events modifier (< 7 days)
+  if (eventData.posted_on || eventData.alert_creation_date) {
+    const eventDate = new Date(eventData.posted_on || eventData.alert_creation_date);
+    const daysSinceEvent = (Date.now() - eventDate.getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSinceEvent < 7) {
+      modifiers += 1;
+    }
+  }
+  
+  // Large company modifier (>1000 employees)
+  if (eventData.company_headcount && parseInt(eventData.company_headcount) > 1000) {
+    modifiers += 1;
+  }
+  
+  // Senior position modifier
+  const seniorKeywords = ['Senior', 'Lead', 'Principal', 'Director', 'VP', 'Chief', 'Head'];
+  if (eventData.position || eventData.job_title) {
+    const title = (eventData.position || eventData.job_title).toLowerCase();
+    if (seniorKeywords.some(keyword => title.includes(keyword.toLowerCase()))) {
+      modifiers += 1;
+    }
+  }
+  
+  return basePriority + modifiers;
+}
+
+// Generate subject line based on event type
+function generateActivitySubject(eventType: string, eventData: any): string {
+  switch (eventType) {
+    case 'job-posting':
+      const position = eventData.position || eventData.job_title || 'Position';
+      const company = eventData.company_name || 'Company';
+      return `Follow up: ${position} opening at ${company}`;
+    
+    case 'funding-event':
+      const fundingCompany = eventData.company_name || 'Company';
+      return `Follow up: Funding event at ${fundingCompany}`;
+    
+    case 'layoff':
+      const layoffCompany = eventData.company_name || 'Company';
+      return `Outreach opportunity: Layoffs at ${layoffCompany}`;
+    
+    case 'new-job':
+      const newJobCompany = eventData.company_name || 'new company';
+      return `Congratulate on new position at ${newJobCompany}`;
+    
+    case 'birthday':
+      return 'Send birthday wishes';
+    
+    default:
+      return `Follow up on ${eventType} event`;
+  }
+}
+
+// Generate activity content based on event type
+function generateActivityContent(eventType: string, eventData: any): string {
+  const baseInfo = [
+    eventData.company_name && `Company: ${eventData.company_name}`,
+    eventData.position && `Position: ${eventData.position}`,
+    eventData.job_title && `Job Title: ${eventData.job_title}`,
+    eventData.company_location && `Location: ${eventData.company_location}`,
+    eventData.posted_on && `Posted: ${new Date(eventData.posted_on).toLocaleDateString()}`,
+  ].filter(Boolean).join(', ');
+  
+  switch (eventType) {
+    case 'job-posting':
+      return `New job posting detected for this contact. ${baseInfo}. Consider reaching out about this opportunity or similar roles at the company.`;
+    
+    case 'funding-event':
+      return `Funding activity detected for this contact's company. ${baseInfo}. This may indicate growth opportunities and increased hiring needs.`;
+    
+    case 'layoff':
+      return `Layoff event detected at contact's company. ${baseInfo}. Consider reaching out with support and new opportunities.`;
+    
+    case 'new-job':
+      return `Contact has started a new position. ${baseInfo}. Great opportunity to congratulate and reconnect.`;
+    
+    case 'birthday':
+      return `Contact's birthday. Personal touch opportunity to strengthen relationship.`;
+    
+    default:
+      return `${eventType} event detected. ${baseInfo}. Review and determine appropriate follow-up action.`;
+  }
+}
+
+// Calculate due date based on event type
+function calculateDueDate(eventType: string): string {
+  const now = new Date();
+  let daysToAdd = 7; // Default 7 days
+  
+  switch (eventType) {
+    case 'job-posting':
+      daysToAdd = 2; // Urgent - job postings need quick follow-up
+      break;
+    case 'funding-event':
+      daysToAdd = 3; // High priority - funding indicates growth
+      break;
+    case 'layoff':
+      daysToAdd = 1; // Very urgent - support needed quickly
+      break;
+    case 'new-job':
+      daysToAdd = 3; // Moderate urgency - congratulate soon
+      break;
+    case 'birthday':
+      daysToAdd = 0; // Same day if possible
+      break;
+    default:
+      daysToAdd = 7; // Standard follow-up
+  }
+  
+  now.setDate(now.getDate() + daysToAdd);
+  return now.toISOString().split('T')[0]; // Return just the date part
+}
+
+// Generate activity from event data
+async function generateActivityFromEvent(
+  supabase: any, 
+  event: any, 
+  contactId: string, 
+  organizationId: string, 
+  engagementScore: number
+): Promise<string | null> {
+  try {
+    const eventPriority = calculateEventPriority(event.type, event);
+    
+    // Calculate activity priority: min(10, engagement_score × event_priority / 10)
+    // Note: activities table has CHECK constraint for priority 1-6, not 1-10
+    const calculatedPriority = Math.min(6, Math.ceil(engagementScore * eventPriority / 10));
+    const activityPriority = Math.max(1, calculatedPriority); // Ensure minimum priority of 1
+    
+    const activityData = {
+      type: 'follow-up', // This matches the activities_type_check constraint
+      contact_id: contactId,
+      event_id: event.id,
+      organization_id: organizationId,
+      priority: activityPriority,
+      status: 'todo', // This matches the activities_status_check constraint
+      subject: generateActivitySubject(event.type, event),
+      content: generateActivityContent(event.type, event),
+      due_date: calculateDueDate(event.type),
+      created_by: null // System-generated
+    };
+    
+    console.log('Creating activity with data:', {
+      type: activityData.type,
+      priority: activityData.priority,
+      subject: activityData.subject,
+      due_date: activityData.due_date,
+      event_id: event.id,
+      contact_id: contactId
+    });
+    
+    const { data: activity, error: activityError } = await supabase
+      .from('activities')
+      .insert(activityData)
+      .select('id')
+      .single();
+    
+    if (activityError) {
+      console.error('Activity creation error:', activityError);
+      return null;
+    }
+    
+    console.log(`Activity created successfully: ${activity.id}`);
+    return activity.id;
+    
+  } catch (error) {
+    console.error('Error generating activity from event:', error);
     return null;
   }
 }
@@ -345,25 +538,78 @@ Deno.serve(async (req) => {
     console.log('Structured fields:', Object.keys(structuredData));
     console.log('JSONB fields:', Object.keys(jsonbData));
 
-    // Lookup contact by email if provided
+    // Lookup contact by HubSpot record ID (primary method) or email (fallback)
     let contactId: string | null = null;
-    if (email && typeof email === 'string') {
+    let contactLookupMethod: string | null = null;
+    let contactData: any = null;
+    
+    // Primary: Lookup by contact_record_id (HubSpot record ID)
+    if (body.contact_record_id && typeof body.contact_record_id === 'string') {
       try {
+        console.log(`Looking up contact by HubSpot record ID: ${body.contact_record_id}`);
         const { data: contact, error: contactError } = await supabase
           .from('contacts')
-          .select('id')
+          .select('id, engagement_score')
+          .eq('hubspot_record_id', body.contact_record_id.trim())
+          .eq('organization_id', organizationId)
+          .single();
+        
+        if (contactError) {
+          if (contactError.code === 'PGRST116') {
+            // No contact found with this HubSpot record ID - this is an invalid state
+            console.warn(`No contact found with HubSpot record ID: ${body.contact_record_id}`);
+            webhookLog.response_status = 400;
+            webhookLog.error = `Invalid state: No contact found with HubSpot record ID: ${body.contact_record_id}`;
+            await logWebhook(webhookLog);
+            return new Response(
+              JSON.stringify({ 
+                error: 'Contact correlation failed',
+                details: `No contact found with HubSpot record ID: ${body.contact_record_id}`,
+                hint: 'Ensure HubSpot sync has been run and contact exists in database'
+              }),
+              { 
+                status: 400, 
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+              }
+            );
+          } else {
+            console.warn('Contact lookup by HubSpot record ID error:', contactError);
+          }
+        } else {
+          contactId = contact?.id || null;
+          contactData = contact;
+          contactLookupMethod = 'hubspot_record_id';
+          console.log(`Contact found via HubSpot record ID: ${contactId}, engagement score: ${contact?.engagement_score}`);
+        }
+      } catch (contactLookupError) {
+        console.warn('Contact lookup by HubSpot record ID failed:', contactLookupError);
+      }
+    }
+    
+    // Fallback: Lookup by email if HubSpot record ID lookup failed
+    if (!contactId && email && typeof email === 'string') {
+      try {
+        console.log(`Fallback: Looking up contact by email: ${email}`);
+        const { data: contact, error: contactError } = await supabase
+          .from('contacts')
+          .select('id, engagement_score')
           .eq('email', email.toLowerCase().trim())
           .eq('organization_id', organizationId)
           .single();
         
         if (contactError && contactError.code !== 'PGRST116') {
           // PGRST116 is "not found", which is ok
-          console.warn('Contact lookup error:', contactError);
+          console.warn('Contact lookup by email error:', contactError);
         }
         
         contactId = contact?.id || null;
+        if (contactId) {
+          contactData = contact;
+          contactLookupMethod = 'email';
+          console.log(`Contact found via email fallback: ${contactId}, engagement score: ${contact?.engagement_score}`);
+        }
       } catch (contactLookupError) {
-        console.warn('Contact lookup failed:', contactLookupError);
+        console.warn('Contact lookup by email failed:', contactLookupError);
         // Continue without linking contact
       }
     }
@@ -372,10 +618,15 @@ Deno.serve(async (req) => {
     const eventData = {
       type: mappedType,  // Use the mapped type here
       contact_id: contactId,
+      contact_record_id: body.contact_record_id || null, // Store HubSpot record ID for correlation
       organization_id: organizationId,
       data: Object.keys(jsonbData).length > 0 ? jsonbData : null, // Only store JSONB if there's data
       // Add all structured fields dynamically
-      ...structuredData
+      ...structuredData,
+      // Add new Clay fields to dedicated columns
+      job_title: body.job_title || null,
+      company_headcount: body.company_headcount ? parseInt(body.company_headcount) : null,
+      alert_creation_date: body.alert_creation_date ? parseDate(body.alert_creation_date) : null
     };
     
     console.log('Inserting event with data:', {
@@ -406,19 +657,57 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Enhanced success response with processing details
+    // Generate activity from event (Phase 5: Automatic Activity Creation)
+    let activityCreated = false;
+    let activityError = null;
+    
+    try {
+      if (event?.id && contactData?.id && contactData?.engagement_score !== undefined) {
+        const activityId = await generateActivityFromEvent(
+          supabase,
+          { ...eventData, id: event.id },
+          contactData.id,
+          eventData.organization_id,
+          contactData.engagement_score
+        );
+        
+        if (activityId) {
+          activityCreated = true;
+          console.log(`Activity created: ${activityId} for event: ${event.id}`);
+        }
+      }
+    } catch (error) {
+      activityError = error instanceof Error ? error.message : 'Unknown activity creation error';
+      console.error('Activity creation failed:', activityError);
+      // Don't fail the webhook for activity creation errors - log and continue
+    }
+
+    // Enhanced success response with contact correlation details
     const responseBody = {
       success: true,
       event_id: event.id,
       contact_linked: !!contactId,
-      contact_strategy: contactId ? 'email' : null,
-      structured_fields_processed: Object.keys(structuredData),
-      jsonb_fields_stored: Object.keys(jsonbData),
-      filtered_fields: RESERVED_FIELDS.filter(field => field in body),
+      contact_correlation: {
+        method: contactLookupMethod,
+        hubspot_record_id: body.contact_record_id || null,
+        contact_id: contactId
+      },
+      activity_creation: {
+        attempted: !!contactData?.id,
+        success: activityCreated,
+        error: activityError,
+        engagement_score: contactData?.engagement_score || null
+      },
+      fields_processed: {
+        structured_fields: Object.keys(structuredData),
+        jsonb_fields: Object.keys(jsonbData),
+        new_clay_fields: ['job_title', 'company_headcount', 'alert_creation_date'].filter(field => body[field]),
+        filtered_fields: RESERVED_FIELDS.filter(field => field in body)
+      },
       event_type_mapped: body.type !== mappedType ? `${body.type} → ${mappedType}` : null,
       data_processing: {
         total_fields: Object.keys(allFields).length,
-        structured_count: Object.keys(structuredData).length,
+        structured_count: Object.keys(structuredData).length + 3, // +3 for new Clay fields
         jsonb_count: Object.keys(jsonbData).length,
         reserved_filtered: RESERVED_FIELDS.filter(field => field in body).length
       }
