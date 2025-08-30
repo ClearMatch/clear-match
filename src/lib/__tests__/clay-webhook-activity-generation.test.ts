@@ -1,5 +1,3 @@
-import { describe, it, expect } from '@jest/globals';
-
 // Test the priority calculation logic
 describe('Clay Webhook Activity Generation', () => {
   // Priority calculation using Clay event types directly
