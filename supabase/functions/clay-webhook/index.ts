@@ -89,21 +89,46 @@ function parseDate(dateString: string): string | null {
   }
 }
 
-// Event priority weights for activity generation
-const EVENT_PRIORITIES: Record<string, number> = {
-  'job-posting': 7,
-  'funding-event': 8,
-  'layoff': 6,
-  'new-job': 5,
-  'birthday': 3,
-  'none': 1
+// Mapping from Clay event types to existing activity types 
+// Uses the existing EVENT_IMPORTANCE_MAPPING from priorityCalculation.ts
+const CLAY_EVENT_TO_ACTIVITY_TYPE: Record<string, string> = {
+  'job-posting': 'new-job-posting',     // Importance: 10 (Highest)
+  'funding-event': 'funding-news',      // Importance: 8 (Medium-High) 
+  'layoff': 'laid-off',                 // Importance: 9 (High)
+  'new-job': 'new-job-posting',         // Importance: 10 (Highest)
+  'birthday': 'birthday',               // Importance: 8 (Medium-High)
+  'none': 'follow-up'                   // Importance: 6 (Medium)
 };
 
-// Calculate event priority with modifiers
-function calculateEventPriority(eventType: string, eventData: any): number {
-  let basePriority = EVENT_PRIORITIES[eventType] || 1;
+// Event importance scores from existing system (copied from priorityCalculation.ts)
+const EVENT_IMPORTANCE_MAPPING: Record<string, number> = {
+  'new-job-posting': 10,
+  'funding-news': 8,
+  'laid-off': 9,
+  'birthday': 8,
+  'follow-up': 6,
+  'open-to-work': 9,
+  'interview': 9,
+  'company-layoffs': 8,
+  'meeting': 8,
+  'm-and-a-activity': 6,
+  'email-reply-received': 6,
+  'call': 6,
+  'video': 6,
+  'holiday': 4,
+  'personal-interest-tag': 4,
+  'email': 4,
+  'text': 4,
+  'dormant-status': 2
+};
+
+// Calculate event priority using existing system with Clay event modifiers
+function calculateEventPriority(clayEventType: string, eventData: any): number {
+  // Map Clay event type to activity type
+  const activityType = CLAY_EVENT_TO_ACTIVITY_TYPE[clayEventType] || 'follow-up';
   
-  // Apply modifiers
+  // Get base importance from existing system
+  let baseImportance = EVENT_IMPORTANCE_MAPPING[activityType] || 6;
   let modifiers = 0;
   
   // Recent events modifier (< 7 days)
@@ -129,7 +154,7 @@ function calculateEventPriority(eventType: string, eventData: any): number {
     }
   }
   
-  return basePriority + modifiers;
+  return baseImportance + modifiers;
 }
 
 // Generate subject line based on event type
@@ -229,15 +254,20 @@ async function generateActivityFromEvent(
   engagementScore: number
 ): Promise<string | null> {
   try {
-    const eventPriority = calculateEventPriority(event.type, event);
+    const eventImportance = calculateEventPriority(event.type, event);
+    const activityType = CLAY_EVENT_TO_ACTIVITY_TYPE[event.type] || 'follow-up';
     
-    // Calculate activity priority: min(10, engagement_score × event_priority / 10)
-    // Note: activities table has CHECK constraint for priority 1-6, not 1-10
-    const calculatedPriority = Math.min(6, Math.ceil(engagementScore * eventPriority / 10));
-    const activityPriority = Math.max(1, calculatedPriority); // Ensure minimum priority of 1
+    // Use existing priority calculation system: engagement_score × event_importance
+    // Map result to 1-4 priority system (activities use 1-4, not 1-6)
+    const calculatedScore = engagementScore * eventImportance;
+    let activityPriority = 1; // Default to Low
+    if (calculatedScore >= 80) activityPriority = 4; // Critical
+    else if (calculatedScore >= 60) activityPriority = 3; // High
+    else if (calculatedScore >= 40) activityPriority = 2; // Medium
+    else activityPriority = 1; // Low
     
     const activityData = {
-      type: 'follow-up', // This matches the activities_type_check constraint
+      type: activityType, // Use mapped activity type from existing system
       contact_id: contactId,
       event_id: event.id,
       organization_id: organizationId,
@@ -250,7 +280,9 @@ async function generateActivityFromEvent(
     };
     
     console.log('Creating activity with data:', {
-      type: activityData.type,
+      clay_event_type: event.type,
+      mapped_activity_type: activityData.type,
+      calculated_score: calculatedScore,
       priority: activityData.priority,
       subject: activityData.subject,
       due_date: activityData.due_date,
