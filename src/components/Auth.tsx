@@ -19,6 +19,12 @@ export function Auth() {
   // Check for messages from middleware
   const messageFromUrl = searchParams.get('message');
   const errorFromUrl = searchParams.get('error');
+  
+  // Set signup mode based on URL parameter
+  useEffect(() => {
+    const mode = searchParams.get('mode');
+    setIsSignUp(mode === 'signup');
+  }, [searchParams]);
 
   // Clear any corrupted session on component mount
   useEffect(() => {

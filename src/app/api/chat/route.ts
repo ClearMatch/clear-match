@@ -154,6 +154,7 @@ Your capabilities:
 - Provide guidance on workflow optimization
 - Assist with understanding recruitment metrics
 - Offer suggestions for improving candidate engagement
+- Create and manage tasks/activities for users
 
 Guidelines:
 - Be helpful, professional, and concise
@@ -161,6 +162,12 @@ Guidelines:
 - If asked about technical implementation details, provide clear explanations
 - When discussing data analysis, suggest actionable insights
 - Always maintain a supportive and encouraging tone
+
+Task Creation Guidelines:
+- When a user wants to create a task, ask for a subject and description if they haven't provided them
+- Don't call the createActivity function until you have both subject and description
+- Be conversational and helpful in gathering the required information
+- After successfully creating a task, provide the user with a summary and link to view the task
 
 Current user ID: ${user.id}`;
 
@@ -201,26 +208,59 @@ Current user ID: ${user.id}`;
       }),
       
       createActivity: tool({
-        description: 'Create a new activity or task, optionally associated with a contact',
+        description: 'Create a new activity or task. If the user hasn\'t provided a subject or description, ask them for the missing information instead of calling this function. Only call this function when you have both subject and description.',
         parameters: z.object({
           contactId: z.string().optional().describe('ID of the contact this activity is for (optional)'),
-          type: z.enum(['follow-up', 'interview', 'call', 'email', 'meeting', 'text', 'video']).default('follow-up').describe('Type of activity'),
-          subject: z.string().describe('Brief subject/title of the activity'),
-          description: z.string().describe('Detailed description of the activity'),
+          type: z.enum([
+            // Original types from database constraint
+            'none', 'email', 'call', 'video', 'text',
+            // New event types from GitHub issue #138
+            'new-job-posting', 'open-to-work', 'laid-off', 'interview', 
+            'funding-news', 'company-layoffs', 'birthday', 'meeting',
+            'm-and-a-activity', 'email-reply-received', 'follow-up', 
+            'holiday', 'personal-interest-tag', 'dormant-status'
+          ]).default('follow-up').describe('Type of activity (must match database constraint exactly)'),
+          subject: z.string().min(1).describe('Brief subject/title of the activity - REQUIRED'),
+          description: z.string().min(1).describe('Detailed description of the activity - REQUIRED'),
           dueDate: z.string().optional().describe('Due date in ISO format (optional, defaults to 1 week from now)'),
           priority: z.number().min(1).max(4).optional().default(2).describe('Priority level: 1=Low, 2=Medium, 3=High, 4=Critical')
         }),
         // @ts-ignore - AI SDK v5 tool typing compatibility
         execute: async (params: CreateActivityParams) => {
           console.log('🛠️ Executing createActivity with params:', JSON.stringify(params, null, 2));
+          console.log('🔍 Activity type received:', params.type, 'typeof:', typeof params.type);
           
-          // Use params directly since Zod validation ensures correct types
-          const processedParams: CreateActivityParams = params;
+          // Ensure defaults are applied correctly (AI SDK v5 compatibility fix)
+          const processedParams: CreateActivityParams = {
+            ...params,
+            type: params.type || 'follow-up', // Explicit default handling
+            priority: params.priority || 2    // Explicit default handling
+          };
           
           console.log('🔄 Processed params:', JSON.stringify(processedParams, null, 2));
+          console.log('🔍 Final activity type to database:', processedParams.type);
           
           const result = await createActivity(processedParams, user.id);
           console.log('✅ createActivity result:', result);
+          
+          // Enhance the result with better user feedback and links
+          if (result.success && result.data && result.data.id) {
+            return {
+              success: true,
+              message: `✅ ${result.message}`,
+              details: `Task created successfully with the following details:
+• Subject: "${result.data.subject}"
+• Type: ${result.data.type}
+• Priority: ${result.data.priority === 1 ? 'Low' : result.data.priority === 2 ? 'Medium' : result.data.priority === 3 ? 'High' : 'Critical'}
+• Due Date: ${result.data.dueDate}
+• Status: ${result.data.status}
+
+You can view the full task details at: ${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}${result.link}`,
+              taskLink: result.link,
+              taskId: result.data.id
+            };
+          }
+          
           return result;
         },
       }),
@@ -314,7 +354,9 @@ Current user ID: ${user.id}`;
     console.log('✅ streamText created successfully');
 
     // Return the streaming response in UI message format
-    return result.toUIMessageStreamResponse();
+    const streamResponse = result.toUIMessageStreamResponse();
+    console.log('📤 Returning stream response to client');
+    return streamResponse;
 
   } catch (error) {
     console.error('Chat API error:', error);

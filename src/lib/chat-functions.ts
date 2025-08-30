@@ -112,7 +112,14 @@ export interface SearchContactsParams {
 
 export interface CreateActivityParams {
   contactId?: string;
-  type: 'follow-up' | 'interview' | 'call' | 'email' | 'meeting' | 'text' | 'video';
+  type: 
+    // Original types from database constraint
+    | 'none' | 'email' | 'call' | 'video' | 'text'
+    // New event types from GitHub issue #138
+    | 'new-job-posting' | 'open-to-work' | 'laid-off' | 'interview'
+    | 'funding-news' | 'company-layoffs' | 'birthday' | 'meeting'
+    | 'm-and-a-activity' | 'email-reply-received' | 'follow-up'
+    | 'holiday' | 'personal-interest-tag' | 'dormant-status';
   subject: string;
   description: string;
   dueDate?: string;
@@ -241,6 +248,19 @@ export async function createActivity(params: CreateActivityParams, userId: strin
     dueDate,
     priority = 2
   } = params;
+
+  // Validate required parameters (should be handled by AI tool description, but keep as safety net)
+  if (!type) {
+    throw new Error('Activity type is required and cannot be null or empty');
+  }
+  
+  if (!subject?.trim()) {
+    throw new Error('Activity subject is required and cannot be empty');
+  }
+  
+  if (!description?.trim()) {
+    throw new Error('Activity description is required and cannot be empty');
+  }
 
   // Use service role client for server-side operations
   const supabase = await createSupabaseServerClient(true);

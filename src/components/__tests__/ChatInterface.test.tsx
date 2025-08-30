@@ -163,8 +163,7 @@ describe('ChatInterface', () => {
       await user.click(sendButton);
 
       expect(mockSendMessage).toHaveBeenCalledWith(
-        { text: 'Test message' },
-        { body: { model: 'anthropic/claude-sonnet-4' } }
+        { text: 'Test message' }
       );
     });
 
@@ -176,8 +175,7 @@ describe('ChatInterface', () => {
       await user.keyboard('{Enter}');
 
       expect(mockSendMessage).toHaveBeenCalledWith(
-        { text: 'Test message' },
-        { body: { model: 'anthropic/claude-sonnet-4' } }
+        { text: 'Test message' }
       );
     });
 

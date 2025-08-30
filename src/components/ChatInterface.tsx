@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useChat, UIMessage } from '@ai-sdk/react';
+import { useChat } from '@ai-sdk/react';
+import type { UIMessage } from '@ai-sdk/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -96,10 +97,24 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
     sendMessage,
     error,
     status,
-  } = useChat();
+  } = useChat({
+    onError: (error: Error) => {
+      console.error('Chat error:', error);
+      console.error('Error details:', error?.message || error);
+    },
+    onFinish: (message: { message: UIMessage }) => {
+      console.log('Chat finished successfully:', message);
+    },
+  });
 
   // Convert status to loading state (fallback to false if status doesn't exist)
   const isLoading = status ? (status === 'submitted' || status === 'streaming') : false;
+  
+  // Debug logging for status changes
+  useEffect(() => {
+    console.log('Chat status changed:', status, 'isLoading:', isLoading);
+    console.log('Messages count:', messages?.length || 0);
+  }, [status, isLoading, messages?.length]);
 
   // Limit messages to prevent memory issues and optimize content processing
   const displayMessages = useMemo(() => {
@@ -127,7 +142,13 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
       let textContent = '';
       
       try {
-        // AI SDK v2 uses 'parts' array for message content
+        // Debug logging
+        if (message.role === 'assistant') {
+          console.log('Processing assistant message:', message);
+          console.log('Message parts:', message.parts);
+        }
+        
+        // AI SDK v5 message processing - use parts array
         if (message.parts && Array.isArray(message.parts)) {
           const textParts: string[] = [];
           
@@ -198,13 +219,34 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
           textContent = textParts.join(' ').trim();
         }
         
-        // Fallback for older message formats or direct content
+        // Fallback for older message formats or direct text
         if (!textContent) {
-          if ('content' in message && message.content && typeof message.content === 'string') {
-            textContent = message.content;
-          } else if ('text' in message && message.text && typeof message.text === 'string') {
+          if ('text' in message && message.text && typeof message.text === 'string') {
             textContent = message.text;
           }
+        }
+        
+        // Enhanced fallback - try to extract any available text content
+        if (!textContent && message.parts && Array.isArray(message.parts)) {
+          // Look for any text content in parts, including streaming text
+          const allText = message.parts
+            .filter(part => part && typeof part === 'object')
+            .map(part => {
+              // Extract text from various formats
+              if ('text' in part && part.text) return String(part.text);
+              if ('content' in part && part.content) return String(part.content);
+              if ('value' in part && part.value) return String(part.value);
+              return '';
+            })
+            .filter(text => text.trim())
+            .join(' ');
+          
+          if (allText) textContent = allText;
+        }
+        
+        // Log for debugging when we can't extract content
+        if (!textContent && message.role === 'assistant') {
+          console.log('Could not extract assistant message content:', message);
         }
         
         // Final fallback
@@ -319,23 +361,25 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
    */
   const onSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input?.trim() || isLoading || !user) return;
+    console.log('Form submitted with input:', input);
+    console.log('User:', !!user, 'Loading:', isLoading);
+    
+    if (!input?.trim() || isLoading || !user) {
+      console.log('Submission blocked - empty input, loading, or no user');
+      return;
+    }
     
     setShowSuggestions(false); // Hide suggestions when user sends message
     
     // Send message using the sendMessage function
     const messageText = input.trim();
+    console.log('Sending message:', messageText);
     setInput(''); // Clear input immediately
     
     try {
-      sendMessage(
-        { text: messageText },
-        {
-          body: {
-            model: selectedModel,
-          },
-        }
-      );
+      console.log('Calling sendMessage with:', messageText, { body: { model: selectedModel } });
+      sendMessage({ text: messageText });
+      console.log('sendMessage called successfully');
     } catch (error) {
       console.error('Failed to send message:', error);
     }
