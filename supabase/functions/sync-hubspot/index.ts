@@ -70,6 +70,11 @@ function transformHubSpotContact(hubspotContact: HubSpotContact, organizationId:
     }
   }
 
+  // Add hubspot_record_id for contact correlation (same as hs_object_id)
+  if (hubspotContact.properties.hs_object_id) {
+    contact.hubspot_record_id = hubspotContact.properties.hs_object_id;
+  }
+
   // Ensure required fields have defaults
   if (!contact.first_name && !contact.last_name) {
     contact.first_name = 'Unknown';
@@ -114,7 +119,7 @@ async function upsertContacts(supabase: any, contacts: any[]): Promise<number> {
   const { data, error } = await supabase
     .from('contacts')
     .upsert(contacts, {
-      onConflict: 'hubspot_id',
+      onConflict: 'hubspot_record_id',
       ignoreDuplicates: false
     })
     .select('id');
