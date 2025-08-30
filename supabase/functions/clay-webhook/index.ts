@@ -89,46 +89,21 @@ function parseDate(dateString: string): string | null {
   }
 }
 
-// Mapping from Clay event types to existing activity types 
-// Uses the existing EVENT_IMPORTANCE_MAPPING from priorityCalculation.ts
-const CLAY_EVENT_TO_ACTIVITY_TYPE: Record<string, string> = {
-  'job-posting': 'new-job-posting',     // Importance: 10 (Highest)
-  'funding-event': 'funding-news',      // Importance: 8 (Medium-High) 
-  'layoff': 'laid-off',                 // Importance: 9 (High)
-  'new-job': 'new-job-posting',         // Importance: 10 (Highest)
-  'birthday': 'birthday',               // Importance: 8 (Medium-High)
-  'none': 'follow-up'                   // Importance: 6 (Medium)
+// Clay event types with their importance scores
+// Keep Clay event types as-is, assign importance based on business value
+const CLAY_EVENT_IMPORTANCE: Record<string, number> = {
+  'job-posting': 10,        // Highest - new opportunities
+  'funding-event': 8,       // High - company growth signals
+  'layoff': 9,              // High - immediate outreach opportunity
+  'new-job': 8,             // High - relationship status change
+  'birthday': 6,            // Medium - personal touch opportunity
+  'none': 4                 // Low - generic events
 };
 
-// Event importance scores from existing system (copied from priorityCalculation.ts)
-const EVENT_IMPORTANCE_MAPPING: Record<string, number> = {
-  'new-job-posting': 10,
-  'funding-news': 8,
-  'laid-off': 9,
-  'birthday': 8,
-  'follow-up': 6,
-  'open-to-work': 9,
-  'interview': 9,
-  'company-layoffs': 8,
-  'meeting': 8,
-  'm-and-a-activity': 6,
-  'email-reply-received': 6,
-  'call': 6,
-  'video': 6,
-  'holiday': 4,
-  'personal-interest-tag': 4,
-  'email': 4,
-  'text': 4,
-  'dormant-status': 2
-};
-
-// Calculate event priority using existing system with Clay event modifiers
+// Calculate event priority using Clay event importance with modifiers
 function calculateEventPriority(clayEventType: string, eventData: any): number {
-  // Map Clay event type to activity type
-  const activityType = CLAY_EVENT_TO_ACTIVITY_TYPE[clayEventType] || 'follow-up';
-  
-  // Get base importance from existing system
-  let baseImportance = EVENT_IMPORTANCE_MAPPING[activityType] || 6;
+  // Get base importance for Clay event type
+  let baseImportance = CLAY_EVENT_IMPORTANCE[clayEventType] || 4;
   let modifiers = 0;
   
   // Recent events modifier (< 7 days)
@@ -255,7 +230,6 @@ async function generateActivityFromEvent(
 ): Promise<string | null> {
   try {
     const eventImportance = calculateEventPriority(event.type, event);
-    const activityType = CLAY_EVENT_TO_ACTIVITY_TYPE[event.type] || 'follow-up';
     
     // Use existing priority calculation system: engagement_score × event_importance
     // Map result to 1-4 priority system (activities use 1-4, not 1-6)
@@ -267,7 +241,7 @@ async function generateActivityFromEvent(
     else activityPriority = 1; // Low
     
     const activityData = {
-      type: activityType, // Use mapped activity type from existing system
+      type: event.type, // Keep Clay event type directly
       contact_id: contactId,
       event_id: event.id,
       organization_id: organizationId,
@@ -280,8 +254,7 @@ async function generateActivityFromEvent(
     };
     
     console.log('Creating activity with data:', {
-      clay_event_type: event.type,
-      mapped_activity_type: activityData.type,
+      event_type: event.type,
       calculated_score: calculatedScore,
       priority: activityData.priority,
       subject: activityData.subject,

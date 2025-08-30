@@ -2,25 +2,16 @@ import { describe, it, expect } from '@jest/globals';
 
 // Test the priority calculation logic
 describe('Clay Webhook Activity Generation', () => {
-  // Priority calculation using existing EVENT_IMPORTANCE_MAPPING system
+  // Priority calculation using Clay event types directly
   describe('Priority Calculation', () => {
-    // Maps Clay event types to existing activity types
-    const CLAY_EVENT_TO_ACTIVITY_TYPE: Record<string, string> = {
-      'job-posting': 'new-job-posting',     // Importance: 10
-      'funding-event': 'funding-news',      // Importance: 8
-      'layoff': 'laid-off',                 // Importance: 9
-      'new-job': 'new-job-posting',         // Importance: 10
-      'birthday': 'birthday',               // Importance: 8
-      'none': 'follow-up'                   // Importance: 6
-    };
-
-    // Existing event importance mapping
-    const EVENT_IMPORTANCE_MAPPING: Record<string, number> = {
-      'new-job-posting': 10,
-      'funding-news': 8,
-      'laid-off': 9,
-      'birthday': 8,
-      'follow-up': 6
+    // Clay event types with their importance scores
+    const CLAY_EVENT_IMPORTANCE: Record<string, number> = {
+      'job-posting': 10,        // Highest - new opportunities
+      'funding-event': 8,       // High - company growth signals
+      'layoff': 9,              // High - immediate outreach opportunity
+      'new-job': 8,             // High - relationship status change
+      'birthday': 6,            // Medium - personal touch opportunity
+      'none': 4                 // Low - generic events
     };
 
     const calculateEventPriority = (
@@ -30,9 +21,8 @@ describe('Clay Webhook Activity Generation', () => {
       companyHeadcount?: number,
       postedDate?: string
     ): number => {
-      // Map Clay event type to activity type
-      const activityType = CLAY_EVENT_TO_ACTIVITY_TYPE[clayEventType] || 'follow-up';
-      let baseImportance: number = EVENT_IMPORTANCE_MAPPING[activityType] || 6;
+      // Get base importance for Clay event type
+      let baseImportance: number = CLAY_EVENT_IMPORTANCE[clayEventType] || 4;
       
       // Apply priority modifiers
       let modifiers = 0;
@@ -66,21 +56,21 @@ describe('Clay Webhook Activity Generation', () => {
 
     it('should calculate correct priority for job-posting events', () => {
       const priority = calculateEventPriority('job-posting', 8, 'Software Engineer', 500);
-      // job-posting → new-job-posting (importance: 10)
+      // job-posting (importance: 10)
       // 8 × 10 = 80 → Priority 4 (Critical)
       expect(priority).toBe(4);
     });
 
     it('should apply senior position modifier', () => {
       const priority = calculateEventPriority('job-posting', 8, 'Senior Software Engineer', 500);
-      // job-posting → new-job-posting (importance: 10) + senior modifier (+1)
+      // job-posting (importance: 10) + senior modifier (+1)
       // 8 × (10 + 1) = 88 → Priority 4 (Critical)
       expect(priority).toBe(4);
     });
 
     it('should apply large company modifier', () => {
       const priority = calculateEventPriority('job-posting', 8, 'Software Engineer', 1500);
-      // job-posting → new-job-posting (importance: 10) + large company modifier (+1)
+      // job-posting (importance: 10) + large company modifier (+1)
       // 8 × (10 + 1) = 88 → Priority 4 (Critical)
       expect(priority).toBe(4);
     });
@@ -88,22 +78,22 @@ describe('Clay Webhook Activity Generation', () => {
     it('should apply recent event modifier', () => {
       const recentDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(); // 3 days ago
       const priority = calculateEventPriority('job-posting', 8, 'Software Engineer', 500, recentDate);
-      // job-posting → new-job-posting (importance: 10) + recent modifier (+1)
+      // job-posting (importance: 10) + recent modifier (+1)
       // 8 × (10 + 1) = 88 → Priority 4 (Critical)
       expect(priority).toBe(4);
     });
 
-    it('should calculate medium priority for moderate engagement', () => {
+    it('should calculate medium priority for funding events', () => {
       const priority = calculateEventPriority('funding-event', 6, 'Manager', 800);
-      // funding-event → funding-news (importance: 8)
+      // funding-event (importance: 8)
       // 6 × 8 = 48 → Priority 2 (Medium)
       expect(priority).toBe(2);
     });
 
     it('should handle low engagement scores', () => {
-      const priority = calculateEventPriority('birthday', 3, 'Intern', 50);
-      // birthday → birthday (importance: 8)
-      // 3 × 8 = 24 → Priority 1 (Low)
+      const priority = calculateEventPriority('birthday', 4, 'Intern', 50);
+      // birthday (importance: 6)
+      // 4 × 6 = 24 → Priority 1 (Low)
       expect(priority).toBe(1);
     });
   });
