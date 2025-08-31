@@ -23,33 +23,79 @@ const EVENT_TYPE_MAPPING: Record<string, string> = {
   // No mapping needed - Clay's 'job-posting' matches our database constraint
 };
 
-// Map Clay payload fields to database columns
+// Map Clay payload fields to database columns - comprehensive mapping for all Clay fields
 const CLAY_FIELD_MAPPING: Record<string, string> = {
+  // Job details
   'position': 'position',
-  'posted_on': 'posted_on',
+  'posted_on': 'posted_on', 
   'metro_area': 'metro_area',
   'company_name': 'company_name',
-  'contact_name': 'contact_name',
   'company_website': 'company_website',
   'job_listing_url': 'job_listing_url',
   'company_location': 'company_location',
+  
+  // Compensation fields  
+  'compensation_target': 'compensation_target',
+  'compensation_minimum': 'compensation_minimum',
+  'additional_notes_on_compensation': 'additional_notes_on_compensation',
+  
+  // Work preferences
+  'workplace_preference': 'workplace_preference',
+  'work_authorization': 'work_authorization',
+  'work_authorization_notes': 'work_authorization_notes',
+  
+  // Job search context
+  'ideal_role_description': 'ideal_role_description',
+  'candidate_search_criteria': 'candidate_search_criteria',
+  'current_status_job_search': 'current_status_job_search',
+  'relationship_to_job_market': 'relationship_to_job_market',
+  'current_workplace_situation': 'current_workplace_situation',
+  
+  // Contact fields (kept for backwards compatibility if needed)
+  'contact_name': 'contact_name',
   'contact_linkedin': 'contact_linkedin',
 };
 
 // Reserved database column names to filter from data JSONB
+// These fields have dedicated columns and should not be stored in JSONB
 const RESERVED_FIELDS = [
+  // Database system fields
   'id',
   'contact_id',
-  'contact_record_id', // Add new correlation field
+  'contact_record_id',
   'organization_id',
   'created_at',
   'updated_at',
   'created_by',
   'type',
-  'email', // Add email to reserved fields since it's used for contact lookup
-  'job_title', // New Clay field with dedicated column
-  'company_headcount', // New Clay field with dedicated column
-  'alert_creation_date' // New Clay field with dedicated column
+  'email',
+  
+  // Existing Clay fields with dedicated columns
+  'job_title',
+  'company_headcount',
+  'alert_creation_date',
+  
+  // All Clay fields mapped to dedicated columns
+  'position',
+  'posted_on',
+  'metro_area',
+  'company_name',
+  'company_website',
+  'job_listing_url',
+  'company_location',
+  'compensation_target',
+  'compensation_minimum',
+  'additional_notes_on_compensation',
+  'workplace_preference',
+  'work_authorization',
+  'work_authorization_notes',
+  'ideal_role_description',
+  'candidate_search_criteria',
+  'current_status_job_search',
+  'relationship_to_job_market',
+  'current_workplace_situation',
+  'contact_name',
+  'contact_linkedin',
 ];
 
 interface WebhookLog {
@@ -555,7 +601,7 @@ Deno.serve(async (req) => {
         const { data: contact, error: contactError } = await supabase
           .from('contacts')
           .select('id, engagement_score')
-          .eq('hubspot_record_id', body.contact_record_id.trim())
+          .eq('hubspot_id', body.contact_record_id.trim())
           .eq('organization_id', organizationId)
           .single();
         
@@ -583,7 +629,7 @@ Deno.serve(async (req) => {
         } else {
           contactId = contact?.id || null;
           contactData = contact;
-          contactLookupMethod = 'hubspot_record_id';
+          contactLookupMethod = 'hubspot_id';
           console.log(`Contact found via HubSpot record ID: ${contactId}, engagement score: ${contact?.engagement_score}`);
         }
       } catch (contactLookupError) {
@@ -694,7 +740,7 @@ Deno.serve(async (req) => {
       contact_linked: !!contactId,
       contact_correlation: {
         method: contactLookupMethod,
-        hubspot_record_id: body.contact_record_id || null,
+        hubspot_id: body.contact_record_id || null,
         contact_id: contactId
       },
       activity_creation: {
