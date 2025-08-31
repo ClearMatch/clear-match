@@ -27,7 +27,7 @@ const CLAY_TO_ACTIVITY_TYPE_MAPPING: Record<string, string> = {
   'none': 'follow-up'                 // Default fallback
 };
 
-// Map Clay payload fields to database columns - comprehensive mapping for all Clay fields
+// Map Clay payload fields to database columns - job event focused fields only
 const CLAY_FIELD_MAPPING: Record<string, string> = {
   // Job details
   'position': 'position',
@@ -37,23 +37,6 @@ const CLAY_FIELD_MAPPING: Record<string, string> = {
   'company_website': 'company_website',
   'job_listing_url': 'job_listing_url',
   'company_location': 'company_location',
-  
-  // Compensation fields  
-  'compensation_target': 'compensation_target',
-  'compensation_minimum': 'compensation_minimum',
-  'additional_notes_on_compensation': 'additional_notes_on_compensation',
-  
-  // Work preferences
-  'workplace_preference': 'workplace_preference',
-  'work_authorization': 'work_authorization',
-  'work_authorization_notes': 'work_authorization_notes',
-  
-  // Job search context
-  'ideal_role_description': 'ideal_role_description',
-  'candidate_search_criteria': 'candidate_search_criteria',
-  'current_status_job_search': 'current_status_job_search',
-  'relationship_to_job_market': 'relationship_to_job_market',
-  'current_workplace_situation': 'current_workplace_situation',
   
   // Contact fields (kept for backwards compatibility if needed)
   'contact_name': 'contact_name',
@@ -78,7 +61,7 @@ const RESERVED_FIELDS = [
   'company_headcount',
   'alert_creation_date',
   
-  // All Clay fields mapped to dedicated columns
+  // Clay job event fields with dedicated columns
   'position',
   'posted_on',
   'metro_area',
@@ -86,17 +69,6 @@ const RESERVED_FIELDS = [
   'company_website',
   'job_listing_url',
   'company_location',
-  'compensation_target',
-  'compensation_minimum',
-  'additional_notes_on_compensation',
-  'workplace_preference',
-  'work_authorization',
-  'work_authorization_notes',
-  'ideal_role_description',
-  'candidate_search_criteria',
-  'current_status_job_search',
-  'relationship_to_job_market',
-  'current_workplace_situation',
   'contact_name',
   'contact_linkedin',
 ];
@@ -182,30 +154,41 @@ function calculateEventPriority(clayEventType: string, eventData: any): number {
 }
 
 // Generate subject line based on event type
-function generateActivitySubject(eventType: string, eventData: any): string {
+function generateActivitySubject(eventType: string, eventData: any, contactData: any = null): string {
+  // Generate contact name part
+  const getContactName = () => {
+    if (!contactData?.first_name && !contactData?.last_name) {
+      return "Deleted Contact";
+    }
+    const firstName = contactData?.first_name || "";
+    const lastName = contactData?.last_name || "";
+    return `${firstName} ${lastName}`.trim() || "Unknown Contact";
+  };
+  
+  const contactName = getContactName();
+  
   switch (eventType) {
     case 'job-posting':
-      const position = eventData.position || eventData.job_title || 'Position';
       const company = eventData.company_name || 'Company';
-      return `Follow up: ${position} opening at ${company}`;
+      return `${company} job posting from ${contactName}`;
     
     case 'funding-event':
       const fundingCompany = eventData.company_name || 'Company';
-      return `Follow up: Funding event at ${fundingCompany}`;
+      return `${fundingCompany} funding news from ${contactName}`;
     
     case 'layoff':
       const layoffCompany = eventData.company_name || 'Company';
-      return `Outreach opportunity: Layoffs at ${layoffCompany}`;
+      return `${layoffCompany} layoff update from ${contactName}`;
     
     case 'new-job':
-      const newJobCompany = eventData.company_name || 'new company';
-      return `Congratulate on new position at ${newJobCompany}`;
+      const newJobCompany = eventData.company_name || 'Company';
+      return `${newJobCompany} new job from ${contactName}`;
     
     case 'birthday':
-      return 'Send birthday wishes';
+      return `Birthday reminder for ${contactName}`;
     
     default:
-      return `Follow up on ${eventType} event`;
+      return `${eventType} event from ${contactName}`;
   }
 }
 
@@ -275,7 +258,8 @@ async function generateActivityFromEvent(
   event: any, 
   contactId: string, 
   organizationId: string, 
-  engagementScore: number
+  engagementScore: number,
+  contactData: any = null
 ): Promise<string | null> {
   try {
     const eventImportance = calculateEventPriority(event.type, event);
@@ -296,7 +280,7 @@ async function generateActivityFromEvent(
       organization_id: organizationId,
       priority: activityPriority,
       status: 'todo', // This matches the activities_status_check constraint
-      subject: generateActivitySubject(event.type, event),
+      subject: generateActivitySubject(event.type, event, contactData),
       content: generateActivityContent(event.type, event),
       due_date: calculateDueDate(event.type),
       created_by: null // System-generated
@@ -603,7 +587,7 @@ Deno.serve(async (req) => {
         console.log(`Looking up contact by HubSpot record ID: ${body.contact_record_id}`);
         const { data: contact, error: contactError } = await supabase
           .from('contacts')
-          .select('id, engagement_score')
+          .select('id, engagement_score, first_name, last_name')
           .eq('hubspot_id', body.contact_record_id.trim())
           .eq('organization_id', organizationId)
           .single();
@@ -646,7 +630,7 @@ Deno.serve(async (req) => {
         console.log(`Fallback: Looking up contact by email: ${email}`);
         const { data: contact, error: contactError } = await supabase
           .from('contacts')
-          .select('id, engagement_score')
+          .select('id, engagement_score, first_name, last_name')
           .eq('email', email.toLowerCase().trim())
           .eq('organization_id', organizationId)
           .single();
@@ -666,6 +650,25 @@ Deno.serve(async (req) => {
         console.warn('Contact lookup by email failed:', contactLookupError);
         // Continue without linking contact
       }
+    }
+
+    // Log contact lookup results for debugging
+    if (!contactId) {
+      console.warn('No contact found for event processing:', {
+        hubspot_record_id: body.contact_record_id || 'not_provided',
+        email: email || 'not_provided',
+        event_type: clayEventType,
+        company_name: structuredData.company_name || body.company_name,
+        job_title: body.job_title || structuredData.position,
+        warning: 'Event will be created without contact link - activities cannot be generated'
+      });
+    } else {
+      console.log('Contact successfully linked to event:', {
+        contact_id: contactId,
+        lookup_method: contactLookupMethod,
+        engagement_score: contactData?.engagement_score,
+        contact_name: `${contactData?.first_name || ''} ${contactData?.last_name || ''}`.trim()
+      });
     }
 
     // Prepare event data with both structured fields and JSONB
@@ -699,11 +702,58 @@ Deno.serve(async (req) => {
       .single();
 
     if (eventError) {
+      // Check for idempotency constraint violation (duplicate event)
+      if (eventError.code === '23505' && eventError.constraint === 'events_unique_job_posting') {
+        console.warn('Duplicate event detected (idempotency constraint):', {
+          type: clayEventType,
+          contact_id: contactId,
+          company_name: structuredData.company_name || body.company_name,
+          job_title: body.job_title || structuredData.position,
+          posted_on: structuredData.posted_on
+        });
+        
+        webhookLog.response_status = 200; // Return success for duplicates
+        webhookLog.error = null;
+        webhookLog.response_body = {
+          success: true,
+          duplicate_event: true,
+          message: 'Event already exists - idempotency maintained',
+          contact_linked: !!contactId,
+          event_type_used: clayEventType
+        };
+        await logWebhook(webhookLog);
+        
+        return new Response(
+          JSON.stringify(webhookLog.response_body),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      // Handle other database errors
+      console.error('Event creation database error:', {
+        error_code: eventError.code,
+        error_message: eventError.message,
+        constraint: eventError.constraint,
+        event_data: {
+          type: clayEventType,
+          contact_id: contactId,
+          company_name: structuredData.company_name || body.company_name,
+          job_title: body.job_title
+        }
+      });
+      
       webhookLog.response_status = 500;
       webhookLog.error = `Database error: ${eventError.message}`;
       await logWebhook(webhookLog);
       return new Response(
-        JSON.stringify({ error: 'Failed to save event' }),
+        JSON.stringify({ 
+          error: 'Failed to save event',
+          details: eventError.message,
+          error_code: eventError.code 
+        }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -714,25 +764,61 @@ Deno.serve(async (req) => {
     // Generate activity from event (Phase 5: Automatic Activity Creation)
     let activityCreated = false;
     let activityError = null;
+    let activitySkippedReason = null;
     
     try {
       if (event?.id && contactData?.id && contactData?.engagement_score !== undefined) {
+        console.log('Attempting to create activity for event:', {
+          event_id: event.id,
+          contact_id: contactData.id,
+          engagement_score: contactData.engagement_score,
+          event_type: clayEventType
+        });
+        
         const activityId = await generateActivityFromEvent(
           supabase,
           { ...eventData, id: event.id },
           contactData.id,
           eventData.organization_id,
-          contactData.engagement_score
+          contactData.engagement_score,
+          contactData
         );
         
         if (activityId) {
           activityCreated = true;
-          console.log(`Activity created: ${activityId} for event: ${event.id}`);
+          console.log(`Activity created successfully: ${activityId} for event: ${event.id}`);
+        } else {
+          activitySkippedReason = 'Activity generation returned null - check generateActivityFromEvent logic';
+          console.warn('Activity creation returned null:', {
+            event_id: event.id,
+            contact_id: contactData.id,
+            engagement_score: contactData.engagement_score
+          });
         }
+      } else {
+        // Log why activity creation was skipped
+        const missing = [];
+        if (!event?.id) missing.push('event_id');
+        if (!contactData?.id) missing.push('contact_id');
+        if (contactData?.engagement_score === undefined) missing.push('engagement_score');
+        
+        activitySkippedReason = `Missing required data: ${missing.join(', ')}`;
+        console.log('Activity creation skipped:', {
+          reason: activitySkippedReason,
+          event_id: event?.id || 'missing',
+          contact_id: contactData?.id || 'missing',
+          engagement_score: contactData?.engagement_score || 'missing',
+          has_contact_data: !!contactData
+        });
       }
     } catch (error) {
       activityError = error instanceof Error ? error.message : 'Unknown activity creation error';
-      console.error('Activity creation failed:', activityError);
+      console.error('Activity creation failed with error:', {
+        error: activityError,
+        event_id: event?.id,
+        contact_id: contactData?.id,
+        stack: error instanceof Error ? error.stack : undefined
+      });
       // Don't fail the webhook for activity creation errors - log and continue
     }
 
@@ -750,6 +836,7 @@ Deno.serve(async (req) => {
         attempted: !!contactData?.id,
         success: activityCreated,
         error: activityError,
+        skipped_reason: activitySkippedReason,
         engagement_score: contactData?.engagement_score || null
       },
       fields_processed: {
