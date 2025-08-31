@@ -17,10 +17,14 @@ const ALLOWED_EVENT_TYPES = [
   'new-job'
 ];
 
-// Map Clay event types to our database types
-// Clay sends 'job-posting' and we now store it as 'job-posting' (no mapping needed)
-const EVENT_TYPE_MAPPING: Record<string, string> = {
-  // No mapping needed - Clay's 'job-posting' matches our database constraint
+// Map Clay event types to database activity types
+const CLAY_TO_ACTIVITY_TYPE_MAPPING: Record<string, string> = {
+  'job-posting': 'new-job-posting',    // Clay: job-posting → DB: new-job-posting
+  'layoff': 'laid-off',               // Clay: layoff → DB: laid-off  
+  'funding-event': 'funding-news',    // Clay: funding-event → DB: funding-news
+  'birthday': 'birthday',             // Clay: birthday → DB: birthday (matches)
+  'new-job': 'follow-up',             // Clay: new-job → DB: follow-up (generic)
+  'none': 'follow-up'                 // Default fallback
 };
 
 // Map Clay payload fields to database columns - comprehensive mapping for all Clay fields
@@ -62,7 +66,6 @@ const RESERVED_FIELDS = [
   // Database system fields
   'id',
   'contact_id',
-  'contact_record_id',
   'organization_id',
   'created_at',
   'updated_at',
@@ -287,7 +290,7 @@ async function generateActivityFromEvent(
     else activityPriority = 1; // Low
     
     const activityData = {
-      type: event.type, // Keep Clay event type directly
+      type: CLAY_TO_ACTIVITY_TYPE_MAPPING[event.type] || 'follow-up', // Map Clay event type to activity type
       contact_id: contactId,
       event_id: event.id,
       organization_id: organizationId,
@@ -467,7 +470,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           error: 'Missing required field: type',
-          allowed_types: [...ALLOWED_EVENT_TYPES, ...Object.keys(EVENT_TYPE_MAPPING)]
+          allowed_types: ALLOWED_EVENT_TYPES
         }),
         { 
           status: 400, 
@@ -476,18 +479,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Map Clay event types to our database types
-    const mappedType = EVENT_TYPE_MAPPING[body.type] || body.type;
+    // Use Clay event type directly - validation happens later
+    const clayEventType = body.type;
 
     // Validate event type
-    if (!ALLOWED_EVENT_TYPES.includes(mappedType)) {
+    if (!ALLOWED_EVENT_TYPES.includes(clayEventType)) {
       webhookLog.response_status = 400;
       webhookLog.error = `Invalid event type: ${body.type}`;
       await logWebhook(webhookLog);
       return new Response(
         JSON.stringify({ 
           error: `Invalid event type: ${body.type}`,
-          allowed_types: [...ALLOWED_EVENT_TYPES, ...Object.keys(EVENT_TYPE_MAPPING)]
+          allowed_types: ALLOWED_EVENT_TYPES
         }),
         { 
           status: 400, 
@@ -536,7 +539,7 @@ Deno.serve(async (req) => {
     const jsonbData: Record<string, any> = {};
     
     // Enhanced data processing for job-posting events
-    if (mappedType === 'job-posting') {
+    if (clayEventType === 'job-posting') {
       console.log('Processing job-posting event with structured field mapping');
       
       // Process Clay fields into structured columns vs JSONB
@@ -578,7 +581,7 @@ Deno.serve(async (req) => {
       }
     } else {
       // For non-job events, keep current behavior (everything in JSONB)
-      console.log(`Processing ${mappedType} event - storing all data in JSONB`);
+      console.log(`Processing ${clayEventType} event - storing all data in JSONB`);
       for (const [key, value] of Object.entries(allFields)) {
         if (!RESERVED_FIELDS.includes(key)) {
           jsonbData[key] = value;
@@ -667,9 +670,9 @@ Deno.serve(async (req) => {
 
     // Prepare event data with both structured fields and JSONB
     const eventData = {
-      type: mappedType,  // Use the mapped type here
+      type: clayEventType,  // Use the Clay event type
       contact_id: contactId,
-      contact_record_id: body.contact_record_id || null, // Store HubSpot record ID for correlation
+      // Contact correlation handled via contact_id lookup using hubspot_id
       organization_id: organizationId,
       data: Object.keys(jsonbData).length > 0 ? jsonbData : null, // Only store JSONB if there's data
       // Add all structured fields dynamically
@@ -755,7 +758,7 @@ Deno.serve(async (req) => {
         new_clay_fields: ['job_title', 'company_headcount', 'alert_creation_date'].filter(field => body[field]),
         filtered_fields: RESERVED_FIELDS.filter(field => field in body)
       },
-      event_type_mapped: body.type !== mappedType ? `${body.type} → ${mappedType}` : null,
+      event_type_used: clayEventType,
       data_processing: {
         total_fields: Object.keys(allFields).length,
         structured_count: Object.keys(structuredData).length + 3, // +3 for new Clay fields

@@ -45,7 +45,8 @@ const FIELD_MAPPING = {
   'linkedinbio': 'linkedin_url',
   'website': 'github_url', // Using website field for additional social URLs
   'createdate': 'hubspot_created_date',
-  'lastmodifieddate': 'hubspot_modified_date'
+  'lastmodifieddate': 'hubspot_modified_date',
+  'hubspotscore': 'engagement_score' // HubSpot lead score for engagement tracking
 } as const;
 
 // Transform HubSpot contact to our database format
