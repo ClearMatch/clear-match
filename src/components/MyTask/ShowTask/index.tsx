@@ -20,6 +20,7 @@ import {
   getFullName,
   getPriorityLabel,
 } from "../Services/Types";
+import ActivityDataTable from "./ActivityDataTable";
 import ContactContext from "./ContactContext";
 import EventDetailsSection from "./EventDetailsSection";
 import JobPostingDetails from "./JobPostingDetails";
@@ -162,6 +163,9 @@ function ShowTask() {
                 </div>
               </div>
             </div>
+
+            {/* Comprehensive Activity Data Table */}
+            {taskData && <ActivityDataTable taskData={taskData} />}
 
             <PriorityCalculationBreakdown
               priority={taskData?.priority || 1}
