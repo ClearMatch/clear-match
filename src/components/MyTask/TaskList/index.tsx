@@ -57,15 +57,30 @@ function TaskList({
 
   const taskColumns: Column<ActivityWithRelations>[] = [
     {
-      key: "description",
-      header: "Title",
-      render: (row) => <span className="text-sm">{row.description}</span>,
+      key: "subject",
+      header: "Smart Title",
+      render: (row) => (
+        <span className="text-sm font-medium">
+          {row.subject || row.description || "No Title"}
+        </span>
+      ),
     },
     {
-      key: "due_date",
-      header: "Due Date",
+      key: "events",
+      header: "Company",
       render: (row) => (
-        <span className="text-sm">{formatDate(row.due_date)}</span>
+        <span className="text-sm">
+          {row.events?.company_name || "N/A"}
+        </span>
+      ),
+    },
+    {
+      key: "event_id",
+      header: "Job Title",
+      render: (row) => (
+        <span className="text-sm">
+          {row.events?.job_title || row.events?.position || "N/A"}
+        </span>
       ),
     },
     {
@@ -79,48 +94,28 @@ function TaskList({
       },
     },
     {
-      key: "assigned_to",
-      header: "Assigned To",
-      render: (row) => {
-        const { first_name, last_name } = row.assigned_to_profile || {};
-        return (
-          <span className="text-sm">{getFullName(first_name, last_name)}</span>
-        );
-      },
-    },
-    {
-      key: "created_by",
-      header: "Created By",
-      render: (row) => {
-        const { first_name, last_name } = row.profiles || {};
-        return (
-          <span className="text-sm">{getFullName(first_name, last_name)}</span>
-        );
-      },
-    },
-    {
       key: "type",
       header: "Type",
       render: (row) => <span className="text-sm">{row.type}</span>,
     },
     {
       key: "priority",
-      header: "Priority Level",
+      header: "Priority",
       render: (row) => (
         <span className="text-sm">{getPriorityLabel(row.priority)}</span>
+      ),
+    },
+    {
+      key: "due_date",
+      header: "Due Date",
+      render: (row) => (
+        <span className="text-sm">{formatDate(row.due_date)}</span>
       ),
     },
     {
       key: "status",
       header: "Status",
       render: (row) => <TaskStatus status={row.status} id={row.id} />,
-    },
-    {
-      key: "created_at",
-      header: "Created At",
-      render: (row) => (
-        <span className="text-sm">{formatDate(row.created_at)}</span>
-      ),
     },
   ];
 

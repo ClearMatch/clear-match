@@ -33,6 +33,19 @@ export interface ActivityWithRelations extends ActivityData {
     first_name: string;
     last_name: string;
   };
+  events?: {
+    id: string;
+    company_name: string | null;
+    job_title: string | null;
+    position: string | null;
+    posted_on: string | null;
+    metro_area: string | null;
+    company_website: string | null;
+    job_listing_url: string | null;
+    company_location: string | null;
+    contact_name: string | null;
+    contact_linkedin: string | null;
+  };
 }
 
 export const getFullName = (firstName?: string, lastName?: string): string => {

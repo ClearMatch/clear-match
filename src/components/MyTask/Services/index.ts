@@ -109,6 +109,19 @@ export const fetchActivitiesWithRelationsPaginated = async (
       id,
       first_name,
       last_name
+    ),
+    events:event_id (
+      id,
+      company_name,
+      job_title,
+      position,
+      posted_on,
+      metro_area,
+      company_website,
+      job_listing_url,
+      company_location,
+      contact_name,
+      contact_linkedin
     )`;
 
   const assignedProfileSelect = includeAssignedProfiles 
@@ -201,6 +214,19 @@ export const fetchActivitiesWithRelations = async (
       id,
       first_name,
       last_name
+    ),
+    events:event_id (
+      id,
+      company_name,
+      job_title,
+      position,
+      posted_on,
+      metro_area,
+      company_website,
+      job_listing_url,
+      company_location,
+      contact_name,
+      contact_linkedin
     )`;
 
   const assignedProfileSelect = includeAssignedProfiles 
@@ -412,6 +438,19 @@ export const fetchTaskById = async (
         id,
         first_name,
         last_name
+      ),
+      events:event_id (
+        id,
+        company_name,
+        job_title,
+        position,
+        posted_on,
+        metro_area,
+        company_website,
+        job_listing_url,
+        company_location,
+        contact_name,
+        contact_linkedin
       )
     `
     )
