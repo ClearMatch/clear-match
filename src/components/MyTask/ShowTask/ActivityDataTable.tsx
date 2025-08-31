@@ -279,15 +279,33 @@ export default function ActivityDataTable({ taskData }: ActivityDataTableProps) 
                 </thead>
                 <tbody>
                   {rows.map((row, index) => {
-                    const displayValue = row.value && row.value !== "N/A" ? row.value : null;
-                    const renderedValue = displayValue && row.renderValue 
-                      ? row.renderValue(displayValue) 
-                      : displayValue || <span className="text-gray-400 italic">N/A</span>;
+                    const displayValue = row.value && row.value !== "N/A" && row.value.trim() !== "" ? row.value : null;
+                    
+                    let renderedValue;
+                    try {
+                      renderedValue = displayValue && row.renderValue 
+                        ? row.renderValue(displayValue) 
+                        : displayValue || <span className="text-gray-400 italic">N/A</span>;
+                    } catch (renderError) {
+                      console.warn(`Error rendering value for ${row.label}:`, renderError);
+                      renderedValue = <span className="text-red-400 italic">Error rendering value</span>;
+                    }
+                    
+                    // Special handling for missing contact/event data
+                    const isMissingData = !displayValue && (
+                      row.category === "Contact" || 
+                      row.category === "Clay Event"
+                    );
                     
                     return (
                       <tr key={`${category}-${index}`} className="hover:bg-gray-50 transition-colors">
                         <td className="py-3 px-4 border-b border-gray-100 font-medium text-gray-700">
                           {row.label}
+                          {isMissingData && (
+                            <span className="ml-2 text-xs text-amber-600 font-normal">
+                              (missing)
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-4 border-b border-gray-100 text-gray-900">
                           {renderedValue}

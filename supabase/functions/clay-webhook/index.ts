@@ -652,6 +652,25 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Log contact lookup results for debugging
+    if (!contactId) {
+      console.warn('No contact found for event processing:', {
+        hubspot_record_id: body.contact_record_id || 'not_provided',
+        email: email || 'not_provided',
+        event_type: clayEventType,
+        company_name: structuredData.company_name || body.company_name,
+        job_title: body.job_title || structuredData.position,
+        warning: 'Event will be created without contact link - activities cannot be generated'
+      });
+    } else {
+      console.log('Contact successfully linked to event:', {
+        contact_id: contactId,
+        lookup_method: contactLookupMethod,
+        engagement_score: contactData?.engagement_score,
+        contact_name: `${contactData?.first_name || ''} ${contactData?.last_name || ''}`.trim()
+      });
+    }
+
     // Prepare event data with both structured fields and JSONB
     const eventData = {
       type: clayEventType,  // Use the Clay event type
@@ -683,11 +702,58 @@ Deno.serve(async (req) => {
       .single();
 
     if (eventError) {
+      // Check for idempotency constraint violation (duplicate event)
+      if (eventError.code === '23505' && eventError.constraint === 'events_unique_job_posting') {
+        console.warn('Duplicate event detected (idempotency constraint):', {
+          type: clayEventType,
+          contact_id: contactId,
+          company_name: structuredData.company_name || body.company_name,
+          job_title: body.job_title || structuredData.position,
+          posted_on: structuredData.posted_on
+        });
+        
+        webhookLog.response_status = 200; // Return success for duplicates
+        webhookLog.error = null;
+        webhookLog.response_body = {
+          success: true,
+          duplicate_event: true,
+          message: 'Event already exists - idempotency maintained',
+          contact_linked: !!contactId,
+          event_type_used: clayEventType
+        };
+        await logWebhook(webhookLog);
+        
+        return new Response(
+          JSON.stringify(webhookLog.response_body),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      // Handle other database errors
+      console.error('Event creation database error:', {
+        error_code: eventError.code,
+        error_message: eventError.message,
+        constraint: eventError.constraint,
+        event_data: {
+          type: clayEventType,
+          contact_id: contactId,
+          company_name: structuredData.company_name || body.company_name,
+          job_title: body.job_title
+        }
+      });
+      
       webhookLog.response_status = 500;
       webhookLog.error = `Database error: ${eventError.message}`;
       await logWebhook(webhookLog);
       return new Response(
-        JSON.stringify({ error: 'Failed to save event' }),
+        JSON.stringify({ 
+          error: 'Failed to save event',
+          details: eventError.message,
+          error_code: eventError.code 
+        }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -698,9 +764,17 @@ Deno.serve(async (req) => {
     // Generate activity from event (Phase 5: Automatic Activity Creation)
     let activityCreated = false;
     let activityError = null;
+    let activitySkippedReason = null;
     
     try {
       if (event?.id && contactData?.id && contactData?.engagement_score !== undefined) {
+        console.log('Attempting to create activity for event:', {
+          event_id: event.id,
+          contact_id: contactData.id,
+          engagement_score: contactData.engagement_score,
+          event_type: clayEventType
+        });
+        
         const activityId = await generateActivityFromEvent(
           supabase,
           { ...eventData, id: event.id },
@@ -712,12 +786,39 @@ Deno.serve(async (req) => {
         
         if (activityId) {
           activityCreated = true;
-          console.log(`Activity created: ${activityId} for event: ${event.id}`);
+          console.log(`Activity created successfully: ${activityId} for event: ${event.id}`);
+        } else {
+          activitySkippedReason = 'Activity generation returned null - check generateActivityFromEvent logic';
+          console.warn('Activity creation returned null:', {
+            event_id: event.id,
+            contact_id: contactData.id,
+            engagement_score: contactData.engagement_score
+          });
         }
+      } else {
+        // Log why activity creation was skipped
+        const missing = [];
+        if (!event?.id) missing.push('event_id');
+        if (!contactData?.id) missing.push('contact_id');
+        if (contactData?.engagement_score === undefined) missing.push('engagement_score');
+        
+        activitySkippedReason = `Missing required data: ${missing.join(', ')}`;
+        console.log('Activity creation skipped:', {
+          reason: activitySkippedReason,
+          event_id: event?.id || 'missing',
+          contact_id: contactData?.id || 'missing',
+          engagement_score: contactData?.engagement_score || 'missing',
+          has_contact_data: !!contactData
+        });
       }
     } catch (error) {
       activityError = error instanceof Error ? error.message : 'Unknown activity creation error';
-      console.error('Activity creation failed:', activityError);
+      console.error('Activity creation failed with error:', {
+        error: activityError,
+        event_id: event?.id,
+        contact_id: contactData?.id,
+        stack: error instanceof Error ? error.stack : undefined
+      });
       // Don't fail the webhook for activity creation errors - log and continue
     }
 
@@ -735,6 +836,7 @@ Deno.serve(async (req) => {
         attempted: !!contactData?.id,
         success: activityCreated,
         error: activityError,
+        skipped_reason: activitySkippedReason,
         engagement_score: contactData?.engagement_score || null
       },
       fields_processed: {

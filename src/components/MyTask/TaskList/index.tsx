@@ -68,28 +68,38 @@ function TaskList({
     {
       key: "events",
       header: "Company",
-      render: (row) => (
-        <span className="text-sm">
-          {row.events?.company_name || "N/A"}
-        </span>
-      ),
+      render: (row) => {
+        const companyName = row.events?.company_name;
+        return (
+          <span className={`text-sm ${!companyName ? 'text-gray-400 italic' : ''}`}>
+            {companyName || "No Company"}
+          </span>
+        );
+      },
     },
     {
       key: "event_id",
       header: "Job Title",
-      render: (row) => (
-        <span className="text-sm">
-          {row.events?.job_title || row.events?.position || "N/A"}
-        </span>
-      ),
+      render: (row) => {
+        const jobTitle = row.events?.job_title || row.events?.position;
+        return (
+          <span className={`text-sm ${!jobTitle ? 'text-gray-400 italic' : ''}`}>
+            {jobTitle || "No Job Title"}
+          </span>
+        );
+      },
     },
     {
       key: "contact_id",
       header: "Contact",
       render: (row) => {
         const { first_name, last_name } = row.contacts || {};
+        const fullName = getFullName(first_name, last_name);
+        const hasContact = fullName && fullName !== "N/A";
         return (
-          <span className="text-sm">{getFullName(first_name, last_name)}</span>
+          <span className={`text-sm ${!hasContact ? 'text-gray-400 italic' : ''}`}>
+            {hasContact ? fullName : "No Contact"}
+          </span>
         );
       },
     },
