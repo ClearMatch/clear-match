@@ -62,7 +62,6 @@ const RESERVED_FIELDS = [
   // Database system fields
   'id',
   'contact_id',
-  'contact_record_id',
   'organization_id',
   'created_at',
   'updated_at',
@@ -669,7 +668,7 @@ Deno.serve(async (req) => {
     const eventData = {
       type: mappedType,  // Use the mapped type here
       contact_id: contactId,
-      contact_record_id: body.contact_record_id || null, // Store HubSpot record ID for correlation
+      // Contact correlation handled via contact_id lookup using hubspot_id
       organization_id: organizationId,
       data: Object.keys(jsonbData).length > 0 ? jsonbData : null, // Only store JSONB if there's data
       // Add all structured fields dynamically
