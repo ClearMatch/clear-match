@@ -27,7 +27,7 @@ const CLAY_TO_ACTIVITY_TYPE_MAPPING: Record<string, string> = {
   'none': 'follow-up'                 // Default fallback
 };
 
-// Map Clay payload fields to database columns - comprehensive mapping for all Clay fields
+// Map Clay payload fields to database columns - job event focused fields only
 const CLAY_FIELD_MAPPING: Record<string, string> = {
   // Job details
   'position': 'position',
@@ -37,23 +37,6 @@ const CLAY_FIELD_MAPPING: Record<string, string> = {
   'company_website': 'company_website',
   'job_listing_url': 'job_listing_url',
   'company_location': 'company_location',
-  
-  // Compensation fields  
-  'compensation_target': 'compensation_target',
-  'compensation_minimum': 'compensation_minimum',
-  'additional_notes_on_compensation': 'additional_notes_on_compensation',
-  
-  // Work preferences
-  'workplace_preference': 'workplace_preference',
-  'work_authorization': 'work_authorization',
-  'work_authorization_notes': 'work_authorization_notes',
-  
-  // Job search context
-  'ideal_role_description': 'ideal_role_description',
-  'candidate_search_criteria': 'candidate_search_criteria',
-  'current_status_job_search': 'current_status_job_search',
-  'relationship_to_job_market': 'relationship_to_job_market',
-  'current_workplace_situation': 'current_workplace_situation',
   
   // Contact fields (kept for backwards compatibility if needed)
   'contact_name': 'contact_name',
@@ -78,7 +61,7 @@ const RESERVED_FIELDS = [
   'company_headcount',
   'alert_creation_date',
   
-  // All Clay fields mapped to dedicated columns
+  // Clay job event fields with dedicated columns
   'position',
   'posted_on',
   'metro_area',
@@ -86,17 +69,6 @@ const RESERVED_FIELDS = [
   'company_website',
   'job_listing_url',
   'company_location',
-  'compensation_target',
-  'compensation_minimum',
-  'additional_notes_on_compensation',
-  'workplace_preference',
-  'work_authorization',
-  'work_authorization_notes',
-  'ideal_role_description',
-  'candidate_search_criteria',
-  'current_status_job_search',
-  'relationship_to_job_market',
-  'current_workplace_situation',
   'contact_name',
   'contact_linkedin',
 ];
@@ -182,30 +154,41 @@ function calculateEventPriority(clayEventType: string, eventData: any): number {
 }
 
 // Generate subject line based on event type
-function generateActivitySubject(eventType: string, eventData: any): string {
+function generateActivitySubject(eventType: string, eventData: any, contactData: any = null): string {
+  // Generate contact name part
+  const getContactName = () => {
+    if (!contactData?.first_name && !contactData?.last_name) {
+      return "Deleted Contact";
+    }
+    const firstName = contactData?.first_name || "";
+    const lastName = contactData?.last_name || "";
+    return `${firstName} ${lastName}`.trim() || "Unknown Contact";
+  };
+  
+  const contactName = getContactName();
+  
   switch (eventType) {
     case 'job-posting':
-      const position = eventData.position || eventData.job_title || 'Position';
       const company = eventData.company_name || 'Company';
-      return `Follow up: ${position} opening at ${company}`;
+      return `${company} job posting from ${contactName}`;
     
     case 'funding-event':
       const fundingCompany = eventData.company_name || 'Company';
-      return `Follow up: Funding event at ${fundingCompany}`;
+      return `${fundingCompany} funding news from ${contactName}`;
     
     case 'layoff':
       const layoffCompany = eventData.company_name || 'Company';
-      return `Outreach opportunity: Layoffs at ${layoffCompany}`;
+      return `${layoffCompany} layoff update from ${contactName}`;
     
     case 'new-job':
-      const newJobCompany = eventData.company_name || 'new company';
-      return `Congratulate on new position at ${newJobCompany}`;
+      const newJobCompany = eventData.company_name || 'Company';
+      return `${newJobCompany} new job from ${contactName}`;
     
     case 'birthday':
-      return 'Send birthday wishes';
+      return `Birthday reminder for ${contactName}`;
     
     default:
-      return `Follow up on ${eventType} event`;
+      return `${eventType} event from ${contactName}`;
   }
 }
 
@@ -275,7 +258,8 @@ async function generateActivityFromEvent(
   event: any, 
   contactId: string, 
   organizationId: string, 
-  engagementScore: number
+  engagementScore: number,
+  contactData: any = null
 ): Promise<string | null> {
   try {
     const eventImportance = calculateEventPriority(event.type, event);
@@ -296,7 +280,7 @@ async function generateActivityFromEvent(
       organization_id: organizationId,
       priority: activityPriority,
       status: 'todo', // This matches the activities_status_check constraint
-      subject: generateActivitySubject(event.type, event),
+      subject: generateActivitySubject(event.type, event, contactData),
       content: generateActivityContent(event.type, event),
       due_date: calculateDueDate(event.type),
       created_by: null // System-generated
@@ -603,7 +587,7 @@ Deno.serve(async (req) => {
         console.log(`Looking up contact by HubSpot record ID: ${body.contact_record_id}`);
         const { data: contact, error: contactError } = await supabase
           .from('contacts')
-          .select('id, engagement_score')
+          .select('id, engagement_score, first_name, last_name')
           .eq('hubspot_id', body.contact_record_id.trim())
           .eq('organization_id', organizationId)
           .single();
@@ -646,7 +630,7 @@ Deno.serve(async (req) => {
         console.log(`Fallback: Looking up contact by email: ${email}`);
         const { data: contact, error: contactError } = await supabase
           .from('contacts')
-          .select('id, engagement_score')
+          .select('id, engagement_score, first_name, last_name')
           .eq('email', email.toLowerCase().trim())
           .eq('organization_id', organizationId)
           .single();
@@ -722,7 +706,8 @@ Deno.serve(async (req) => {
           { ...eventData, id: event.id },
           contactData.id,
           eventData.organization_id,
-          contactData.engagement_score
+          contactData.engagement_score,
+          contactData
         );
         
         if (activityId) {
